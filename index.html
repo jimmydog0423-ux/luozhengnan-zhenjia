@@ -2,65 +2,70 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>失序地城：規則牢獄</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0a10" />
+  <title>羅正男：真假</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <main class="shell">
-    <section class="titlebar">
+  <main class="frame">
+    <header class="topbar">
       <div>
-        <h1>失序地城：規則牢獄</h1>
-        <p>單機動作冒險 Prototype</p>
+        <h1>羅正男：真假</h1>
+        <p>單機敘事動作遊戲・Vertical Slice</p>
       </div>
-      <div class="title-actions">
-        <button id="btnResetMeta" type="button">清除死亡記憶</button>
-        <button id="btnRestart" type="button">重新開始</button>
+      <div class="actions">
+        <button id="muteBtn">音效：開</button>
+        <button id="resetBtn">清除存檔</button>
       </div>
-    </section>
+    </header>
 
-    <section class="game-wrap">
-      <canvas id="game" width="960" height="540" aria-label="失序地城遊戲畫面"></canvas>
+    <section class="screen-shell">
+      <canvas id="game" width="1280" height="720"></canvas>
+      <div class="scanlines"></div>
+      <div class="glass"></div>
 
-      <div id="startOverlay" class="overlay show">
-        <div class="panel">
-          <h2>你醒在一座不記得名字的監獄。</h2>
-          <p>牆上的規則有時是真的，有時不是。</p>
-          <p>你死過的事情，這個世界可能記得。</p>
-          <div class="controls">
-            <span>WASD / 方向鍵：移動</span>
-            <span>Shift：Dash</span>
-            <span>空白鍵 / 滑鼠左鍵：攻擊</span>
-            <span>R：重開目前房間</span>
-            <span>Esc：暫停</span>
+      <div id="start" class="overlay show">
+        <div class="card intro-card">
+          <div class="eyebrow">2026 / 台北</div>
+          <h2>網路上有一萬個羅正男。</h2>
+          <p>問題是，你控制的這個到底是不是真的？</p>
+          <div class="keys">
+            <span>WASD / 方向鍵　移動</span>
+            <span>Shift　衝刺</span>
+            <span>空白鍵 / 滑鼠左鍵　動作</span>
+            <span>E　互動</span>
+            <span>Esc　暫停</span>
           </div>
-          <button id="btnStart" type="button">進入牢獄</button>
+          <button id="startBtn">開始直播</button>
+          <small>本作角色、組織、平台與事件均經虛構化及戲劇化改編。</small>
         </div>
       </div>
 
-      <div id="pauseOverlay" class="overlay">
-        <div class="panel small">
-          <h2>暫停</h2>
-          <p>這裡沒有真正的安全區。</p>
-          <button id="btnResume" type="button">繼續</button>
+      <div id="pause" class="overlay">
+        <div class="card small">
+          <div class="eyebrow">PAUSED</div>
+          <h2>聊天室還在跑。</h2>
+          <button id="resumeBtn">繼續</button>
         </div>
       </div>
 
-      <div id="endingOverlay" class="overlay">
-        <div class="panel">
-          <h2 id="endingTitle">你離開了牢獄。</h2>
+      <div id="ending" class="overlay">
+        <div class="card">
+          <div class="eyebrow">VERTICAL SLICE COMPLETE</div>
+          <h2 id="endingTitle">真假。</h2>
           <p id="endingText"></p>
-          <button id="btnEndingRestart" type="button">重新開始</button>
+          <div id="endingStats" class="stats"></div>
+          <button id="againBtn">再播一次</button>
         </div>
       </div>
     </section>
 
-    <section class="hud-help">
-      <div><strong>目標：</strong>突破 10 個房間並擊敗「典獄長」。</div>
-      <div><strong>提示：</strong>規則是玩法，不只是 Debuff；有些房間必須故意違反直覺。</div>
-    </section>
+    <footer>
+      <span id="chapterLabel">2026：頭貼軍團</span>
+      <span id="hintLabel">別相信每一個叫「羅正男」的人。</span>
+    </footer>
   </main>
-
   <script src="js/game.js"></script>
 </body>
 </html>
