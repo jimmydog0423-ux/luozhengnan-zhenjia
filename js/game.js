@@ -181,9 +181,7 @@ function setMsg(s,t=2){G.message=s;G.messageT=t}
 function addClue(id){
   if(G.clues.has(id))return;
   G.clues.add(id);
-  if(G.clues.size>=2){
-    for(const roomId of G.visited)G.fastTravel.add(roomId);
-  }
+  for(const roomId of G.visited)G.fastTravel.add(roomId);
   const c=CLUE_INFO[id];if(c){G.notes.push(c);setMsg(`取得線索：${c[0]}`,2.2);beep(650,.07)}
 }
 function startDialogue(lines,onDone=null){
@@ -216,8 +214,9 @@ function changeRoom(id,spawn="auto"){
     if(G.pyramidKey){startPyramidBoss();return}
     setMsg("下面只有封死的牆。你還不知道真正入口在哪。",2);return
   }
-  G.room=id;G.visited.add(id);
-  if(G.clues.size>=2)G.fastTravel.add(id);
+  G.room=id;
+  G.visited.add(id);
+  G.fastTravel.add(id); // 親自走到過一次後，永久開啟快速移動
   P.x=240;P.y=650;SHAXY.x=175;SHAXY.y=685;G.roomTransition=.28;beep(220,.04);
 }
 
@@ -239,7 +238,12 @@ function updateRoom(dt){
     if(prop)interactProp(prop);
     else if(door)changeRoom(door[0]);
   }
-  if(input.pressed.has("KeyM"))G.mode="map";
+  if(input.pressed.has("KeyM")){
+    const arr=mapSelectable();
+    const currentIndex=arr.indexOf(G.room);
+    mapIndex=currentIndex>=0?currentIndex:0;
+    G.mode="map";
+  }
   if(input.pressed.has("KeyQ"))G.mode="notes";
 }
 
@@ -667,12 +671,15 @@ function drawDialogue(){
   drawPortrait(lk,280,610,false,line.side==="left");drawPortrait(rk,1320,610,true,line.side==="right");
   panel(70,620,1460,230,.97);txt(line.who,120,670,24,line.side==="left"?K.cyan:K.gold);wrap(line.t,120,725,1340,38,25,K.white);txt("SPACE / ENTER",1470,824,12,K.muted,"right")
 }
+const MAP_LAYOUT={
+  gate:[190,650],courtyard:[430,650],hall1:[690,650],class203:[600,450],infirmary:[800,450],computer:[1000,450],
+  hall2:[1230,650],music:[1100,250],library:[1280,250],staff:[1460,250],gym:[420,250],auditorium:[650,250],
+  oldhall:[1330,650],basement:[1430,650]
+};
+
 function drawMap(){
   ctx.fillStyle="#09080d";ctx.fillRect(0,0,W,H);panel(90,65,1420,770,.97);txt("紅色學校平面圖",140,115,30,K.white);txt("已探索的安全區可快速移動。事件中、Boss 前與未知房間不能傳送。",140,150,13,K.muted);
-  const layout={
-    gate:[190,650],courtyard:[430,650],hall1:[690,650],class203:[600,450],infirmary:[800,450],computer:[1000,450],
-    hall2:[1230,650],music:[1100,250],library:[1280,250],staff:[1460,250],gym:[420,250],auditorium:[650,250],oldhall:[1330,650],basement:[1430,650]
-  };
+  const layout=MAP_LAYOUT;
   const selectable=mapSelectable();
   if(mapIndex>=selectable.length)mapIndex=Math.max(0,selectable.length-1);
   const selected=selectable[mapIndex]||null;
@@ -686,7 +693,7 @@ function drawMap(){
     txt(ROOMS[id].name,pos[0],pos[1]+6,13,id===selected?K.gold:active?K.white:K.muted,"center")
   }
   if(selected)txt(`目前選擇：${ROOMS[selected].name}`,140,755,15,K.gold);
-  txt("方向鍵移動選擇　ENTER 快速移動　M / ESC 關閉",140,792,13,K.muted)
+  txt("方向鍵 / WASD 選擇　ENTER / SPACE 移動　也可直接滑鼠點房間　M / ESC 關閉",140,792,13,K.muted)
 }
 function drawNotes(){
   drawRoom();ctx.fillStyle="rgba(5,4,8,.84)";ctx.fillRect(0,0,W,H);panel(100,70,1400,760,.97);txt("案件筆記",150,125,30,K.white);txt("只記錄你真的調查到的東西。",150,158,13,K.muted);
@@ -779,11 +786,33 @@ function resetGame(){
 let mapIndex=0;
 function mapSelectable(){return [...G.fastTravel]}
 function handleMapKey(e){
-  const arr=mapSelectable();if(!arr.length)return;
-  if(e.code==="ArrowLeft"||e.code==="ArrowUp")mapIndex=(mapIndex-1+arr.length)%arr.length;
-  if(e.code==="ArrowRight"||e.code==="ArrowDown")mapIndex=(mapIndex+1)%arr.length;
-  if(e.code==="Enter"){changeRoom(arr[mapIndex]);G.mode="room"}
-  if(e.code==="KeyM"||e.code==="Escape")G.mode="room"
+  const arr=mapSelectable();
+  if(!arr.length)return;
+
+  if(e.code==="ArrowLeft"||e.code==="ArrowUp"||e.code==="KeyA"||e.code==="KeyW"){
+    e.preventDefault();
+    mapIndex=(mapIndex-1+arr.length)%arr.length;
+    beep(300,.02);
+    return;
+  }
+  if(e.code==="ArrowRight"||e.code==="ArrowDown"||e.code==="KeyD"||e.code==="KeyS"){
+    e.preventDefault();
+    mapIndex=(mapIndex+1)%arr.length;
+    beep(360,.02);
+    return;
+  }
+  if(e.code==="Enter"||e.code==="Space"){
+    e.preventDefault();
+    const target=arr[mapIndex];
+    if(target){
+      changeRoom(target);
+      G.mode="room";
+    }
+    return;
+  }
+  if(e.code==="KeyM"||e.code==="Escape"){
+    G.mode="room";
+  }
 }
 function handleNotesKey(e){if(e.code==="KeyQ"||e.code==="Escape")G.mode="room"}
 function handleDialogueKey(e){if(e.code==="Space"||e.code==="Enter"||e.code==="KeyE")nextDialogue();if(e.code==="Escape"){G.dialogue=null;G.mode="room"}}
@@ -799,7 +828,32 @@ window.addEventListener("keydown",e=>{
 });
 window.addEventListener("keyup",e=>input.held.delete(e.code));
 canvas.addEventListener("mousemove",e=>{const r=canvas.getBoundingClientRect();input.mx=(e.clientX-r.left)/r.width*W;input.my=(e.clientY-r.top)/r.height*H});
-canvas.addEventListener("mousedown",()=>input.mouse=true);
+canvas.addEventListener("mousedown",()=>{
+  input.mouse=true;
+
+  if(G.running && G.mode==="map"){
+    const r=canvas.getBoundingClientRect();
+    const mx=input.mx, my=input.my;
+    const arr=mapSelectable();
+
+    for(const id of arr){
+      const pos=MAP_LAYOUT[id];
+      if(!pos)continue;
+      if(mx>=pos[0]-78 && mx<=pos[0]+78 && my>=pos[1]-36 && my<=pos[1]+36){
+        mapIndex=arr.indexOf(id);
+        if(id===G.room){
+          G.mode="room";
+          setMsg("你已經在這裡。",1);
+        }else{
+          changeRoom(id);
+          G.mode="room";
+        }
+        beep(520,.035);
+        break;
+      }
+    }
+  }
+});
 
 document.getElementById("startBtn").onclick=()=>{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();UI.title.classList.remove("show");resetGame()};
 document.getElementById("resumeBtn").onclick=()=>{G.paused=false;UI.pause.classList.remove("show")};
