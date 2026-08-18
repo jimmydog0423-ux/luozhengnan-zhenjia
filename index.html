@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>失序地城：規則牢獄</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="titlebar">
+      <div>
+        <h1>失序地城：規則牢獄</h1>
+        <p>單機動作冒險 Prototype</p>
+      </div>
+      <div class="title-actions">
+        <button id="btnResetMeta" type="button">清除死亡記憶</button>
+        <button id="btnRestart" type="button">重新開始</button>
+      </div>
+    </section>
+
+    <section class="game-wrap">
+      <canvas id="game" width="960" height="540" aria-label="失序地城遊戲畫面"></canvas>
+
+      <div id="startOverlay" class="overlay show">
+        <div class="panel">
+          <h2>你醒在一座不記得名字的監獄。</h2>
+          <p>牆上的規則有時是真的，有時不是。</p>
+          <p>你死過的事情，這個世界可能記得。</p>
+          <div class="controls">
+            <span>WASD / 方向鍵：移動</span>
+            <span>Shift：Dash</span>
+            <span>空白鍵 / 滑鼠左鍵：攻擊</span>
+            <span>R：重開目前房間</span>
+            <span>Esc：暫停</span>
+          </div>
+          <button id="btnStart" type="button">進入牢獄</button>
+        </div>
+      </div>
+
+      <div id="pauseOverlay" class="overlay">
+        <div class="panel small">
+          <h2>暫停</h2>
+          <p>這裡沒有真正的安全區。</p>
+          <button id="btnResume" type="button">繼續</button>
+        </div>
+      </div>
+
+      <div id="endingOverlay" class="overlay">
+        <div class="panel">
+          <h2 id="endingTitle">你離開了牢獄。</h2>
+          <p id="endingText"></p>
+          <button id="btnEndingRestart" type="button">重新開始</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="hud-help">
+      <div><strong>目標：</strong>突破 10 個房間並擊敗「典獄長」。</div>
+      <div><strong>提示：</strong>規則是玩法，不只是 Debuff；有些房間必須故意違反直覺。</div>
+    </section>
+  </main>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
