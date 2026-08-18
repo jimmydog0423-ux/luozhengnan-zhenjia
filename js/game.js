@@ -26,6 +26,8 @@ const input = {
   typed: "",
 };
 
+const chatImeInput = document.getElementById("chatImeInput");
+
 const C = {
   bg:"#08080c", floor:"#19171d", floor2:"#1e1b22", wall:"#3e3944",
   wall2:"#29262d", white:"#eeeaf1", muted:"#99919f", red:"#ff6470",
@@ -202,7 +204,23 @@ function addEvidence(id){
   persist();
   const e=EVIDENCE[id]; if(e){say(`取得線索：${e.title}`,2.3);beep(620,.07,"square",.03)}
 }
-function setMode(m){G.mode=m;input.typed=""}
+function hideChatIme(){
+  chatImeInput.classList.remove("show");
+  chatImeInput.blur();
+}
+function showChatIme(){
+  chatImeInput.value=G.searchInput||"";
+  chatImeInput.classList.add("show");
+  requestAnimationFrame(()=>{
+    chatImeInput.focus();
+    chatImeInput.setSelectionRange(chatImeInput.value.length,chatImeInput.value.length);
+  });
+}
+function setMode(m){
+  G.mode=m;
+  input.typed="";
+  if(m!=="device")hideChatIme();
+}
 
 function startDialogue(lines,onDone=null){
   G.dialogue={lines,onDone};G.dialogueIndex=0;setMode("dialogue");beep(300,.04);
@@ -371,6 +389,8 @@ function openSecurity(){G.device={type:"security"};G.securityMinute=14;G.securit
 function searchChat(term){
   term=term.trim();
   if(!term)return;
+  G.searchInput=term;
+  hideChatIme();
   if(!save.searchedTerms.includes(term))save.searchedTerms.push(term);
   persist();
   if(term.includes("02:17")||term.includes("0217")||term.includes("後面")||term.includes("影子")){
@@ -400,12 +420,13 @@ function handleDeviceKey(e){
   if(d.type==="studio"){
     if(d.screen==="home"){
       if(e.code==="Digit1"){addEvidence("obs");d.screen="obs"}
-      if(e.code==="Digit2"){d.screen="chatSearch";G.searchInput=""}
+      if(e.code==="Digit2"){d.screen="chatSearch";G.searchInput="";showChatIme()}
     }else if(d.screen==="chatSearch"){
-      if(e.code==="Enter")searchChat(G.searchInput);
-      else if(e.code==="Backspace")G.searchInput=G.searchInput.slice(0,-1);
-      else if(e.key&&e.key.length===1&&G.searchInput.length<20)G.searchInput+=e.key;
-    }else if(e.code==="Backspace"){d.screen="home"}
+      if(e.code==="Enter" && !e.isComposing)searchChat(G.searchInput);
+    }else if(e.code==="Backspace"){
+      e.preventDefault();
+      d.screen="home";
+    }
     return;
   }
   if(d.type==="office"){
@@ -894,6 +915,7 @@ function loop(ts){
 }
 
 function resetGame(){
+  hideChatIme();
   G.running=true;G.paused=false;G.mode="explore";G.time=0;G.startedAt=performance.now()/1000;G.last=0;
   G.message="";G.messageT=0;G.camX=0;G.camY=700;G.lightsOn=true;G.flashlight=false;
   G.watcher={x:2360,y:730,active:false,targetX:0,targetY:0,repath:0};
@@ -905,6 +927,7 @@ function resetGame(){
 
 window.addEventListener("keydown",e=>{
   if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
+  if(G.running && G.mode==="device" && e.code==="Backspace")e.preventDefault();
 
   if(G.running && G.mode==="device"){handleDeviceKey(e);return}
   if(G.running && G.mode==="dialogue"){
@@ -938,6 +961,34 @@ canvas.addEventListener("mousemove",e=>{
   const r=canvas.getBoundingClientRect();input.mx=(e.clientX-r.left)/r.width*W;input.my=(e.clientY-r.top)/r.height*H;
 });
 canvas.addEventListener("mousedown",()=>input.mousePressed=true);
+
+// Real HTML input is used here so Windows/macOS IME composition works correctly.
+// This fixes Chinese/Japanese/Korean input and gives Backspace native editing behavior.
+chatImeInput.addEventListener("input",()=>{
+  G.searchInput=chatImeInput.value.slice(0,40);
+});
+chatImeInput.addEventListener("compositionend",()=>{
+  G.searchInput=chatImeInput.value.slice(0,40);
+});
+chatImeInput.addEventListener("keydown",e=>{
+  // Do not let the game's global key handler swallow IME/editing keys.
+  e.stopPropagation();
+
+  if(e.key==="Enter"){
+    if(e.isComposing)return;
+    e.preventDefault();
+    G.searchInput=chatImeInput.value.slice(0,40);
+    searchChat(G.searchInput);
+    return;
+  }
+
+  if(e.key==="Escape"){
+    e.preventDefault();
+    hideChatIme();
+    setMode("explore");
+    G.device=null;
+  }
+});
 
 document.getElementById("startBtn").onclick=()=>{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();UI.title.classList.remove("show");resetGame()};
 document.getElementById("resumeBtn").onclick=()=>{G.paused=false;UI.pause.classList.remove("show")};
