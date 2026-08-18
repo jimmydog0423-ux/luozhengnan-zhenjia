@@ -4,997 +4,812 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
+const W=1600,H=900;
 
-const W = 1600, H = 900;
-const WORLD_W = 2860, WORLD_H = 1740;
-const SAVE_KEY = "luozhengnan_case01_v3";
-
-const UI = {
-  title: document.getElementById("titleOverlay"),
-  pause: document.getElementById("pauseOverlay"),
-  ending: document.getElementById("endingOverlay"),
-  endingTitle: document.getElementById("endingTitle"),
-  endingText: document.getElementById("endingText"),
-  endingStats: document.getElementById("endingStats"),
+const UI={
+  title:document.getElementById("titleOverlay"),
+  pause:document.getElementById("pauseOverlay"),
+  ending:document.getElementById("endingOverlay"),
+  endingTitle:document.getElementById("endingTitle"),
+  endingText:document.getElementById("endingText"),
+  endingStats:document.getElementById("endingStats")
 };
 
-const input = {
-  held: new Set(),
-  pressed: new Set(),
-  mousePressed: false,
-  mx: 0, my: 0,
-  typed: "",
+const K={
+  bg:"#07070a",white:"#f1edf3",muted:"#99909f",red:"#ff5f6c",darkred:"#8d2635",
+  cyan:"#62dfdb",gold:"#e7c85e",green:"#6cc58d",blue:"#6f8fc7",purple:"#a97bd4",
+  orange:"#d99363",wall:"#3b3641",floor:"#19171d",floor2:"#201c23",wood:"#59424a",
+  skin:"#d5a58a",black:"#141118"
 };
 
-const chatImeInput = document.getElementById("chatImeInput");
-
-const C = {
-  bg:"#08080c", floor:"#19171d", floor2:"#1e1b22", wall:"#3e3944",
-  wall2:"#29262d", white:"#eeeaf1", muted:"#99919f", red:"#ff6470",
-  cyan:"#60e0dc", gold:"#e6c65c", purple:"#a87ad5", green:"#6cc995",
-  orange:"#d89a63", ink:"#0b0a0d", blue:"#708fc9"
-};
-
-let audioCtx = null;
-function beep(freq=340, duration=.05, type="square", vol=.026){
+let audioCtx=null;
+function beep(freq=340,d=.05,type="square",vol=.025){
   try{
-    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.type=type; o.frequency.value=freq; g.gain.value=vol;
-    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+duration);
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type;o.frequency.value=freq;g.gain.value=vol;o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d);
   }catch{}
 }
-
-function loadSave(){
-  try{
-    return Object.assign({
-      clears:0, wrongTheories:0, blackoutDeaths:0, bestSeconds:null,
-      discovered:[], searchedTerms:[], finalMistakes:0
-    }, JSON.parse(localStorage.getItem(SAVE_KEY)||"{}"));
-  }catch{
-    return {clears:0,wrongTheories:0,blackoutDeaths:0,bestSeconds:null,discovered:[],searchedTerms:[],finalMistakes:0};
-  }
-}
-let save = loadSave();
-function persist(){ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
-
-const G = {
-  running:false, paused:false, mode:"explore",
-  time:0, last:0, startedAt:0,
-  camX:0, camY:0,
-  message:"", messageT:0, prompt:"",
-  flash:.0, shake:0, glitch:0,
-  dialogue:null, dialogueIndex:0,
-  notebookTab:"evidence",
-  device:null,
-  securityMinute:14, securityFeed:0, securityMarked:[],
-  searchInput:"",
-  stage:0,
-  lightsOn:true,
-  flashlight:false,
-  blackoutTimer:0,
-  watcher:{x:2360,y:730,active:false,targetX:0,targetY:0,repath:0},
-  theory:null,
-  finalIndex:0, finalHP:3, finalTimer:0, finalMistakes:0,
-  hintsUsed:0,
-  evidence:new Set(),
-  statements:new Set(),
-  flags:{
-    talkedCrab:false,talkedXue:false,talkedWei:false,
-    pcUnlocked:false,officeUnlocked:false,cameraSolved:false,
-    clockKnown:false,accessKnown:false,chatShadow:false,
-    ventKnown:false,mahjongKnown:false,breakerKnown:false,
-    blackoutCleared:false,foundRoger:false
-  }
-};
-
-const P = {
-  x:310,y:1010,r:16,speed:205,faceX:1,faceY:0,
-  dash:.0,dashCd:0,inv:0
-};
-
-const rooms = [
-  {x:110,y:840,w:500,h:640,name:"交誼廳",tone:"#29252c"},
-  {x:650,y:870,w:520,h:530,name:"直播間",tone:"#241f2a"},
-  {x:1220,y:850,w:470,h:550,name:"練習室",tone:"#22262c"},
-  {x:1740,y:850,w:450,h:550,name:"辦公室",tone:"#2b2426"},
-  {x:2230,y:850,w:500,h:540,name:"監控室",tone:"#20252a"},
-  {x:130,y:180,w:500,h:520,name:"麻將房",tone:"#252925"},
-  {x:690,y:180,w:480,h:520,name:"廚房",tone:"#2b2924"},
-  {x:1220,y:190,w:470,h:500,name:"儲藏間",tone:"#292524"},
-  {x:1730,y:190,w:450,h:510,name:"樓梯間",tone:"#222226"},
-  {x:2225,y:180,w:510,h:520,name:"舊錄音室",tone:"#221e27"},
-];
-
-const walls = [
-  // outer
-  {x:60,y:80,w:2740,h:35},{x:60,y:1600,w:2740,h:35},{x:60,y:80,w:35,h:1555},{x:2765,y:80,w:35,h:1555},
-  // center horizontal corridor separators
-  {x:95,y:760,w:2670,h:28},
-  // vertical dividers lower rooms with door gaps
-  {x:620,y:840,w:28,h:255},{x:620,y:1200,w:28,h:300},
-  {x:1180,y:840,w:28,h:195},{x:1180,y:1140,w:28,h:360},
-  {x:1700,y:840,w:28,h:260},{x:1700,y:1205,w:28,h:295},
-  {x:2200,y:840,w:28,h:230},{x:2200,y:1170,w:28,h:330},
-  // upper dividers
-  {x:640,y:150,w:28,h:205},{x:640,y:470,w:28,h:250},
-  {x:1180,y:150,w:28,h:250},{x:1180,y:505,w:28,h:215},
-  {x:1700,y:150,w:28,h:230},{x:1700,y:485,w:28,h:235},
-  {x:2200,y:150,w:28,h:210},{x:2200,y:465,w:28,h:255},
-  // furniture obstacles
-  {x:240,y:1060,w:245,h:95},{x:760,y:1010,w:280,h:90},{x:1335,y:1050,w:230,h:80},
-  {x:1840,y:1010,w:225,h:95},{x:2340,y:1020,w:260,h:100},
-  {x:255,y:330,w:250,h:140},{x:790,y:350,w:250,h:110},{x:1325,y:330,w:235,h:120},
-];
-
-const NPCS = {
-  crab:{id:"crab",name:"蟹老闆",x:390,y:930,color:C.orange,portrait:"crab"},
-  xue:{id:"xue",name:"薛西",x:1350,y:950,color:C.green,portrait:"xue"},
-  wei:{id:"wei",name:"阿威",x:915,y:555,color:C.blue,portrait:"wei"},
-};
-
-const EVIDENCE = {
-  obs:{title:"OBS 結束紀錄",desc:"直播軟體顯示最後錄影在 02:18:03 結束。"},
-  chat:{title:"聊天室背景影子",desc:"02:17 的聊天室有人提到「後面有人走過去」。"},
-  clock:{title:"直播間時鐘偏快",desc:"直播間牆鐘比手機時間快 4 分鐘。"},
-  access:{title:"後門刷卡紀錄",desc:"02:21 有『羅正男』的門禁卡刷出紀錄。"},
-  badge:{title:"借出的門禁卡",desc:"阿威承認 02:20 左右借過羅正男的卡去拿外送。"},
-  mahjong:{title:"麻將桌少一張椅子",desc:"椅子被搬到舊錄音室方向，地上有拖痕。"},
-  vent:{title:"服務通道",desc:"儲藏間後方有通往舊錄音室的維修通道。"},
-  camera:{title:"監視器時間差",desc:"C3 的時間比其他鏡頭慢 3 分鐘，不能直接比較畫面時間。"},
-  audio:{title:"舊錄音室音檔",desc:"02:24 左右留下短暫錄音，能聽見羅正男咳嗽與椅子拖動。"},
-  breaker:{title:"跳電紀錄",desc:"02:26 監控室記錄一次異常跳電。"},
-};
-
-const HOTSPOTS = [
-  {id:"studioPc",x:805,y:970,r:58,label:"直播電腦",kind:"pc"},
-  {id:"studioClock",x:1090,y:920,r:50,label:"牆上時鐘",kind:"clock"},
-  {id:"mahjong",x:360,y:500,r:72,label:"麻將桌",kind:"mahjong"},
-  {id:"storageVent",x:1600,y:600,r:54,label:"牆後異音",kind:"vent"},
-  {id:"officeDoor",x:1715,y:1150,r:55,label:"辦公室門",kind:"officeDoor"},
-  {id:"officeTerminal",x:1980,y:990,r:55,label:"門禁終端",kind:"officePc"},
-  {id:"securityConsole",x:2490,y:990,r:70,label:"監視器主控",kind:"camera"},
-  {id:"breaker",x:2680,y:1280,r:58,label:"配電箱",kind:"breaker"},
-  {id:"oldStudio",x:2460,y:520,r:90,label:"舊錄音室",kind:"oldStudio"},
-  {id:"whiteboard",x:1525,y:920,r:65,label:"案件白板",kind:"theory"},
-];
-
-const dialogues = {
-  crab1:[
-    {speaker:"蟹老闆",side:"left",portrait:"crab",text:"羅正男人勒？兩點十分還說等等會來錄，現在整間宿舍找不到。"},
-    {speaker:"你",side:"right",portrait:"player",text:"最後確定看到他是幾點？"},
-    {speaker:"蟹老闆",side:"left",portrait:"crab",text:"我記得 02:10 左右。他在直播間。後來有人說後門看到他的卡刷出去。"},
-    {speaker:"蟹老闆",side:"left",portrait:"crab",text:"先別急著下結論。這裡每台設備的時間都不一定一樣。"},
-  ],
-  xue1:[
-    {speaker:"薛西",side:"right",portrait:"xue",text:"我 02:16 還有聽到他在隔壁碎念，照理說人還在宿舍。"},
-    {speaker:"你",side:"left",portrait:"player",text:"你有看到本人嗎？"},
-    {speaker:"薛西",side:"right",portrait:"xue",text:"沒有。只聽聲音。你要查就去看直播間電腦，聊天室比人誠實一點……大概。"},
-  ],
-  wei1:[
-    {speaker:"阿威",side:"right",portrait:"wei",text:"我只知道後門 02:21 有刷卡。不要看我，我那時候在廚房。"},
-    {speaker:"你",side:"left",portrait:"player",text:"你的時間很準？"},
-    {speaker:"阿威",side:"right",portrait:"wei",text:"手機準。牆上的不準。啊，門禁卡那件事……你先自己查。"},
-  ],
-  weiBadge:[
-    {speaker:"你",side:"left",portrait:"player",text:"後門刷卡的人不是羅正男，對吧？"},
-    {speaker:"阿威",side:"right",portrait:"wei",text:"……好啦。我 02:20 左右借他的卡去後門拿外送。"},
-    {speaker:"阿威",side:"right",portrait:"wei",text:"我以為五分鐘就回來，懶得登記。你不要跟蟹老闆講得太用力。"},
-  ],
-  rogerEnd:[
-    {speaker:"羅正男",side:"right",portrait:"roger",text:"你們是在找我喔？"},
-    {speaker:"你",side:"left",portrait:"player",text:"整間宿舍都以為你跑了。"},
-    {speaker:"羅正男",side:"right",portrait:"roger",text:"真假。我只是來舊錄音室躲一下，結果門卡住，手機又沒電。"},
-    {speaker:"羅正男",side:"right",portrait:"roger",text:"啊你不要跟蟹老闆說我有先搬椅子。"},
-    {speaker:"蟹老闆",side:"left",portrait:"crab",text:"我就在外面。"},
-  ]
-};
-
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function dist(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by)}
-function circleRect(cx,cy,cr,r){
-  const nx=clamp(cx,r.x,r.x+r.w), ny=clamp(cy,r.y,r.y+r.h);
-  const dx=cx-nx,dy=cy-ny; return dx*dx+dy*dy<cr*cr;
+function panel(x,y,w,h,a=.93){ctx.fillStyle=`rgba(10,8,13,${a})`;ctx.fillRect(x,y,w,h);ctx.strokeStyle="#473b4f";ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,w-2,h-2)}
+function txt(s,x,y,size=18,color=K.white,align="left",weight=700){ctx.font=`${weight} ${size}px "Microsoft JhengHei",sans-serif`;ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(s,x,y)}
+function wrap(s,x,y,max,lineH,size=18,color=K.white,align="left",weight=650){
+  ctx.font=`${weight} ${size}px "Microsoft JhengHei",sans-serif`;ctx.textAlign=align;ctx.fillStyle=color;
+  let line="",yy=y;for(const ch of s){const t=line+ch;if(ctx.measureText(t).width>max){ctx.fillText(line,x,yy);line=ch;yy+=lineH}else line=t}if(line)ctx.fillText(line,x,yy)
 }
-function say(text,t=2){G.message=text;G.messageT=t}
-function addEvidence(id){
-  if(G.evidence.has(id)) return;
-  G.evidence.add(id);
-  if(!save.discovered.includes(id))save.discovered.push(id);
-  persist();
-  const e=EVIDENCE[id]; if(e){say(`取得線索：${e.title}`,2.3);beep(620,.07,"square",.03)}
-}
-function hideChatIme(){
-  chatImeInput.classList.remove("show");
-  chatImeInput.blur();
-}
-function showChatIme(){
-  chatImeInput.value=G.searchInput||"";
-  chatImeInput.classList.add("show");
-  requestAnimationFrame(()=>{
-    chatImeInput.focus();
-    chatImeInput.setSelectionRange(chatImeInput.value.length,chatImeInput.value.length);
-  });
-}
-function setMode(m){
-  G.mode=m;
-  input.typed="";
-  if(m!=="device")hideChatIme();
-}
+function rng(seed){let x=Math.sin(seed*999.17)*43758.5453;return x-Math.floor(x)}
+function hitRect(px,py,r,o){const nx=clamp(px,o.x,o.x+o.w),ny=clamp(py,o.y,o.y+o.h),dx=px-nx,dy=py-ny;return dx*dx+dy*dy<r*r}
 
-function startDialogue(lines,onDone=null){
-  G.dialogue={lines,onDone};G.dialogueIndex=0;setMode("dialogue");beep(300,.04);
+const input={held:new Set(),pressed:new Set(),mouse:false,mx:0,my:0};
+const SAVE_KEY="red_school_roger_v1";
+function loadSave(){try{return Object.assign({clears:0,badEnds:0,trueEnds:0,best:null},JSON.parse(localStorage.getItem(SAVE_KEY)||"{}"))}catch{return{clears:0,badEnds:0,trueEnds:0,best:null}}}
+let save=loadSave(); function persist(){localStorage.setItem(SAVE_KEY,JSON.stringify(save))}
+
+const P={x:250,y:620,r:18,speed:220,faceX:1,faceY:0,dash:0,dashCd:0};
+const SHAXY={x:190,y:660};
+const G={
+  running:false,paused:false,time:0,last:0,startedAt:0,
+  mode:"room",room:"gate",message:"",messageT:0,prompt:"",
+  dialogue:null,dialogueIndex:0,choiceIndex:0,
+  visited:new Set(["gate"]),fastTravel:new Set(["gate"]),
+  clues:new Set(),flags:{},
+  notes:[],ending:null,
+  mini:null,boss:null,
+  roomTransition:0,redLevel:0,
+  shaxyTrust:0,overloadHeart:0,pyramidKey:false,
+  badCount:0,miniWins:0,wrongChoices:0,
+};
+
+const ROOMS={
+  gate:{name:"校門",sub:"紅色學校・正門",tone:"#21191d",doors:[["courtyard",1450,610,"往中庭"]]},
+  courtyard:{name:"中庭",sub:"時計停在 00:13",tone:"#20231f",doors:[["gate",140,650,"回校門"],["hall1",1450,610,"一樓走廊"],["gym",780,150,"體育館"],["auditorium",1150,150,"紅色禮堂"]]},
+  hall1:{name:"一樓走廊",sub:"教室門牌從 101 開始",tone:"#1c1f23",doors:[["courtyard",130,610,"回中庭"],["class203",540,170,"二年三班"],["infirmary",950,170,"保健室"],["computer",1370,170,"電腦教室"],["hall2",1450,610,"二樓樓梯"]]},
+  class203:{name:"二年三班",sub:"桌椅比名冊多一張",tone:"#25201f",doors:[["hall1",1450,610,"回走廊"]]},
+  infirmary:{name:"保健室",sub:"藥櫃玻璃裡有第二層倒影",tone:"#20242a",doors:[["hall1",1450,610,"回走廊"]]},
+  computer:{name:"電腦教室",sub:"所有螢幕都停在同一篇舊貼文",tone:"#1c2028",doors:[["hall1",1450,610,"回走廊"]]},
+  hall2:{name:"二樓走廊",sub:"這裡的窗戶比外牆多一扇",tone:"#201c24",doors:[["hall1",130,610,"回一樓"],["music",540,170,"音樂教室"],["library",960,170,"圖書館"],["staff",1370,170,"教職員室"],["oldhall",1450,610,"舊校舍"]]},
+  music:{name:"音樂教室",sub:"沒有插電的節拍器還在動",tone:"#241d28",doors:[["hall2",1450,610,"回走廊"]]},
+  library:{name:"圖書館",sub:"同一本校刊被撕掉不同頁",tone:"#25221c",doors:[["hall2",1450,610,"回走廊"]]},
+  staff:{name:"教職員室",sub:"點名簿最後一列不是姓名",tone:"#28201d",doors:[["hall2",1450,610,"回走廊"]]},
+  gym:{name:"體育館",sub:"看台下有人在等你",tone:"#20251f",doors:[["courtyard",140,650,"回中庭"]]},
+  auditorium:{name:"紅色禮堂",sub:"布幕後面的牆是濕的",tone:"#2c171d",doors:[["courtyard",140,650,"回中庭"],["boss",1450,610,"舞台深處"]]},
+  oldhall:{name:"舊校舍",sub:"地圖上沒有這一區",tone:"#1c181d",doors:[["hall2",130,610,"回二樓"],["basement",1450,610,"往地下"]]},
+  basement:{name:"地下機房",sub:"電纜像樹根一樣往更深處延伸",tone:"#181d20",doors:[["oldhall",130,610,"回舊校舍"],["pyramid",1450,610,"更下面"]]},
+};
+
+const PROPS={
+ gate:[
+  ["sign",270,250,90,90,"校牌"],["booth",580,330,180,150,"警衛室"],["notice",980,270,120,90,"公告欄"],["exit",130,650,70,120,"離開學校"]
+ ],
+ courtyard:[
+  ["clock",760,210,110,110,"停住的鐘"],["tree",420,430,120,180,"老榕樹"],["fountain",1020,470,180,120,"乾掉的噴水池"],["shoe",1250,570,50,35,"單隻室內鞋"]
+ ],
+ hall1:[
+  ["poster",310,270,90,130,"破掉的校慶海報"],["locker",700,380,180,110,"置物櫃"],["blood",1120,520,120,40,"拖行痕跡"]
+ ],
+ class203:[
+  ["deskA",330,350,120,80,"31 號桌"],["deskB",610,350,120,80,"32 號桌"],["blackboard",820,170,420,120,"黑板"],["photo",1260,300,110,90,"班級照片"],["drawer",350,570,80,55,"抽屜"]
+ ],
+ infirmary:[
+  ["bed",350,350,280,120,"病床"],["cabinet",840,260,160,180,"藥櫃"],["mirror",1180,280,130,180,"鏡子"],["uv",650,560,70,50,"紫外線燈"]
+ ],
+ computer:[
+  ["pc1",330,320,150,110,"電腦 A"],["pc2",650,320,150,110,"電腦 B"],["pc3",970,320,150,110,"電腦 C"],["server",1260,270,150,180,"伺服器櫃"]
+ ],
+ hall2:[
+  ["window",330,220,180,120,"窗戶"],["extra",820,220,180,120,"不存在的窗戶"],["radio",1180,450,90,70,"無線電"]
+ ],
+ music:[
+  ["piano",310,300,310,150,"鋼琴"],["metronome",790,300,80,120,"節拍器"],["score",1040,250,150,110,"泛黃樂譜"],["npcFinger",1280,560,80,80,"中指通"]
+ ],
+ library:[
+  ["shelf",260,240,220,340,"校刊書架"],["table",660,420,330,130,"閱覽桌"],["photoWall",1120,230,240,200,"歷屆照片"],["npcToyz",1280,580,80,80,"TOYZ"]
+ ],
+ staff:[
+  ["desk",330,350,300,120,"教師桌"],["roll",790,260,160,100,"點名簿"],["safe",1170,350,150,150,"老式保險箱"],["npcGod",1280,590,80,80,"統神"]
+ ],
+ gym:[
+  ["bleacher",330,260,900,180,"看台"],["ball",560,600,55,55,"籃球"],["locker",1120,500,180,110,"器材櫃"]
+ ],
+ auditorium:[
+  ["curtain",360,170,880,200,"紅色布幕"],["seat",340,520,900,90,"觀眾席"],["wish",1260,300,110,110,"後台紙箱"]
+ ],
+ oldhall:[
+  ["locker",320,300,190,150,"鏽蝕置物櫃"],["door",720,260,170,210,"封死的教室"],["shaxy",1130,520,80,80,"薛喜？"],["stairs",1300,400,100,180,"地下樓梯"]
+ ],
+ basement:[
+  ["panel",310,280,250,160,"主配電盤"],["cable",750,420,380,90,"紅色電纜"],["tape",1210,300,110,80,"舊錄音帶"]
+ ],
+};
+
+const CLUE_INFO={
+  shoe:["單隻室內鞋","鞋底沾著紅色粉末，尺寸比羅正男小。"],
+  photo32:["多出來的第 32 張桌子","名冊只有 31 人，照片卻在最右側多出模糊身影。"],
+  uv:["鏡面上的字","紫外線下寫著：『不要相信會叫你阿傑的人。』"],
+  post:["舊貼文","有人在十年前就提到『00:13 後會多出一間紅色教室』。"],
+  window:["多出來的窗","從中庭數外牆只有 7 扇，二樓走廊內側卻有 8 扇。"],
+  score:["逆拍樂譜","樂譜每第四小節都故意少一拍。"],
+  yearbook:["被改過的校刊","每屆照片裡都出現同一個肥胖男生，但名字被塗掉。"],
+  roll:["點名簿最後一列","最後一列不是姓名，而是『還沒放學』。"],
+  cable:["紅色電纜","不是學校原有線路，全部通向禮堂地下。"],
+  tape:["錄音帶","有人說：『他不是源頭，只是被留在這裡。真正的東西在金字塔下面。』"],
+  heart1:["心願碎片：便當袋","寫著『想再吃一次下課後的雞排』。"],
+  heart2:["心願碎片：遊戲卡","背面寫著『想贏一次，不要再被笑』。"],
+  heart3:["心願碎片：畢業照","照片背面只寫『想跟大家一起畢業』。"],
+};
+
+const DIALOGUES={
+ intro:[
+  {who:"羅正男",side:"left",p:"roger",t:"所以我們半夜跑來廢校，是因為聊天室說這裡有鬼？"},
+  {who:"薛喜",side:"right",p:"shaxy",t:"不是。是因為三個不同的人都拍到同一扇『不存在的窗戶』。"},
+  {who:"羅正男",side:"left",p:"roger",t:"啊不就窗戶。"},
+  {who:"薛喜",side:"right",p:"shaxy",t:"外牆七扇，裡面八扇。你等一下不要第一個去開第八扇。"},
+  {who:"羅正男",side:"left",p:"roger",t:"我偏要。"},
+ ],
+ finger:[
+  {who:"中指通",side:"right",p:"finger",t:"想問音樂教室的事？先證明你手指不是裝飾。"},
+  {who:"羅正男",side:"left",p:"roger",t:"薛喜你上。"},
+  {who:"薛喜",side:"right",p:"shaxy",t:"為什麼每次有技術含量的都我？"},
+ ],
+ toyz:[
+  {who:"TOYZ",side:"right",p:"toyz",t:"校刊我有看過。但先來個紙捲競速。不是比快而已，捲爛一樣算輸。"},
+  {who:"羅正男",side:"left",p:"roger",t:"這又是什麼校園社團。"},
+ ],
+ god:[
+  {who:"統神",side:"right",p:"god",t:"你們要點名簿後面的密碼？薛喜跟我玩一把。"},
+  {who:"薛喜",side:"left",p:"shaxy",t:"又我？"},
+  {who:"統神",side:"right",p:"god",t:"羅正男在旁邊閉嘴就是最大幫忙。"},
+ ],
+ fakeShaxy:[
+  {who:"薛喜？",side:"right",p:"fake",t:"阿傑，別查了。我找到出口了，跟我走。"},
+ ],
+ overloadReveal:[
+  {who:"超負荷",side:"right",p:"overload",t:"你們以為是我把這裡變成這樣？"},
+  {who:"羅正男",side:"left",p:"roger",t:"不然勒。整間學校都你的聲音。"},
+  {who:"超負荷",side:"right",p:"overload",t:"我只是一直沒辦法『放學』。它拿我的聲音、我的樣子，叫每個留下來的人繼續陪它。"},
+ ],
+ pyramidReveal:[
+  {who:"超負荷",side:"right",p:"overload",t:"你真的把那三件東西找回來了……那我告訴你。"},
+  {who:"超負荷",side:"right",p:"overload",t:"控制這裡的不是我。地下機房那條紅線，通往一個根本不該存在的地方。"},
+  {who:"薛喜",side:"left",p:"shaxy",t:"哪裡？"},
+  {who:"超負荷",side:"right",p:"overload",t:"金字塔。裡面有個一直被叫做『紹安』的東西。別把名字當成真人，這裡的名字都只是面具。"},
+ ]
+};
+
+function setMsg(s,t=2){G.message=s;G.messageT=t}
+function addClue(id){
+  if(G.clues.has(id))return;
+  G.clues.add(id);
+  if(G.clues.size>=2){
+    for(const roomId of G.visited)G.fastTravel.add(roomId);
+  }
+  const c=CLUE_INFO[id];if(c){G.notes.push(c);setMsg(`取得線索：${c[0]}`,2.2);beep(650,.07)}
 }
-function advanceDialogue(){
-  if(!G.dialogue)return;
+function startDialogue(lines,onDone=null){
+  G.dialogue={lines,onDone};G.dialogueIndex=0;G.mode="dialogue";beep(330,.03)
+}
+function nextDialogue(){
   G.dialogueIndex++;
   if(G.dialogueIndex>=G.dialogue.lines.length){
-    const cb=G.dialogue.onDone;G.dialogue=null;setMode("explore");if(cb)cb();
-  }else beep(360,.025);
+    const cb=G.dialogue.onDone;G.dialogue=null;G.mode="room";if(cb)cb();
+  }else beep(390,.025)
+}
+function endGame(title,text,type="bad"){
+  G.running=false;save.clears++;if(type==="bad"){save.badEnds++;G.badCount++}if(type==="true")save.trueEnds++;
+  const sec=Math.floor(performance.now()/1000-G.startedAt);if(save.best==null||sec<save.best)save.best=sec;persist();
+  UI.endingTitle.textContent=title;UI.endingText.textContent=text;
+  UI.endingStats.innerHTML=[
+    ["線索",`${G.clues.size}/12`],["NPC 挑戰",`${G.miniWins}/3`],["錯誤選擇",String(G.wrongChoices)],["結局",type.toUpperCase()]
+  ].map(([a,b])=>`<div class="stat">${a}<b>${b}</b></div>`).join("");
+  UI.ending.classList.add("show")
 }
 
-function playerMove(dt){
+function roomProps(){return PROPS[G.room]||[]}
+function roomDoors(){return ROOMS[G.room].doors||[]}
+function isDoorNear(){for(const d of roomDoors()){if(dist(P.x,P.y,d[1],d[2])<80)return d}return null}
+function propNear(){for(const p of roomProps()){if(dist(P.x,P.y,p[1],p[2])<80)return p}return null}
+
+function changeRoom(id,spawn="auto"){
+  if(id==="boss"){startOverloadBoss();return}
+  if(id==="pyramid"){
+    if(G.pyramidKey){startPyramidBoss();return}
+    setMsg("下面只有封死的牆。你還不知道真正入口在哪。",2);return
+  }
+  G.room=id;G.visited.add(id);
+  if(G.clues.size>=2)G.fastTravel.add(id);
+  P.x=240;P.y=650;SHAXY.x=175;SHAXY.y=685;G.roomTransition=.28;beep(220,.04);
+}
+
+function updateRoom(dt){
+  P.dash=Math.max(0,P.dash-dt);P.dashCd=Math.max(0,P.dashCd-dt);
   let dx=(input.held.has("KeyD")||input.held.has("ArrowRight")?1:0)-(input.held.has("KeyA")||input.held.has("ArrowLeft")?1:0);
   let dy=(input.held.has("KeyS")||input.held.has("ArrowDown")?1:0)-(input.held.has("KeyW")||input.held.has("ArrowUp")?1:0);
   if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l;P.faceX=dx;P.faceY=dy}
-  P.dashCd=Math.max(0,P.dashCd-dt);
-  if((input.pressed.has("ShiftLeft")||input.pressed.has("ShiftRight"))&&P.dashCd<=0){P.dash=.14;P.dashCd=.55;beep(220,.035)}
-  P.dash=Math.max(0,P.dash-dt);
-  const sp=P.dash>0?365:P.speed;
-  const ox=P.x,oy=P.y;
-  P.x+=dx*sp*dt;
-  for(const w of walls)if(circleRect(P.x,P.y,P.r,w)){P.x=ox;break}
-  P.y+=dy*sp*dt;
-  for(const w of walls)if(circleRect(P.x,P.y,P.r,w)){P.y=oy;break}
-  P.x=clamp(P.x,80,WORLD_W-80);P.y=clamp(P.y,100,WORLD_H-100);
+  if((input.pressed.has("ShiftLeft")||input.pressed.has("ShiftRight"))&&P.dashCd<=0){P.dash=.14;P.dashCd=.6;beep(230,.03)}
+  const sp=P.dash>0?390:P.speed;P.x=clamp(P.x+dx*sp*dt,80,1520);P.y=clamp(P.y+dy*sp*dt,145,795);
+  SHAXY.x+=(P.x-70-SHAXY.x)*Math.min(1,dt*4);SHAXY.y+=(P.y+30-SHAXY.y)*Math.min(1,dt*4);
 
-  if(!G.lightsOn && G.watcher.active) updateWatcher(dt);
-  updateCamera(dt);
-}
-
-function updateCamera(dt){
-  const tx=clamp(P.x-W/2,0,WORLD_W-W),ty=clamp(P.y-H/2,0,WORLD_H-H);
-  G.camX+=(tx-G.camX)*Math.min(1,dt*5.3);G.camY+=(ty-G.camY)*Math.min(1,dt*5.3);
-}
-
-function updateWatcher(dt){
-  const w=G.watcher;
-  const d=dist(w.x,w.y,P.x,P.y);
-  const canSee=G.flashlight && d<650;
-  const speed=canSee?190:110;
-  w.repath-=dt;
-  if(w.repath<=0){
-    w.repath=canSee?.28:.75;
-    if(canSee){w.targetX=P.x;w.targetY=P.y}
-    else{w.targetX=clamp(P.x+rnd(-320,320),100,WORLD_W-100);w.targetY=clamp(P.y+rnd(-260,260),100,WORLD_H-100)}
-  }
-  const dx=w.targetX-w.x,dy=w.targetY-w.y,l=Math.hypot(dx,dy)||1;
-  w.x+=dx/l*speed*dt;w.y+=dy/l*speed*dt;
-  if(dist(w.x,w.y,P.x,P.y)<34){
-    save.blackoutDeaths++;persist();
-    say("黑暗裡的東西碰到了你。",1.3);
-    G.shake=16;G.flash=.5;beep(70,.25,"sawtooth",.06);
-    P.x=2120;P.y=1320;w.x=2520;w.y=620;G.flashlight=false;
-  }
-}
-
-function nearestInteractable(){
-  let best=null,bd=82;
-  for(const n of Object.values(NPCS)){
-    const d=dist(P.x,P.y,n.x,n.y);if(d<bd){bd=d;best={type:"npc",obj:n}}
-  }
-  for(const h of HOTSPOTS){
-    const d=dist(P.x,P.y,h.x,h.y);if(d<Math.max(bd,h.r)){if(d<h.r){bd=d;best={type:"hotspot",obj:h}}}
-  }
-  return best;
-}
-
-function interact(){
-  const near=nearestInteractable();
-  if(!near){say("這裡沒有值得調查的東西。",1);return}
-  if(near.type==="npc"){
-    const n=near.obj;
-    if(n.id==="crab"){
-      if(!G.flags.talkedCrab){G.flags.talkedCrab=true;G.statements.add("crab_0210");startDialogue(dialogues.crab1)}
-      else startDialogue([{speaker:"蟹老闆",side:"left",portrait:"crab",text:"不要只聽人講。時間、門禁、影像自己對。"}]);
-    }
-    if(n.id==="xue"){
-      if(!G.flags.talkedXue){G.flags.talkedXue=true;G.statements.add("xue_voice");startDialogue(dialogues.xue1)}
-      else startDialogue([{speaker:"薛西",side:"right",portrait:"xue",text:"你如果看到 02:17 的聊天室，記得看背景，不要只看字。"}]);
-    }
-    if(n.id==="wei"){
-      if(G.evidence.has("access")&&G.evidence.has("clock")&&!G.evidence.has("badge")){
-        startDialogue(dialogues.weiBadge,()=>addEvidence("badge"));
-      }else if(!G.flags.talkedWei){G.flags.talkedWei=true;G.statements.add("wei_kitchen");startDialogue(dialogues.wei1)}
-      else startDialogue([{speaker:"阿威",side:"right",portrait:"wei",text:"我真的沒看到他出去。刷卡紀錄不等於人。"}]);
-    }
-    return;
-  }
-  const h=near.obj;
-  switch(h.kind){
-    case "pc": openStudioPC();break;
-    case "clock":
-      if(!G.evidence.has("clock")){
-        G.flags.clockKnown=true;addEvidence("clock");
-        startDialogue([
-          {speaker:"你",side:"left",portrait:"player",text:"牆鐘顯示 02:21，手機是 02:17。快了四分鐘。"},
-          {speaker:"你",side:"left",portrait:"player",text:"如果有人用牆鐘回憶時間，證詞可能整段偏移。"}
-        ]);
-      }else say("牆鐘固定快四分鐘。",1.3);
-      break;
-    case "mahjong":
-      if(!G.evidence.has("mahjong")){
-        G.flags.mahjongKnown=true;addEvidence("mahjong");
-        startDialogue([{speaker:"你",side:"left",portrait:"player",text:"四人桌只剩三張椅子。地板有一路拖向北側走廊的痕跡。"}]);
-      }else say("椅腳拖痕往北側延伸。",1);
-      break;
-    case "vent":
-      if(!G.evidence.has("vent")){
-        if(G.evidence.has("mahjong")||G.evidence.has("camera")){
-          G.flags.ventKnown=true;addEvidence("vent");
-          startDialogue([{speaker:"你",side:"left",portrait:"player",text:"牆板後面是維修通道。方向正好通往舊錄音室。"}]);
-        }else say("牆後有風聲，但你還不知道為什麼要在意。",1.4);
-      }else say("服務通道太窄，人過不去，但可以傳聲。",1);
-      break;
-    case "officeDoor":
-      if(G.flags.officeUnlocked){P.x=1765;say("辦公室已解鎖。",1)}
-      else{
-        if(G.evidence.has("clock")&&G.evidence.has("chat")) openKeypad();
-        else say("四位數密碼。旁邊貼著：『用真正的時間，不要用牆上的。』",2);
-      }
-      break;
-    case "officePc":
-      if(!G.flags.officeUnlocked){say("門鎖著，進不去。",1)}
-      else openOfficePC();
-      break;
-    case "camera":
-      if(!G.flags.officeUnlocked){say("監控室需要辦公室權限才能啟用主控。",1.4)}
-      else openSecurity();
-      break;
-    case "breaker":
-      if(G.lightsOn){say("配電箱目前正常。",1)}
-      else{
-        if(G.flags.cameraSolved){
-          G.lightsOn=true;G.watcher.active=false;G.flags.blackoutCleared=true;addEvidence("breaker");
-          say("你重新接上備援電源。黑暗中的腳步聲停了。",2.4);
-        }else say("你不知道哪一路該先接。監控主控裡可能有跳電紀錄。",2);
-      }
-      break;
-    case "oldStudio":
-      if(!G.flags.blackoutCleared){say("門後沒有反應。你需要先恢復電力。",1.5)}
-      else if(!(G.evidence.has("audio")&&G.evidence.has("vent")&&G.evidence.has("badge")&&G.evidence.has("camera"))){
-        const missing=[];
-        if(!G.evidence.has("audio"))missing.push("能證明裡面有人的資料");
-        if(!G.evidence.has("vent"))missing.push("聲音如何傳出去");
-        if(!G.evidence.has("badge"))missing.push("後門刷卡者的身分");
-        if(!G.evidence.has("camera"))missing.push("監視器時間差");
-        say("你還不能收束案件。缺少："+missing.join("、")+"。",2.6)
-      }
-      else{
-        G.flags.foundRoger=true;
-        startDialogue(dialogues.rogerEnd,()=>startFinal());
-      }
-      break;
-    case "theory": openTheory();break;
-  }
-}
-
-function openStudioPC(){
-  G.device={type:"studio",screen:"home"};G.searchInput="";setMode("device");
-}
-function openOfficePC(){G.device={type:"office",screen:"access"};setMode("device")}
-function openKeypad(){G.device={type:"keypad",code:""};setMode("device")}
-function openSecurity(){G.device={type:"security"};G.securityMinute=14;G.securityFeed=0;setMode("device")}
-
-function searchChat(term){
-  term=term.trim();
-  if(!term)return;
-  G.searchInput=term;
-  hideChatIme();
-  if(!save.searchedTerms.includes(term))save.searchedTerms.push(term);
-  persist();
-  if(term.includes("02:17")||term.includes("0217")||term.includes("後面")||term.includes("影子")){
-    addEvidence("chat");G.flags.chatShadow=true;
-    G.device.screen="searchResult";
-  }else if(term.includes("羅正男")||term.includes("Roger")){
-    G.device.screen="manyResults";
-  }else G.device.screen="noResult";
-}
-
-function handleDeviceKey(e){
-  if(!G.device)return;
-  const d=G.device;
-  if(e.code==="Escape"){setMode("explore");G.device=null;return}
-  if(d.type==="keypad"){
-    if(/^Digit[0-9]$/.test(e.code)||/^Numpad[0-9]$/.test(e.code)){
-      const n=e.code.replace("Digit","").replace("Numpad","");if(d.code.length<4)d.code+=n;beep(420,.03);
-    }
-    if(e.code==="Backspace")d.code=d.code.slice(0,-1);
-    if(e.code==="Enter"){
-      if(d.code==="0217"){
-        G.flags.officeUnlocked=true;setMode("explore");G.device=null;say("辦公室門鎖解除。",2);beep(730,.1);
-      }else{d.code="";G.shake=6;beep(100,.1,"sawtooth");say("密碼錯誤。",1)}
-    }
-    return;
-  }
-  if(d.type==="studio"){
-    if(d.screen==="home"){
-      if(e.code==="Digit1"){addEvidence("obs");d.screen="obs"}
-      if(e.code==="Digit2"){d.screen="chatSearch";G.searchInput="";showChatIme()}
-    }else if(d.screen==="chatSearch"){
-      if(e.code==="Enter" && !e.isComposing)searchChat(G.searchInput);
-    }else if(e.code==="Backspace"){
-      e.preventDefault();
-      d.screen="home";
-    }
-    return;
-  }
-  if(d.type==="office"){
-    if(e.code==="Digit1"){addEvidence("access");G.flags.accessKnown=true}
-    if(e.code==="Digit2"){
-      addEvidence("audio");
-      if(G.lightsOn){
-        G.lightsOn=false;G.watcher.active=true;G.watcher.x=2550;G.watcher.y=520;
-        setMode("explore");G.device=null;G.flashlight=false;
-        say("整棟宿舍跳電。你聽見北側走廊有腳步。F 可以開手電筒。",3);
-        beep(55,.35,"sawtooth",.07);G.flash=.6;G.glitch=.5;
-      }
-    }
-    return;
-  }
-  if(d.type==="security"){
-    if(e.code==="ArrowLeft")G.securityMinute=clamp(G.securityMinute-1,14,24);
-    if(e.code==="ArrowRight")G.securityMinute=clamp(G.securityMinute+1,14,24);
-    if(/^Digit[1-4]$/.test(e.code))G.securityFeed=parseInt(e.code.slice(-1))-1;
-    if(e.code==="Space"){
-      const key=`${G.securityFeed}:${G.securityMinute}`;
-      if(!G.securityMarked.includes(key))G.securityMarked.push(key);
-      beep(520,.04);
-      // correct observations: feed1 minute17 shadow, feed2 minute21 card runner, feed3 minute18 offset marker
-      const required=["0:17","1:21","2:18"];
-      if(required.every(k=>G.securityMarked.includes(k))){
-        G.flags.cameraSolved=true;addEvidence("camera");say("你標出了三段不能直接用同一時間比較的畫面。",2.2);
-      }
-    }
-  }
-}
-
-function openTheory(){
-  G.theory={step:0,answers:[]};setMode("theory");
-}
-const THEORY_Q = [
-  {q:"後門 02:21 的刷卡紀錄能直接證明羅正男離開宿舍嗎？",opts:["能，卡就是本人","不能，卡可能被別人使用","不能，因為後門不存在"],correct:1},
-  {q:"哪一個時間最值得當作統一基準？",opts:["直播間牆鐘","手機／系統紀錄","每個人自己的記憶"],correct:1},
-  {q:"目前最合理的方向？",opts:["羅正男已經離開宿舍","羅正男仍可能在北側區域","所有人都在說謊"],correct:1},
-];
-
-function handleTheoryChoice(n){
-  const q=THEORY_Q[G.theory.step];
-  G.theory.answers.push(n);
-  if(n!==q.correct){
-    save.wrongTheories++;persist();G.shake=8;beep(90,.12,"sawtooth");
-    say("推理可以成立一部分，但會把你帶到錯的方向。你浪費了幾分鐘。",2.3);
-  }else beep(620,.05);
-  G.theory.step++;
-  if(G.theory.step>=THEORY_Q.length){
-    const ok=G.theory.answers.every((a,i)=>a===THEORY_Q[i].correct);
-    if(ok){
-      say("推理成立：『刷卡的人未必是羅正男；他可能仍在宿舍北側。』",3);
-      if(G.evidence.has("access")&&G.evidence.has("clock")&&!G.evidence.has("badge"))say("現在再去問阿威一次。",2.8);
-    }
-    setMode("explore");G.theory=null;
-  }
-}
-
-function updateExplore(dt){
-  playerMove(dt);
-  if(input.pressed.has("KeyE"))interact();
-  if(input.pressed.has("KeyQ"))setMode("notebook");
-  if(input.pressed.has("KeyF")&&!G.lightsOn){G.flashlight=!G.flashlight;beep(G.flashlight?700:180,.035)}
   G.prompt="";
-  const near=nearestInteractable();
-  if(near)G.prompt=`E  ${near.obj.name||near.obj.label}`;
+  const prop=propNear(),door=isDoorNear();
+  if(prop)G.prompt=`E 調查：${prop[4]}`;
+  else if(door)G.prompt=`E ${door[3]}`;
+
+  if(input.pressed.has("KeyE")){
+    if(prop)interactProp(prop);
+    else if(door)changeRoom(door[0]);
+  }
+  if(input.pressed.has("KeyM"))G.mode="map";
+  if(input.pressed.has("KeyQ"))G.mode="notes";
 }
 
-function startFinal(){
-  G.finalIndex=0;G.finalHP=3;G.finalTimer=22;G.finalMistakes=0;setMode("final");
+function interactProp(p){
+  const id=p[0];
+  if(id==="exit"){
+    endGame("BAD END：放學","羅正男覺得事情太麻煩，直接離開。隔天早上，薛喜的手機仍留在學校裡，但沒有人記得他什麼時候回去過。","bad");return
+  }
+  if(G.room==="courtyard"&&id==="shoe"){addClue("shoe");return}
+  if(G.room==="class203"&&id==="photo"){
+    if(!G.flags.photoGame){G.flags.photoGame=true;startPhotoMini()}else addClue("photo32");return
+  }
+  if(G.room==="class203"&&id==="drawer"){addClue("heart1");G.overloadHeart=Math.max(G.overloadHeart,1);return}
+  if(G.room==="infirmary"&&id==="uv"){startUvMini();return}
+  if(G.room==="computer"&&(id==="pc1"||id==="pc2"||id==="pc3")){startTerminalMini();return}
+  if(G.room==="hall2"&&id==="extra"){addClue("window");return}
+  if(G.room==="music"&&id==="score"){addClue("score");return}
+  if(G.room==="music"&&id==="npcFinger"){
+    if(!G.flags.fingerWon)startDialogue(DIALOGUES.finger,()=>startRhythmMini());else setMsg("中指通：你手指確實能用。",1.5);return
+  }
+  if(G.room==="library"&&id==="photoWall"){
+    if(G.flags.toyzWon)addClue("yearbook");else setMsg("照片牆缺一張標示頁。TOYZ 說他看過。",1.8);return
+  }
+  if(G.room==="library"&&id==="npcToyz"){
+    if(!G.flags.toyzWon)startDialogue(DIALOGUES.toyz,()=>startRollMini());else setMsg("TOYZ：校刊那頁你自己去看啦。",1.5);return
+  }
+  if(G.room==="library"&&id==="table"){addClue("heart2");return}
+  if(G.room==="staff"&&id==="roll"){
+    if(G.flags.pokerWon)addClue("roll");else setMsg("點名簿被鎖在透明盒裡。統神拿著鑰匙。",1.7);return
+  }
+  if(G.room==="staff"&&id==="npcGod"){
+    if(!G.flags.pokerWon)startDialogue(DIALOGUES.god,()=>startPokerMini());else setMsg("統神：下一把再說。",1.2);return
+  }
+  if(G.room==="auditorium"&&id==="wish"){addClue("heart3");return}
+  if(G.room==="oldhall"&&id==="shaxy"){
+    if(!G.flags.fakeSeen){
+      G.flags.fakeSeen=true;
+      startDialogue(DIALOGUES.fakeShaxy,()=>startFakeChoice());
+    }else setMsg("那個『薛喜』已經不見了。",1.4);return
+  }
+  if(G.room==="basement"&&id==="cable"){addClue("cable");return}
+  if(G.room==="basement"&&id==="tape"){addClue("tape");return}
+  setMsg(genericPropText(G.room,id),1.7)
 }
-const FINAL_ITEMS = [
-  {s:"02:21 後門刷卡＝羅正男本人離開",cat:2,why:"門禁卡被阿威借走，刷卡不等於本人。"},
-  {s:"薛西 02:16 聽到羅正男聲音",cat:1,why:"是證詞，沒有目擊，只能證明聲音來源。"},
-  {s:"直播間牆鐘比手機快四分鐘",cat:0,why:"你親自比對過時間。"},
-  {s:"舊錄音室 02:24 有羅正男咳嗽聲",cat:0,why:"系統音檔可重播驗證。"},
-  {s:"羅正男一定跑去打麻將",cat:3,why:"麻將桌只有椅子拖痕，沒有足夠證據。"},
-  {s:"監視器所有鏡頭時間完全同步",cat:2,why:"C3 慢三分鐘。"},
-  {s:"阿威說自己一直在廚房",cat:1,why:"這是當事人說法；門禁資料顯示他至少去過後門。"},
-  {s:"服務通道能把舊錄音室聲音傳到練習室",cat:0,why:"你在儲藏間確認了通道。"},
-];
-const CAT_LABEL=["已驗證","人物證詞","被證據否定","目前無法確認"];
+function genericPropText(room,id){
+  if(id==="locker"&&room==="hall1")return "置物櫃裡塞著很多沒領走的學生證，最下面一張照片被刮掉臉。";
+  if(id==="locker"&&room==="oldhall")return "鏽蝕的門縫裡傳出手機震動，但打開後只有一條紅線。";
+  const map={
+    sign:"校名被紅漆蓋掉，只剩『紅色學校』四個字。",
+    booth:"警衛室裡沒有灰塵，像今天還有人使用。",
+    notice:"公告日期全部停在同一天：7 月 14 日。",
+    clock:"時鐘停在 00:13，但秒針還在微微抖。",
+    tree:"樹根纏著幾條褪色紅線。",
+    fountain:"池底有很多硬幣，但全部都是同一年。",
+    poster:"海報上的表演名單有一個名字被整塊挖掉。",
 
-function updateFinal(dt){
-  G.finalTimer-=dt;
-  if(G.finalTimer<=0){G.finalHP--;G.finalTimer=18;G.finalMistakes++;beep(80,.12,"sawtooth");if(G.finalHP<=0)restartFinal()}
-  for(let i=0;i<4;i++)if(input.pressed.has(`Digit${i+1}`)){
-    const item=FINAL_ITEMS[G.finalIndex];
-    if(i===item.cat){
-      beep(650,.05);G.finalIndex++;G.finalTimer=Math.max(10,G.finalTimer+3);
-      if(G.finalIndex>=FINAL_ITEMS.length)finishCase();
-    }else{
-      G.finalHP--;G.finalMistakes++;G.shake=10;beep(85,.1,"sawtooth");
-      say(item.why,2);
-      if(G.finalHP<=0)restartFinal();
+    blood:"不是血，是紅色粉筆灰。",
+    deskA:"普通的學生桌，桌底刻著『不要坐 32』。",
+    deskB:"桌面比其他桌乾淨，像剛被放進來。",
+    blackboard:"黑板角落寫著：『31 + 1 = 32？』",
+    bed:"病床床單底下壓著一根紅線。",
+    cabinet:"藥罐標籤全部被換成學生名字。",
+    mirror:"你和薛喜的倒影慢了半拍。",
+    server:"伺服器上只有一個資料夾：RED_SCHOOL_ARCHIVE。",
+    window:"外面數得到七扇窗。",
+    radio:"無線電偶爾傳出一個人喘氣的聲音。",
+    piano:"有一個琴鍵按下去沒有聲音，卻會讓門外的燈閃一下。",
+    metronome:"節拍器一直卡在 13、13、13、13。",
+    shelf:"每一本校刊的第 32 頁都被撕掉。",
+    safe:"保險箱不是鎖著，是從裡面被頂住。",
+    bleacher:"看台底下貼滿『今天可以放學嗎』的紙條。",
+    ball:"籃球裡面有東西在滾。",
+    curtain:"布幕背後有非常新的手掌印。",
+    seat:"所有椅子都朝舞台，只有最後一張朝出口。",
+
+    door:"門把被紅線纏死。",
+    stairs:"樓梯往下，但從外面看學校根本沒有地下室。",
+    panel:"配電盤上有一條完全不在圖紙裡的紅色迴路。"
+  };return map[id]||"看起來普通，但你總覺得哪裡不對。"
+}
+
+// ---------- Investigation mini games ----------
+function startPhotoMini(){
+  G.mini={type:"photo",found:new Set(),timer:45};G.mode="mini"
+}
+function startUvMini(){
+  G.mini={type:"uv",progress:0,spots:[{x:510,y:315,r:45,hit:false},{x:850,y:410,r:38,hit:false},{x:1120,y:290,r:42,hit:false}],timer:50};G.mode="mini"
+}
+function startTerminalMini(){
+  G.mini={type:"terminal",code:[2,0,1,3],slots:[],timer:50};G.mode="mini"
+}
+function startRhythmMini(){
+  const keys=["KeyA","KeyS","KeyD","KeyJ","KeyK","KeyL"];
+  const notes=[];for(let i=0;i<34;i++)notes.push({t:1.1+i*.43+(i%7===0?.12:0),key:keys[(i*3+i%4)%6],hit:false,miss:false});
+  G.mini={type:"rhythm",notes,start:G.time,score:0,combo:0,miss:0};G.mode="mini"
+}
+function startRollMini(){
+  G.mini={type:"roll",quality:55,progress:0,opponent:0,phase:0,done:false};G.mode="mini"
+}
+function startPokerMini(){
+  G.mini={type:"poker",round:0,playerChips:6,godChips:6,history:[],prompt:null};nextPokerRound();G.mode="mini"
+}
+function startFakeChoice(){
+  G.mode="choice";G.choiceIndex=0;G.dialogue={choiceTitle:"你面前有兩個選擇。",choices:["跟這個薛喜走","用無線電叫真正的薛喜報暗號"],onChoice:(i)=>{
+    if(i===0)endGame("BAD END：另一個薛喜","你跟著他走進不存在的四樓。真正的薛喜在無線電另一端不斷叫你，但樓梯已經沒有回頭路。","bad");
+    else{G.shaxyTrust++;G.wrongChoices+=0;setMsg("無線電那端的薛喜罵了一句你才聽得懂的話。眼前的『薛喜』笑容瞬間僵住，然後消失。",3);G.mode="room"}
+  }}
+}
+function nextPokerRound(){
+  const m=G.mini;if(!m)return;
+  const patterns=[
+    {face:"快跟",tell:"他看牌後立刻整理籌碼",truth:"strong"},
+    {face:"皺眉",tell:"嘴上一直說爛牌，手卻沒放鬆",truth:"strong"},
+    {face:"安靜",tell:"第一次沒有碎念",truth:"bluff"},
+    {face:"大聲",tell:"突然一直催你快點",truth:"bluff"},
+  ];
+  m.prompt=patterns[m.round%patterns.length]
+}
+
+// ---------- Overload boss ----------
+function startOverloadBoss(){
+  if(!(G.clues.has("roll")&&G.clues.has("window")&&G.miniWins>=2)){
+    setMsg("舞台深處的門沒有打開。你還缺足夠的校園規則與至少兩位 NPC 的協助。",2.5);return
+  }
+  G.mode="boss";G.boss={kind:"overload",phase:1,hp:30,player:5,timer:0,attack:0,side:"L",lane:2,laneTarget:2,chat:[],resolved:false};beep(90,.2,"sawtooth",.06)
+}
+function startPyramidBoss(){
+  G.mode="boss";G.boss={kind:"pyramid",phase:1,hp:18,player:4,timer:0,q:0,lane:1,bullets:[],anomaly:0};beep(70,.25,"sawtooth",.06)
+}
+
+function updateMini(dt){
+  const m=G.mini;
+  if(!m)return;
+  if(m.type==="photo"){
+    m.timer-=dt;
+    if(input.mouse){
+      const pts=[[420,330],[835,360],[1120,505]];
+      pts.forEach((p,i)=>{if(dist(input.mx,input.my,p[0],p[1])<60)m.found.add(i)});
+    }
+    if(m.found.size===3){addClue("photo32");G.mode="room";G.mini=null;G.miniWins++;return}
+    if(m.timer<=0){G.wrongChoices++;setMsg("你盯太久了。重新整理一下再看。",1.8);G.mode="room";G.mini=null}
+  }
+  if(m.type==="uv"){
+    m.timer-=dt;
+    if(input.mouse){
+      for(const s of m.spots)if(dist(input.mx,input.my,s.x,s.y)<s.r)s.hit=true;
+    }
+    if(m.spots.every(s=>s.hit)){addClue("uv");G.mode="room";G.mini=null;G.miniWins++;return}
+    if(m.timer<=0){G.wrongChoices++;G.mode="room";G.mini=null;setMsg("你漏掉了東西。紫外線不是照一下就算。",1.8)}
+  }
+  if(m.type==="terminal"){
+    m.timer-=dt;
+    for(let i=0;i<4;i++)if(input.pressed.has(`Digit${i+1}`)){m.slots.push(i);beep(300+i*70,.03);if(m.slots.length>4)m.slots.shift()}
+    if(m.slots.length===4){
+      const ok=m.slots.every((v,i)=>v===m.code[i]);
+      if(ok){addClue("post");G.mode="room";G.mini=null;G.miniWins++;return}
+      else{m.slots=[];G.wrongChoices++;beep(90,.08,"sawtooth")}
+    }
+    if(m.timer<=0){G.mode="room";G.mini=null}
+  }
+  if(m.type==="rhythm"){
+    const t=G.time-m.start;
+    const map={KeyA:0,KeyS:1,KeyD:2,KeyJ:3,KeyK:4,KeyL:5};
+    for(const [k,lane] of Object.entries(map)){
+      if(input.pressed.has(k)){
+        let best=null,bd=.16;
+        for(const n of m.notes){if(!n.hit&&!n.miss&&n.key===k){const d=Math.abs(n.t-t);if(d<bd){bd=d;best=n}}}
+        if(best){best.hit=true;m.score++;m.combo++;beep(520+lane*45,.025)}
+        else{m.miss++;m.combo=0;beep(110,.04,"square")}
+      }
+    }
+    for(const n of m.notes)if(!n.hit&&!n.miss&&t>n.t+.18){n.miss=true;m.miss++;m.combo=0}
+    if(t>m.notes[m.notes.length-1].t+1){
+      if(m.score>=26){G.flags.fingerWon=true;G.miniWins++;addClue("score");setMsg("中指通：可以。你有跟上逆拍。",2)}
+      else{G.wrongChoices++;setMsg("中指通：手指太僵，回去練。",1.7)}
+      G.mode="room";G.mini=null
+    }
+  }
+  if(m.type==="roll"){
+    if(input.held.has("KeyA"))m.quality-=18*dt;
+    if(input.held.has("KeyD"))m.quality+=18*dt;
+    if(input.held.has("Space")){m.progress+=22*dt;const dev=Math.abs(m.quality-55);m.progress-=dev*.02*dt}
+    else m.progress-=2*dt;
+    m.quality=clamp(m.quality,0,100);m.progress=clamp(m.progress,0,100);m.opponent+=11*dt;
+    if(m.progress>=100||m.opponent>=100){
+      if(m.progress>=100&&Math.abs(m.quality-55)<18){G.flags.toyzWon=true;G.miniWins++;setMsg("TOYZ：速度有，品質也有。去看照片牆。",2)}
+      else{G.wrongChoices++;setMsg("TOYZ：太鬆、太緊、太慢都不行。",1.8)}
+      G.mode="room";G.mini=null
+    }
+  }
+  if(m.type==="poker"){
+    if(input.pressed.has("Digit1")||input.pressed.has("Digit2")||input.pressed.has("Digit3")){
+      const choice=input.pressed.has("Digit1")?0:input.pressed.has("Digit2")?1:2;
+      const truth=m.prompt.truth;
+      let win=false;
+      if(choice===0)win=(truth==="bluff");
+      if(choice===1)win=(truth==="strong");
+      if(choice===2)win=(m.round%2===0);
+      if(win){m.playerChips+=2;m.godChips-=2;beep(620,.05)}
+      else{m.playerChips-=2;m.godChips+=2;G.wrongChoices++;beep(100,.07,"sawtooth")}
+      m.history.push({choice,truth});
+      m.round++;
+      if(m.playerChips<=0||m.godChips<=0||m.round>=4){
+        if(m.playerChips>m.godChips){G.flags.pokerWon=true;G.miniWins++;setMsg("統神：可以啦。點名簿你拿去。",2)}
+        else setMsg("統神：你們兩個讀人能力還要練。",1.8);
+        G.mode="room";G.mini=null;return
+      }
+      nextPokerRound()
     }
   }
 }
-function restartFinal(){
-  save.finalMistakes+=G.finalMistakes;persist();G.finalIndex=0;G.finalHP=3;G.finalTimer=22;G.finalMistakes=0;say("資訊被混在一起了。重新分類。",2.2)
+
+function updateBoss(dt){
+  const b=G.boss;if(!b)return;
+  if(b.kind==="overload")updateOverload(dt,b);else updatePyramid(dt,b)
 }
-function finishCase(){
-  const sec=Math.floor(performance.now()/1000-G.startedAt);
-  save.clears++;save.finalMistakes+=G.finalMistakes;
-  if(save.bestSeconds==null||sec<save.bestSeconds)save.bestSeconds=sec;
-  persist();G.running=false;
-  UI.endingTitle.textContent="案件暫時解體。";
-  UI.endingText.textContent="羅正男沒有消失。真正讓所有人判斷錯誤的，是不同步的時間、借出去的門禁卡，以及每個人只記得自己看到的那一小段。";
-  UI.endingStats.innerHTML=[
-    ["找到線索",`${G.evidence.size}/10`],
-    ["錯誤推理",String(save.wrongTheories)],
-    ["黑暗失手",String(save.blackoutDeaths)]
-  ].map(([a,b])=>`<div class="stat">${a}<b>${b}</b></div>`).join("");
-  UI.ending.classList.add("show");
+function updateOverload(dt,b){
+  b.timer+=dt;
+  if(b.phase===1){
+    if(b.attack<=0){b.attack=.9-Math.min(.35,(30-b.hp)*.012);b.side=Math.random()<.5?"L":"R"}
+    b.attack-=dt;
+    if(b.attack<.18&&!b.hitWindow)b.hitWindow=true;
+    if(b.hitWindow){
+      const key=b.side==="L"?"KeyA":"KeyD";
+      if(input.pressed.has(key)){b.hp-=1;b.hitWindow=false;b.attack=.4;beep(600,.03)}
+      else if(input.pressed.has(b.side==="L"?"KeyD":"KeyA")){b.player--;b.hitWindow=false;b.attack=.4;beep(90,.07,"sawtooth")}
+    }
+    if(b.attack<=0&&b.hitWindow){b.player--;b.hitWindow=false;beep(90,.07,"sawtooth")}
+    if(b.hp<=20){b.phase=2;b.attack=0;b.timer=0}
+  }else if(b.phase===2){
+    if(b.attack<=0){b.attack=.72;b.laneTarget=Math.floor(Math.random()*5);b.chat.push({lane:b.laneTarget,life:.7})}
+    b.attack-=dt;
+    if(input.pressed.has("ArrowLeft")||input.pressed.has("KeyA"))b.lane=clamp(b.lane-1,0,4);
+    if(input.pressed.has("ArrowRight")||input.pressed.has("KeyD"))b.lane=clamp(b.lane+1,0,4);
+    for(const c of b.chat)c.life-=dt;
+    if(b.chat.some(c=>c.life<.08&&c.life>0&&c.lane===b.lane)){b.player--;b.chat=b.chat.filter(c=>c.life>.08);beep(90,.06,"sawtooth")}
+    b.chat=b.chat.filter(c=>c.life>0);
+    if(b.timer>13){b.hp=10;b.phase=3;b.timer=0;b.attack=0}
+  }else{
+    if(b.attack<=0){b.attack=.48;b.side=Math.random()<.5?"L":"R";b.laneTarget=Math.floor(Math.random()*5)}
+    b.attack-=dt;
+    if(input.pressed.has("ArrowLeft")||input.pressed.has("KeyA"))b.lane=clamp(b.lane-1,0,4);
+    if(input.pressed.has("ArrowRight")||input.pressed.has("KeyD"))b.lane=clamp(b.lane+1,0,4);
+    const parry=b.side==="L"?"KeyJ":"KeyL";
+    if(b.attack<.14&&input.pressed.has(parry)){b.hp-=1;b.attack=.3;beep(680,.025)}
+    if(b.attack<=0){if(b.lane===b.laneTarget)b.player--;b.attack=.35}
+  }
+  if(b.player<=0){G.wrongChoices++;endGame("BAD END：過載","聊天室、音樂、畫面與叫聲同時壓上來。羅正男最後分不清哪一個提示是真的。","bad");return}
+  if(b.hp<=0){
+    if(G.clues.has("heart1")&&G.clues.has("heart2")&&G.clues.has("heart3")){
+      startDialogue(DIALOGUES.overloadReveal,()=>startOverloadChoice())
+    }else{
+      endGame("NORMAL END：超負荷","你擊敗了紅色禮堂裡的超負荷。學校暫時安靜，但地下機房仍有紅光。你們帶著『應該結束了吧』的錯覺離開。","normal")
+    }
+    G.boss=null
+  }
+}
+function startOverloadChoice(){
+  G.mode="choice";G.choiceIndex=0;G.dialogue={choiceTitle:"超負荷沒有繼續攻擊。你要怎麼做？",choices:["離開，事情已經解決","把三個心願碎片交給他"],onChoice:(i)=>{
+    if(i===0)endGame("NORMAL END：差一步","你選擇離開。超負荷沒有追上來，但他最後一句『不是我』一直留在羅正男腦中。","normal");
+    else{
+      G.overloadHeart=3;startDialogue(DIALOGUES.pyramidReveal,()=>{
+        G.pyramidKey=true;G.mode="room";G.room="basement";G.visited.add("basement");G.fastTravel.add("basement");setMsg("TRUE ROUTE：地下機房出現新的門。",3)
+      })
+    }
+  }}
+}
+function updatePyramid(dt,b){
+  b.timer+=dt;
+  if(b.phase===1){
+    const qs=[
+      ["二年三班真正異常的是？",["黑板","第 32 張桌子","窗簾"],1],
+      ["哪個地方的數量對不上外牆？",["音樂教室","二樓窗戶","圖書館書架"],1],
+      ["超負荷真正想要的是？",["繼續留校","完成放學前沒完成的三件事","打敗所有學生"],1],
+    ];
+    const q=qs[b.q];
+    if(!q){b.phase=2;b.timer=0;return}
+    for(let i=0;i<3;i++)if(input.pressed.has(`Digit${i+1}`)){
+      if(i===q[2]){b.q++;beep(620,.04)}
+      else{b.player--;G.wrongChoices++;beep(90,.08,"sawtooth")}
+    }
+    if(b.player<=0){
+      endGame("BAD END：錯誤的學校","你把錯誤的記憶當成真相。金字塔重新排列所有房間，紅色學校從此只剩下錯誤版本。","bad");
+      return;
+    }
+  }else{
+    if(input.pressed.has("ArrowLeft")||input.pressed.has("KeyA"))b.lane=clamp(b.lane-1,0,2);
+    if(input.pressed.has("ArrowRight")||input.pressed.has("KeyD"))b.lane=clamp(b.lane+1,0,2);
+    if(Math.random()<dt*2.6)b.bullets.push({lane:Math.floor(Math.random()*3),y:-30,spd:230+rng(G.time)*120});
+    for(const x of b.bullets)x.y+=x.spd*dt;
+    for(const x of b.bullets)if(x.y>660&&x.y<720&&x.lane===b.lane&&!x.hit){x.hit=true;b.player--;beep(80,.07,"sawtooth")}
+    b.bullets=b.bullets.filter(x=>x.y<800);
+    if(input.pressed.has("Space")){b.hp-=1;beep(540,.025)}
+    if(b.player<=0){endGame("BAD END：BAN","畫面只剩 CONNECTION LOST。你以為重新整理能解決一切，但紅色學校從此再也沒有入口。","bad");return}
+    if(b.hp<=0){
+      endGame("TRUE END：金字塔之下","紅色電纜終於熄滅。超負荷第一次走出禮堂，學校的第八扇窗在天亮前消失。羅正男問：『所以真的結束了？』薛喜沒有回答。","true")
+    }
+  }
+}
+
+function updateChoice(){
+  const d=G.dialogue;
+  if(input.pressed.has("ArrowUp"))G.choiceIndex=clamp(G.choiceIndex-1,0,d.choices.length-1);
+  if(input.pressed.has("ArrowDown"))G.choiceIndex=clamp(G.choiceIndex+1,0,d.choices.length-1);
+  if(input.pressed.has("Enter")||input.pressed.has("Space")){
+    const cb=d.onChoice,idx=G.choiceIndex;G.dialogue=null;cb(idx)
+  }
 }
 
 function update(dt){
   if(!G.running||G.paused)return;
-  G.time+=dt;G.messageT=Math.max(0,G.messageT-dt);G.shake=Math.max(0,G.shake-dt*26);G.flash=Math.max(0,G.flash-dt);G.glitch=Math.max(0,G.glitch-dt*.08);
-  if(G.mode==="explore")updateExplore(dt);
-  else if(G.mode==="final")updateFinal(dt);
-  input.pressed.clear();input.mousePressed=false;
+  G.time+=dt;G.messageT=Math.max(0,G.messageT-dt);G.roomTransition=Math.max(0,G.roomTransition-dt);
+  if(G.mode==="room")updateRoom(dt);
+  else if(G.mode==="mini")updateMini(dt);
+  else if(G.mode==="boss")updateBoss(dt);
+  else if(G.mode==="choice")updateChoice();
+  input.pressed.clear();input.mouse=false;
 }
 
-function panel(x,y,w,h,a=.9){
-  ctx.fillStyle=`rgba(10,8,13,${a})`;ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle="#45394e";ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,w-2,h-2);
+// ---------- Drawing ----------
+function drawRoom(){
+  const r=ROOMS[G.room];ctx.fillStyle=r.tone;ctx.fillRect(0,0,W,H);
+  drawRoomArchitecture(G.room);
+  drawProps(G.room);
+  drawCharacter(P.x,P.y,"rogerSmall");
+  drawCharacter(SHAXY.x,SHAXY.y,"shaxySmall");
+  drawHUD()
 }
-function txt(s,x,y,size=18,color=C.white,align="left",weight=700){
-  ctx.font=`${weight} ${size}px "Microsoft JhengHei",sans-serif`;ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(s,x,y);
-}
-function wrap(s,x,y,maxW,lineH,size=18,color=C.white,align="left",weight=600){
-  ctx.font=`${weight} ${size}px "Microsoft JhengHei",sans-serif`;ctx.textAlign=align;ctx.fillStyle=color;
-  let line="",yy=y;
-  for(const ch of s){
-    const t=line+ch;
-    if(ctx.measureText(t).width>maxW){ctx.fillText(line,x,yy);line=ch;yy+=lineH}else line=t;
+function drawRoomArchitecture(room){
+  // floor
+  for(let y=120;y<H;y+=42){ctx.fillStyle=((y/42)%2)?K.floor:K.floor2;ctx.fillRect(0,y,W,42)}
+  // walls
+  ctx.fillStyle="#302b35";ctx.fillRect(0,0,W,140);ctx.fillStyle="#47404b";ctx.fillRect(0,132,W,8);
+  // windows / lamps / doors
+  for(let x=120;x<1500;x+=280){
+    ctx.fillStyle="#12141a";ctx.fillRect(x,38,160,72);ctx.strokeStyle="#605666";ctx.strokeRect(x,38,160,72);
+    ctx.fillStyle=(room==="auditorium"||room==="oldhall")?"#57232e":"#334454";ctx.fillRect(x+8,46,144,56)
   }
-  if(line)ctx.fillText(line,x,yy);
-}
-function drawWorld(){
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.translate(-G.camX,-G.camY);
-
-  ctx.fillStyle="#111015";ctx.fillRect(60,80,2740,1555);
-
-  for(const r of rooms){
-    ctx.fillStyle=r.tone;ctx.fillRect(r.x,r.y,r.w,r.h);
-    ctx.strokeStyle="#4a4550";ctx.lineWidth=3;ctx.strokeRect(r.x,r.y,r.w,r.h);
-    txt(r.name,r.x+18,r.y+32,14,"#716a76");
-    // tile details
-    ctx.globalAlpha=.16;
-    for(let yy=r.y+52;yy<r.y+r.h-15;yy+=48){
-      ctx.fillStyle=((yy/48)%2)?"#fff":"#000";ctx.fillRect(r.x+8,yy,r.w-16,1);
-    }
-    ctx.globalAlpha=1;
-  }
-
-  // corridor
-  ctx.fillStyle="#15141a";ctx.fillRect(95,788,2670,45);
-  for(let x=120;x<2740;x+=100){ctx.fillStyle=x%200===0?"#232027":"#1c1a20";ctx.fillRect(x,797,58,7)}
-
-  for(const w of walls){
-    ctx.fillStyle=C.wall2;ctx.fillRect(w.x,w.y,w.w,w.h);
-    ctx.fillStyle=C.wall;ctx.fillRect(w.x,w.y,Math.min(w.w,7),w.h);
-  }
-
-  drawFurniture();
-  drawHotspots();
-  for(const n of Object.values(NPCS))drawNPC(n);
-  if(!G.lightsOn&&G.watcher.active)drawWatcher();
-  drawPlayer();
-  drawLighting();
-
-  ctx.restore();
-  drawTopHUD();
-}
-function drawFurniture(){
-  // lounge couch
-  ctx.fillStyle="#4a3d49";ctx.fillRect(240,1060,245,95);ctx.fillStyle="#665063";ctx.fillRect(252,1072,221,27);
-  // studio desk / monitors
-  ctx.fillStyle="#4b3b45";ctx.fillRect(760,1010,280,90);
-  ctx.fillStyle="#10151a";ctx.fillRect(792,930,94,72);ctx.fillRect(902,930,94,72);
-  ctx.strokeStyle=C.purple;ctx.strokeRect(792,930,94,72);ctx.strokeStyle=C.cyan;ctx.strokeRect(902,930,94,72);
-  // practice PCs
-  ctx.fillStyle="#383c44";ctx.fillRect(1335,1050,230,80);
-  for(let i=0;i<3;i++){ctx.fillStyle="#0d1117";ctx.fillRect(1352+i*68,985,54,58);ctx.strokeStyle="#516379";ctx.strokeRect(1352+i*68,985,54,58)}
-  // office
-  ctx.fillStyle="#56434a";ctx.fillRect(1840,1010,225,95);ctx.fillStyle="#111318";ctx.fillRect(1880,935,120,70);
-  // security console
-  ctx.fillStyle="#394148";ctx.fillRect(2340,1020,260,100);
-  for(let i=0;i<4;i++){ctx.fillStyle="#0b1014";ctx.fillRect(2360+(i%2)*110,930+Math.floor(i/2)*66,95,52);ctx.strokeStyle="#445b68";ctx.strokeRect(2360+(i%2)*110,930+Math.floor(i/2)*66,95,52)}
-  // mahjong table + 3 chairs
-  ctx.fillStyle="#315243";ctx.fillRect(255,330,250,140);ctx.strokeStyle="#72947f";ctx.strokeRect(265,340,230,120);
-  ctx.fillStyle="#55484f";ctx.fillRect(205,365,38,70);ctx.fillRect(515,365,38,70);ctx.fillRect(360,475,70,38);
-  // kitchen
-  ctx.fillStyle="#565047";ctx.fillRect(790,350,250,110);ctx.fillStyle="#24272c";ctx.fillRect(815,375,60,55);ctx.fillRect(900,375,60,55);
-  // storage boxes
-  ctx.fillStyle="#53483d";for(let i=0;i<4;i++)ctx.fillRect(1325+(i%2)*120,330+Math.floor(i/2)*125,105,105);
-  // old studio chair hint
-  ctx.fillStyle="#51444f";ctx.fillRect(2450,470,58,70);ctx.fillRect(2435,535,88,16);
-}
-function drawHotspots(){
-  for(const h of HOTSPOTS){
-    const near=dist(P.x,P.y,h.x,h.y)<h.r;
-    if(near){
-      ctx.strokeStyle=C.gold;ctx.lineWidth=2;ctx.beginPath();ctx.arc(h.x,h.y,28+Math.sin(G.time*5)*3,0,Math.PI*2);ctx.stroke();
-    }
-  }
-}
-function drawNPC(n){
-  ctx.save();ctx.translate(n.x,n.y);
-  ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(-18,20,36,8);
-  ctx.fillStyle=n.color;ctx.fillRect(-15,-24,30,40);
-  ctx.fillStyle="#d6a98d";ctx.fillRect(-11,-43,22,20);
-  ctx.fillStyle="#16131a";ctx.fillRect(-12,-47,24,8);
-  ctx.fillStyle="#ddd";ctx.fillRect(3,-37,4,3);
-  ctx.restore();
-}
-function drawPlayer(){
-  ctx.save();ctx.translate(P.x,P.y);
-  ctx.fillStyle="rgba(0,0,0,.32)";ctx.fillRect(-20,20,40,8);
-  ctx.fillStyle="#3e6c7c";ctx.fillRect(-15,-22,30,40);
-  ctx.fillStyle="#d6aa90";ctx.fillRect(-11,-42,22,20);
-  ctx.fillStyle="#17141a";ctx.fillRect(-12,-47,24,9);
-  ctx.fillStyle=C.cyan;ctx.fillRect(P.faceX>=0?4:-8,-36,4,3);
-  ctx.restore();
-}
-function drawWatcher(){
-  const w=G.watcher;
-  ctx.save();ctx.translate(w.x,w.y);ctx.globalAlpha=.64;
-  ctx.fillStyle="#09090c";ctx.beginPath();ctx.ellipse(0,0,24,50,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=C.red;ctx.fillRect(-7,-18,4,4);ctx.fillRect(5,-18,4,4);
-  ctx.restore();
-}
-function drawLighting(){
-  if(G.lightsOn)return;
-  ctx.save();
-  ctx.fillStyle="rgba(0,0,0,.88)";ctx.fillRect(G.camX,G.camY,W,H);
-  const px=P.x,py=P.y;
-  ctx.globalCompositeOperation="destination-out";
-  const radius=G.flashlight?420:95;
-  const grad=ctx.createRadialGradient(px,py,20,px,py,radius);
-  grad.addColorStop(0,"rgba(0,0,0,1)");grad.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.fillStyle=grad;ctx.beginPath();ctx.arc(px,py,radius,0,Math.PI*2);ctx.fill();
-  ctx.restore();
-}
-function drawTopHUD(){
-  panel(22,20,430,76,.78);
-  txt("CASE 01　宿舍失蹤事件",40,49,16,C.white);
-  txt(`線索 ${G.evidence.size}/10　　Q 案件筆記`,40,78,13,C.muted);
-  if(!G.lightsOn)txt(`F 手電筒：${G.flashlight?"開":"關"}`,300,78,13,G.flashlight?C.cyan:C.red);
-  if(G.prompt){panel(W/2-180,H-78,360,44,.84);txt(G.prompt,W/2,H-49,14,C.gold,"center")}
-  if(G.messageT>0){panel(390,H-148,820,58,.92);wrap(G.message,800,H-113,760,22,15,C.white,"center",700)}
-}
-
-function drawPortrait(kind,x,y,scale=1,flip=false,active=true){
-  ctx.save();ctx.translate(x,y);if(flip)ctx.scale(-1,1);ctx.scale(scale,scale);ctx.globalAlpha=active?1:.42;
-  let coat="#496d7c",accent=C.cyan,hair="#18141a",skin="#d5a78c";
-  if(kind==="crab"){coat="#8b5a3e";accent=C.orange}
-  if(kind==="xue"){coat="#496e54";accent=C.green}
-  if(kind==="wei"){coat="#526b8c";accent=C.blue}
-  if(kind==="roger"){coat="#a64542";accent=C.red}
-  if(kind==="player"){coat="#496d7c";accent=C.cyan}
-  // torso
-  ctx.fillStyle=coat;ctx.fillRect(-115,-40,230,270);
-  ctx.fillStyle="#ded7ce";ctx.fillRect(-40,-30,80,245);
-  ctx.fillStyle=accent;ctx.fillRect(-115,190,230,18);
-  // neck/head
-  ctx.fillStyle=skin;ctx.fillRect(-38,-105,76,78);ctx.fillRect(-92,-250,184,155);
-  // ears
-  ctx.fillRect(-108,-205,25,54);ctx.fillRect(83,-205,25,54);
-  // hair silhouettes
-  ctx.fillStyle=hair;
-  if(kind==="roger"){
-    ctx.fillRect(-98,-270,196,48);ctx.fillRect(-92,-245,44,58);ctx.fillRect(52,-252,45,45);ctx.fillRect(-45,-285,110,30);
-  }else if(kind==="crab"){
-    ctx.fillRect(-100,-270,200,46);ctx.fillRect(-98,-245,36,55);ctx.fillRect(62,-245,36,55);
-  }else{
-    ctx.fillRect(-98,-272,196,52);ctx.fillRect(-96,-244,34,48);ctx.fillRect(64,-246,34,46);
-  }
-  // face
-  ctx.fillStyle="#60453e";ctx.fillRect(-45,-190,18,8);ctx.fillRect(30,-190,18,8);
-  ctx.fillStyle=active?accent:"#5f5962";ctx.fillRect(34,-188,8,5);
-  ctx.fillStyle="#7b5048";ctx.fillRect(-18,-135,38,7);
-  // expression mark
-  if(kind==="crab"){ctx.fillStyle="#3b2a26";ctx.fillRect(-52,-208,38,6);ctx.fillRect(16,-208,38,6)}
-  if(kind==="xue"){ctx.fillStyle="#3b2a26";ctx.fillRect(-52,-210,36,5)}
-  ctx.restore();
-}
-
-function drawDialogue(){
-  drawWorld();
-  ctx.fillStyle="rgba(7,6,10,.48)";ctx.fillRect(0,0,W,H);
-  const line=G.dialogue.lines[G.dialogueIndex];
-  const leftActive=line.side==="left";
-  const other=(G.dialogue.lines.find(v=>v.portrait!=="player")||{portrait:"crab"}).portrait;
-  let leftKind="player", rightKind=other;
-  if(line.speaker==="你"){
-    if(line.side==="right"){leftKind=other;rightKind="player"}
-    else{leftKind="player";rightKind=other}
-  }else{
-    if(line.side==="left"){leftKind=line.portrait;rightKind="player"}
-    else{leftKind="player";rightKind=line.portrait}
-  }
-  drawPortrait(leftKind,250,595,1.15,false,leftActive);
-  drawPortrait(rightKind,1350,595,1.15,true,!leftActive);
-  panel(80,620,1440,235,.97);
-  txt(line.speaker,125,668,24,line.side==="left"?C.cyan:C.gold);
-  wrap(line.text,125,720,1340,38,25,C.white,"left",700);
-  txt("SPACE / ENTER",1460,825,12,C.muted,"right");
-}
-
-function drawNotebook(){
-  drawWorld();
-  ctx.fillStyle="rgba(5,4,8,.82)";ctx.fillRect(0,0,W,H);
-  panel(110,70,1380,760,.97);
-  txt("案件筆記",160,125,30,C.white);
-  txt("Q / ESC 關閉",1430,122,13,C.muted,"right");
-  txt("目前不是任務清單。這裡只記錄你已經找到的資料。",160,160,13,C.muted);
-
-  let y=210;
-  const ids=[...G.evidence];
-  if(ids.length===0){txt("尚無可用線索。",160,y,18,C.muted);return}
-  for(const id of ids){
-    const e=EVIDENCE[id];
-    ctx.fillStyle="#17131c";ctx.fillRect(150,y-28,1300,70);
-    ctx.strokeStyle="#3f3548";ctx.strokeRect(150,y-28,1300,70);
-    txt(e.title,175,y,18,C.gold);
-    wrap(e.desc,430,y,980,22,14,"#b7aebd");
-    y+=86;if(y>760)break;
-  }
-}
-
-function drawDevice(){
-  drawWorld();ctx.fillStyle="rgba(4,4,6,.74)";ctx.fillRect(0,0,W,H);
-  const d=G.device;
-  if(d.type==="keypad"){
-    panel(560,250,480,390,.98);txt("OFFICE ACCESS",800,310,18,C.red,"center");
-    txt(d.code.padEnd(4,"_"),800,405,54,C.white,"center");
-    txt("提示：用真正的時間，不要用牆上的。",800,490,15,C.muted,"center");
-    txt("數字鍵輸入 / ENTER 確認 / ESC 返回",800,585,13,C.muted,"center");
-    return;
-  }
-  if(d.type==="studio"){
-    panel(140,80,1320,740,.98);txt("直播間工作站",190,130,25,C.purple);
-    if(d.screen==="home"){
-      txt("1　OBS / 錄影紀錄",210,220,22,C.white);
-      txt("2　聊天室搜尋",210,270,22,C.white);
-      txt("ESC　離開",210,320,18,C.muted);
-    }else if(d.screen==="obs"){
-      txt("OBS SESSION LOG",190,190,16,C.cyan);
-      const logs=["02:02:11　開始錄影","02:11:40　音訊裝置重新連線","02:18:03　錄影結束","02:18:05　程序仍在背景執行"];
-      logs.forEach((s,i)=>txt(s,220,250+i*58,19,i===2?C.gold:"#c7c0cc"));
-      txt("BACKSPACE 返回",220,560,13,C.muted);
-    }else if(d.screen==="chatSearch"){
-      txt("CHAT ARCHIVE SEARCH",190,190,16,C.cyan);
-      panel(200,230,1150,62,.8);txt(G.searchInput||"輸入關鍵字，例如時間、動作或人物…",225,270,20,G.searchInput?C.white:"#706877");
-      txt("ENTER 搜尋　BACKSPACE 刪除　ESC 離開",220,345,13,C.muted);
-    }else if(d.screen==="searchResult"){
-      txt("搜尋結果",190,190,18,C.cyan);
-      const lines=[
-        "02:16:48　[免費仔] 他是不是還在碎念",
-        "02:17:12　[老傑寶] 後面剛有人走過去？",
-        "02:17:19　[剪輯師] 不是羅正男吧 那影子比較高",
-        "02:18:03　[系統] 直播中斷"
-      ];
-      lines.forEach((s,i)=>txt(s,220,245+i*58,18,i===1?C.gold:"#c7c0cc"));
-    }else if(d.screen==="manyResults"){
-      txt("搜尋結果 1264 筆",190,190,18,C.red);txt("名稱幾乎沒有辨識力。你需要搜尋時間或具體事件。",220,250,19,C.muted);
-    }else{
-      txt("沒有精確結果。",190,190,18,C.red);txt("聊天室不是資料庫魔法；換個更具體的關鍵字。",220,250,19,C.muted);
-    }
-    return;
-  }
-  if(d.type==="office"){
-    panel(180,90,1240,720,.98);txt("辦公室內網",230,140,25,C.orange);
-    txt("1　門禁進出紀錄",250,240,22,C.white);
-    txt("2　舊錄音室備份音檔",250,300,22,C.white);
-    txt("ESC　離開",250,360,16,C.muted);
-    txt("注意：第二項會喚醒北側老舊設備。",250,690,14,C.red);
-    return;
-  }
-  if(d.type==="security"){
-    drawSecurity();
-  }
-}
-function drawSecurity(){
-  panel(80,55,1440,790,.98);
-  txt("監視器主控",120,105,24,C.cyan);
-  txt(`時間 02:${String(G.securityMinute).padStart(2,"0")}　 ← → 調整　 1~4 切鏡頭　 SPACE 標記`,120,145,14,C.muted);
-  const feeds=[
-    {name:"C1 直播間走廊",offset:0},
-    {name:"C2 後門",offset:0},
-    {name:"C3 北側走廊",offset:-3},
-    {name:"C4 廚房",offset:0},
-  ];
-  for(let i=0;i<4;i++){
-    const x=120+(i%2)*690,y=185+Math.floor(i/2)*305,w=640,h=260;
-    ctx.fillStyle=i===G.securityFeed?"#151c20":"#0c0f12";ctx.fillRect(x,y,w,h);
-    ctx.strokeStyle=i===G.securityFeed?C.cyan:"#344049";ctx.lineWidth=i===G.securityFeed?3:1;ctx.strokeRect(x,y,w,h);
-    txt(feeds[i].name,x+16,y+26,14,i===G.securityFeed?C.cyan:C.muted);
-    const shown=G.securityMinute+feeds[i].offset;
-    txt(`02:${String(shown).padStart(2,"0")}`,x+w-18,y+26,13,C.red,"right");
-    drawSecurityEvent(i,G.securityMinute,x,y,w,h);
-    const key=`${i}:${G.securityMinute}`;
-    if(G.securityMarked.includes(key)){txt("MARKED",x+w-18,y+h-16,12,C.gold,"right")}
-  }
-}
-function drawSecurityEvent(feed,min,x,y,w,h){
-  ctx.globalAlpha=.18;
-  for(let i=0;i<60;i++){ctx.fillStyle=i%2?"#fff":"#000";ctx.fillRect(x+8+(i*53)%620,y+40+(i*37)%190,2,2)}
-  ctx.globalAlpha=1;
-  if(feed===0 && min===17){
-    ctx.fillStyle="#6f666e";ctx.fillRect(x+410,y+110,22,90);ctx.fillRect(x+390,y+190,62,12);
-    txt("一道人影穿過背景",x+18,y+h-24,14,C.gold);
-  }
-  if(feed===1 && min===21){
-    ctx.fillStyle="#5b6f82";ctx.fillRect(x+300,y+90,26,110);ctx.fillStyle="#c69d82";ctx.fillRect(x+304,y+68,18,22);
-    txt("有人用門禁卡離開，體型不像羅正男",x+18,y+h-24,14,C.gold);
-  }
-  if(feed===2 && min===18){
-    ctx.strokeStyle=C.red;ctx.strokeRect(x+40,y+62,210,62);txt("畫面時間與主控差 3 分鐘",x+55,y+100,15,C.red);
-  }
-  if(feed===3 && min===20){
-    ctx.fillStyle="#6a7484";ctx.fillRect(x+380,y+96,24,102);txt("廚房短暫無人",x+18,y+h-24,14,C.muted);
-  }
-}
-
-function drawTheory(){
-  drawWorld();ctx.fillStyle="rgba(5,4,8,.82)";ctx.fillRect(0,0,W,H);
-  panel(180,110,1240,680,.98);
-  const q=THEORY_Q[G.theory.step];
-  txt("案件白板",240,170,28,C.white);
-  wrap(q.q,240,245,1100,38,24,C.gold);
-  q.opts.forEach((o,i)=>{
-    const y=365+i*92;ctx.fillStyle="#17131d";ctx.fillRect(245,y-38,1080,66);ctx.strokeStyle="#43384c";ctx.strokeRect(245,y-38,1080,66);
-    txt(`${i+1}. ${o}`,275,y,20,C.white);
-  });
-  txt("按 1 / 2 / 3 提交。錯誤推理不會立刻 Game Over。",240,720,14,C.muted);
-}
-
-function drawFinal(){
-  ctx.fillStyle="#09070c";ctx.fillRect(0,0,W,H);
-  // wall of messages
+  const doors=roomDoors();for(const d of doors){ctx.fillStyle="#2a2026";ctx.fillRect(d[1]-38,d[2]-70,76,140);ctx.strokeStyle="#72505a";ctx.strokeRect(d[1]-38,d[2]-70,76,140)}
+  // room label
+  txt(ROOMS[room].name,50,80,28,K.white);txt(ROOMS[room].sub,50,110,13,K.muted)
+  // decorative clutter
+  const seed=Object.keys(ROOMS).indexOf(room)+1;
   for(let i=0;i<18;i++){
-    const y=30+i*48,off=Math.sin(G.time*.6+i)*18;
-    ctx.fillStyle=i%2?"#121018":"#0e0c12";ctx.fillRect(40+off,y,1520,34);
-    txt(i%3===0?"羅正男":"聊天室",70+off,y+23,11,i%4===0?C.red:"#625b68");
-    txt(i%2?"真假 確實 有料":"我記得不是這樣",170+off,y+23,11,"#625b68");
+    const x=120+rng(seed*100+i)*1360,y=180+rng(seed*300+i)*560;
+    ctx.fillStyle=i%3===0?"#4b3d43":i%3===1?"#2c353a":"#5b5048";
+    ctx.fillRect(x,y,10+rng(i)*28,7+rng(i+4)*18)
   }
-  ctx.fillStyle="rgba(7,6,10,.72)";ctx.fillRect(0,0,W,H);
-  panel(150,120,1300,650,.96);
-  txt("五十大謊言 / 資訊分類",210,175,28,C.red);
-  txt(`生命 ${"■".repeat(G.finalHP)}${"□".repeat(3-G.finalHP)}　剩餘 ${G.finalTimer.toFixed(1)} 秒`,1390,175,16,C.gold,"right");
-  const item=FINAL_ITEMS[G.finalIndex];
-  txt(`${G.finalIndex+1} / ${FINAL_ITEMS.length}`,210,225,13,C.muted);
-  wrap(item.s,210,305,1180,42,30,C.white);
-  CAT_LABEL.forEach((c,i)=>{
-    const x=220+(i%2)*600,y=470+Math.floor(i/2)*110;
-    ctx.fillStyle="#17131d";ctx.fillRect(x,y,550,76);ctx.strokeStyle="#44384d";ctx.strokeRect(x,y,550,76);
-    txt(`${i+1}　${c}`,x+28,y+48,21,i===0?C.cyan:i===1?C.gold:i===2?C.red:C.purple);
-  });
-  txt("答案只來自你這一章親自取得的資料。",210,715,14,C.muted);
+  if(room==="class203"){
+    for(let row=0;row<3;row++)for(let col=0;col<6;col++){ctx.fillStyle="#60494d";ctx.fillRect(180+col*190,280+row*150,105,55);ctx.fillStyle="#312a2f";ctx.fillRect(188+col*190,338+row*150,12,40);ctx.fillRect(268+col*190,338+row*150,12,40)}
+  }
+  if(room==="library"){
+    for(let i=0;i<5;i++){ctx.fillStyle="#44363a";ctx.fillRect(140+i*280,190,210,430);for(let j=0;j<7;j++){ctx.fillStyle=j%2?"#755c4e":"#4f6570";ctx.fillRect(155+i*280,210+j*55,180,35)}}
+  }
+  if(room==="computer"){
+    for(let i=0;i<4;i++){ctx.fillStyle="#4c4149";ctx.fillRect(180+i*340,360,240,90);ctx.fillStyle="#101319";ctx.fillRect(220+i*340,260,160,90);ctx.strokeStyle="#4d7082";ctx.strokeRect(220+i*340,260,160,90)}
+  }
+  if(room==="music"){ctx.fillStyle="#4a393d";ctx.fillRect(190,300,360,180);ctx.fillStyle="#101014";ctx.fillRect(210,325,320,40)}
+  if(room==="gym"){ctx.fillStyle="#493d42";ctx.fillRect(170,250,1100,260);for(let i=0;i<6;i++){ctx.fillStyle=i%2?"#594b50":"#433940";ctx.fillRect(190,270+i*36,1060,26)}}
+  if(room==="auditorium"){ctx.fillStyle="#6c2431";ctx.fillRect(250,150,1050,260);ctx.fillStyle="#24151a";ctx.fillRect(300,190,950,170)}
+  if(room==="basement"){for(let i=0;i<8;i++){ctx.strokeStyle=i%2?K.red:"#4c4048";ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(0,220+i*70);ctx.bezierCurveTo(500,120+i*90,900,760-i*50,1600,300+i*45);ctx.stroke()}}
 }
-
+function drawProps(room){
+  for(const p of roomProps()){
+    const near=dist(P.x,P.y,p[1],p[2])<80;drawProp(p,near)
+  }
+}
+function drawProp(p,near){
+  const [id,x,y]=p;
+  ctx.save();ctx.translate(x,y);
+  if(near){ctx.strokeStyle=K.gold;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,38+Math.sin(G.time*5)*4,0,Math.PI*2);ctx.stroke()}
+  if(id.startsWith("npc")){drawNpcSprite(id);ctx.restore();return}
+  if(id==="shaxy"){drawCharacter(0,0,"fakeSmall");ctx.restore();return}
+  ctx.fillStyle=id==="blood"?K.red:id==="shoe"?K.white:id==="clock"?K.gold:"#67525b";
+  if(["photo","notice","poster","score","roll","wish","tape"].includes(id)){ctx.fillRect(-42,-30,84,60);ctx.strokeStyle="#baa9a5";ctx.strokeRect(-42,-30,84,60)}
+  else if(["pc1","pc2","pc3","server"].includes(id)){ctx.fillStyle="#11151a";ctx.fillRect(-55,-40,110,80);ctx.strokeStyle=K.cyan;ctx.strokeRect(-55,-40,110,80)}
+  else if(["deskA","deskB","table","desk","bed","piano"].includes(id)){ctx.fillRect(-70,-35,140,70);ctx.fillStyle="#372f34";ctx.fillRect(-60,35,12,35);ctx.fillRect(48,35,12,35)}
+  else if(["cabinet","safe","locker","booth"].includes(id)){ctx.fillRect(-60,-65,120,130);ctx.strokeStyle="#8b7379";ctx.strokeRect(-60,-65,120,130)}
+  else{ctx.beginPath();ctx.arc(0,0,36,0,Math.PI*2);ctx.fill()}
+  ctx.restore()
+}
+function drawNpcSprite(id){
+  const kind=id==="npcFinger"?"finger":id==="npcToyz"?"toyz":"god";
+  drawCharacter(0,0,kind+"Small")
+}
+function drawCharacter(x,y,kind){
+  ctx.save();ctx.translate(x,y);let coat="#a34243",accent=K.red;
+  if(kind.startsWith("shaxy")){coat="#44694f";accent=K.green}
+  if(kind.startsWith("fake")){coat="#4d4a51";accent=K.red}
+  if(kind.startsWith("finger")){coat="#654c7f";accent=K.purple}
+  if(kind.startsWith("toyz")){coat="#6c5d3d";accent=K.gold}
+  if(kind.startsWith("god")){coat="#435c77";accent=K.blue}
+  ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(-20,25,40,7);
+  ctx.fillStyle=coat;ctx.fillRect(-16,-24,32,44);ctx.fillStyle=K.skin;ctx.fillRect(-11,-44,22,20);ctx.fillStyle=K.black;ctx.fillRect(-13,-50,26,10);
+  ctx.fillStyle=accent;ctx.fillRect(kind.startsWith("fake")?-7:4,-38,5,4);ctx.restore()
+}
+function drawHUD(){
+  panel(26,742,420,122,.82);txt("羅正男 ＋ 薛喜",48,776,17,K.white);txt(`線索 ${G.clues.size}/12　NPC ${G.miniWins}/3`,48,808,13,K.muted);
+  txt("M 地圖　Q 筆記",48,838,13,K.muted);
+  if(G.prompt){panel(520,790,560,52,.88);txt(G.prompt,800,824,15,K.gold,"center")}
+  if(G.messageT>0){panel(470,680,660,70,.92);wrap(G.message,800,722,600,23,15,K.white,"center")}
+}
+function drawPortrait(kind,x,y,flip=false,active=true){
+  ctx.save();ctx.translate(x,y);if(flip)ctx.scale(-1,1);ctx.globalAlpha=active?1:.42;
+  let coat="#a34243",accent=K.red;
+  if(kind==="shaxy"){coat="#466e52";accent=K.green}
+  if(kind==="fake"){coat="#56505c";accent=K.red}
+  if(kind==="finger"){coat="#6f5587";accent=K.purple}
+  if(kind==="toyz"){coat="#7c643d";accent=K.gold}
+  if(kind==="god"){coat="#466486";accent=K.blue}
+  if(kind==="overload"){coat="#814757";accent="#ff7c8a"}
+  ctx.fillStyle=coat;ctx.fillRect(-125,-30,250,300);ctx.fillStyle="#e0d8d0";ctx.fillRect(-42,-20,84,255);
+  ctx.fillStyle=K.skin;ctx.fillRect(-42,-108,84,82);ctx.fillRect(-100,-265,200,165);
+  ctx.fillStyle=K.black;ctx.fillRect(-105,-285,210,56);ctx.fillRect(-100,-250,40,60);ctx.fillRect(60,-250,40,60);
+  ctx.fillStyle="#5b403b";ctx.fillRect(-48,-190,20,7);ctx.fillRect(30,-190,20,7);
+  ctx.fillStyle=accent;ctx.fillRect(34,-188,9,5);ctx.fillStyle="#7b5048";ctx.fillRect(-20,-132,40,8);
+  if(kind==="overload"){ctx.fillStyle="#b75b68";ctx.fillRect(-80,-82,160,34);ctx.fillStyle="#23151a";ctx.fillRect(-28,-152,56,12)}
+  ctx.restore()
+}
+function drawDialogue(){
+  drawRoom();ctx.fillStyle="rgba(5,4,8,.54)";ctx.fillRect(0,0,W,H);
+  const line=G.dialogue.lines[G.dialogueIndex];
+  const other=(G.dialogue.lines.find(v=>v.p!=="roger")||{p:"shaxy"}).p;
+  let lk="roger",rk=other;if(line.side==="left"){lk=line.p;rk=line.p==="roger"?"shaxy":"roger"}else{rk=line.p;lk=line.p==="roger"?"shaxy":"roger"}
+  drawPortrait(lk,280,610,false,line.side==="left");drawPortrait(rk,1320,610,true,line.side==="right");
+  panel(70,620,1460,230,.97);txt(line.who,120,670,24,line.side==="left"?K.cyan:K.gold);wrap(line.t,120,725,1340,38,25,K.white);txt("SPACE / ENTER",1470,824,12,K.muted,"right")
+}
+function drawMap(){
+  ctx.fillStyle="#09080d";ctx.fillRect(0,0,W,H);panel(90,65,1420,770,.97);txt("紅色學校平面圖",140,115,30,K.white);txt("已探索的安全區可快速移動。事件中、Boss 前與未知房間不能傳送。",140,150,13,K.muted);
+  const layout={
+    gate:[190,650],courtyard:[430,650],hall1:[690,650],class203:[600,450],infirmary:[800,450],computer:[1000,450],
+    hall2:[1230,650],music:[1100,250],library:[1280,250],staff:[1460,250],gym:[420,250],auditorium:[650,250],oldhall:[1330,650],basement:[1430,650]
+  };
+  const selectable=mapSelectable();
+  if(mapIndex>=selectable.length)mapIndex=Math.max(0,selectable.length-1);
+  const selected=selectable[mapIndex]||null;
+  for(const [id,pos] of Object.entries(layout)){
+    const seen=G.visited.has(id);if(!seen)continue;
+    const active=G.fastTravel.has(id);
+    ctx.fillStyle=id===G.room?"#3b2230":id===selected?"#29322f":active?"#18272a":"#18151d";ctx.fillRect(pos[0]-70,pos[1]-28,140,56);
+    ctx.strokeStyle=id===selected?K.gold:id===G.room?K.red:active?K.cyan:"#4a404d";
+    ctx.lineWidth=id===selected?3:1;
+    ctx.strokeRect(pos[0]-70,pos[1]-28,140,56);
+    txt(ROOMS[id].name,pos[0],pos[1]+6,13,id===selected?K.gold:active?K.white:K.muted,"center")
+  }
+  if(selected)txt(`目前選擇：${ROOMS[selected].name}`,140,755,15,K.gold);
+  txt("方向鍵移動選擇　ENTER 快速移動　M / ESC 關閉",140,792,13,K.muted)
+}
+function drawNotes(){
+  drawRoom();ctx.fillStyle="rgba(5,4,8,.84)";ctx.fillRect(0,0,W,H);panel(100,70,1400,760,.97);txt("案件筆記",150,125,30,K.white);txt("只記錄你真的調查到的東西。",150,158,13,K.muted);
+  let y=210;for(const [a,b] of G.notes){ctx.fillStyle="#17131c";ctx.fillRect(145,y-28,1310,72);ctx.strokeStyle="#403649";ctx.strokeRect(145,y-28,1310,72);txt(a,170,y,18,K.gold);wrap(b,430,y,980,22,14,"#b9b0bd");y+=88}
+}
+function drawChoice(){
+  drawRoom();ctx.fillStyle="rgba(5,4,8,.72)";ctx.fillRect(0,0,W,H);panel(210,180,1180,520,.97);txt(G.dialogue.choiceTitle,260,240,26,K.white);
+  G.dialogue.choices.forEach((c,i)=>{const y=340+i*110;ctx.fillStyle=i===G.choiceIndex?"#2b2130":"#17131c";ctx.fillRect(260,y-42,1080,72);ctx.strokeStyle=i===G.choiceIndex?K.gold:"#463a4e";ctx.strokeRect(260,y-42,1080,72);txt(`${i+1}. ${c}`,295,y,20,i===G.choiceIndex?K.gold:K.white)})
+}
+function drawMini(){
+  const m=G.mini;ctx.fillStyle="#09080d";ctx.fillRect(0,0,W,H);
+  if(m.type==="photo"){
+    txt("調查小遊戲：找出照片中 3 個不自然的地方",100,90,26,K.white);txt(`剩餘 ${m.timer.toFixed(1)} 秒`,1460,90,16,K.gold,"right");
+    ctx.fillStyle="#3d3539";ctx.fillRect(170,150,1260,620);
+    // class photo blocks
+    for(let r=0;r<4;r++)for(let c=0;c<8;c++){ctx.fillStyle=(r*8+c===31)?"#7d4050":"#74645e";ctx.fillRect(240+c*140,220+r*120,62,72);ctx.fillStyle="#d0a184";ctx.fillRect(254+c*140,190+r*120,34,30)}
+    [[420,330],[835,360],[1120,505]].forEach((p,i)=>{if(m.found.has(i)){ctx.strokeStyle=K.cyan;ctx.lineWidth=4;ctx.beginPath();ctx.arc(p[0],p[1],48,0,Math.PI*2);ctx.stroke()}})
+    txt("點擊你認為異常的細節",800,825,15,K.muted,"center")
+  }else if(m.type==="uv"){
+    txt("紫外線調查：拖動滑鼠光源，找出三段被擦掉的字",100,90,26,K.white);txt(`剩餘 ${m.timer.toFixed(1)} 秒`,1460,90,16,K.gold,"right");
+    ctx.fillStyle="#252229";ctx.fillRect(180,150,1240,600);for(const s of m.spots){if(s.hit){ctx.fillStyle=K.red;ctx.fillRect(s.x-90,s.y-16,180,32);txt("不要相信",s.x,s.y+6,18,K.white,"center")}}
+    const g=ctx.createRadialGradient(input.mx,input.my,5,input.mx,input.my,110);g.addColorStop(0,"rgba(180,110,255,.45)");g.addColorStop(1,"rgba(180,110,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(input.mx,input.my,110,0,Math.PI*2);ctx.fill()
+  }else if(m.type==="terminal"){
+    txt("電腦教室：四台機器啟動順序",100,90,26,K.white);txt("線索：從最舊到最新，但第 3 台的系統時間倒著走。",100,125,14,K.muted);
+    for(let i=0;i<4;i++){const x=230+i*300;ctx.fillStyle="#11151a";ctx.fillRect(x,250,210,170);ctx.strokeStyle=K.cyan;ctx.strokeRect(x,250,210,170);txt(String(i+1),x+105,350,42,K.white,"center")}
+    txt("已輸入："+m.slots.map(v=>v+1).join(" → "),800,520,22,K.gold,"center");txt("按 1~4 輸入順序",800,610,15,K.muted,"center")
+  }else if(m.type==="rhythm"){
+    txt("中指通：六指逆拍",100,80,28,K.white);txt("A S D　J K L",800,120,18,K.gold,"center");const lanes=["A","S","D","J","K","L"];
+    for(let i=0;i<6;i++){const x=280+i*170;ctx.fillStyle="#17131c";ctx.fillRect(x,160,110,600);txt(lanes[i],x+55,800,18,K.muted,"center")}
+    const t=G.time-m.start;
+    for(const n of m.notes){if(n.hit||n.miss)continue;const lane={KeyA:0,KeyS:1,KeyD:2,KeyJ:3,KeyK:4,KeyL:5}[n.key];const y=720-(n.t-t)*320;if(y>-50&&y<760){ctx.fillStyle=K.cyan;ctx.fillRect(300+lane*170,y,70,22)}}
+    ctx.strokeStyle=K.red;ctx.lineWidth=3;ctx.strokeRect(260,690,980,45);txt(`SCORE ${m.score}　MISS ${m.miss}　COMBO ${m.combo}`,800,855,16,K.white,"center")
+  }else if(m.type==="roll"){
+    txt("TOYZ：紙捲競速",100,90,28,K.white);txt("A / D 控制鬆緊　SPACE 捲動",100,130,15,K.muted);
+    txt("品質",230,270,18,K.white);ctx.fillStyle="#2c2630";ctx.fillRect(330,245,900,38);ctx.fillStyle=Math.abs(m.quality-55)<18?K.green:K.red;ctx.fillRect(330,245,m.quality*9,38);ctx.strokeStyle=K.gold;ctx.strokeRect(330+55*9-18*9,238,36*9,52);
+    txt("你的進度",230,390,18,K.white);ctx.fillStyle="#2c2630";ctx.fillRect(330,365,900,35);ctx.fillStyle=K.cyan;ctx.fillRect(330,365,m.progress*9,35);
+    txt("TOYZ",230,510,18,K.white);ctx.fillStyle="#2c2630";ctx.fillRect(330,485,900,35);ctx.fillStyle=K.gold;ctx.fillRect(330,485,m.opponent*9,35)
+  }else if(m.type==="poker"){
+    txt("統神 vs 薛喜：讀人，不是賭錢",100,90,28,K.white);txt(`薛喜籌碼 ${m.playerChips}　統神 ${m.godChips}`,800,145,18,K.gold,"center");
+    panel(260,210,1080,250,.95);txt(`表情：${m.prompt.face}`,320,270,22,K.white);wrap(`細節：${m.prompt.tell}`,320,330,930,32,20,K.muted);
+    txt("1 跟注／抓 Bluff　　2 蓋牌／尊重大牌　　3 反向讀取",800,600,19,K.cyan,"center");txt("羅正男：我覺得他沒有啦。",800,690,16,K.red,"center")
+  }
+}
+function drawBoss(){
+  const b=G.boss;ctx.fillStyle="#09070c";ctx.fillRect(0,0,W,H);
+  if(b.kind==="overload")drawOverload(b);else drawPyramid(b)
+}
+function drawOverload(b){
+  ctx.fillStyle="#31151d";ctx.fillRect(0,0,W,H);for(let i=0;i<20;i++){ctx.fillStyle=i%2?"#3a1821":"#251218";ctx.fillRect(0,i*45,W,28)}
+  drawPortrait("overload",800,530,false,true);txt("大肥哥超負荷",800,100,34,K.red,"center");txt(`HP ${Math.max(0,b.hp)}　你 ${"■".repeat(Math.max(0,b.player))}`,800,145,18,K.white,"center");
+  if(b.phase===1){txt("PHASE 1：左右嘴砲　A / D 精準防反",800,210,18,K.gold,"center");txt(b.side==="L"?"← 左邊來了":"右邊來了 →",800,700,34,b.attack<.2?K.red:K.white,"center")}
+  else if(b.phase===2){txt("PHASE 2：聊天室過載　左右移動躲掉真正攻擊",800,210,18,K.gold,"center");for(let i=0;i<5;i++){ctx.fillStyle=i===b.lane?"#4a3038":"#20171d";ctx.fillRect(360+i*180,560,120,120)}for(const c of b.chat){ctx.fillStyle=c.life<.18?K.red:"#8c6a73";ctx.fillRect(370+c.lane*180,350+c.life*250,100,34)}}
+  else{txt("PHASE 3：OVERLOAD　A/D 移動，J/L 對應左右攻擊",800,210,18,K.gold,"center");for(let i=0;i<5;i++){ctx.fillStyle=i===b.lane?"#513640":"#20171d";ctx.fillRect(360+i*180,560,120,120)}txt(b.side==="L"?"J":"L",800,720,48,K.red,"center")}
+}
+function drawPyramid(b){
+  ctx.fillStyle="#050508";ctx.fillRect(0,0,W,H);ctx.strokeStyle=K.gold;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(800,80);ctx.lineTo(260,760);ctx.lineTo(1340,760);ctx.closePath();ctx.stroke();txt("金字塔紹安",800,105,32,K.gold,"center");txt(`HP ${b.hp}　你 ${"■".repeat(Math.max(0,b.player))}`,800,150,17,K.white,"center");
+  if(b.phase===1){
+    const qs=[
+      ["二年三班真正異常的是？",["黑板","第 32 張桌子","窗簾"],1],
+      ["哪個地方的數量對不上外牆？",["音樂教室","二樓窗戶","圖書館書架"],1],
+      ["超負荷真正想要的是？",["繼續留校","完成放學前沒完成的三件事","打敗所有學生"],1]
+    ],q=qs[b.q];
+    if(q){wrap(q[0],800,300,900,40,28,K.white,"center");q[1].forEach((o,i)=>txt(`${i+1}. ${o}`,800,410+i*80,21,i===q[2]?K.gold:K.white,"center"))}
+  }else{
+    txt("Phase 2：三線金字塔　A/D 移動，SPACE 反擊",800,230,18,K.cyan,"center");
+    for(let i=0;i<3;i++){ctx.fillStyle=i===b.lane?"#4e3c22":"#17141b";ctx.fillRect(470+i*260,650,160,90)}
+    for(const x of b.bullets){ctx.fillStyle=K.red;ctx.beginPath();ctx.arc(550+x.lane*260,x.y,16,0,Math.PI*2);ctx.fill()}
+  }
+}
 function draw(){
-  ctx.save();
-  if(G.shake>0)ctx.translate((Math.random()-.5)*G.shake,(Math.random()-.5)*G.shake);
-  if(G.mode==="explore")drawWorld();
+  if(G.mode==="room")drawRoom();
   else if(G.mode==="dialogue")drawDialogue();
-  else if(G.mode==="notebook")drawNotebook();
-  else if(G.mode==="device")drawDevice();
-  else if(G.mode==="theory")drawTheory();
-  else if(G.mode==="final")drawFinal();
-  if(G.flash>0){ctx.fillStyle=`rgba(255,80,90,${Math.min(.28,G.flash)})`;ctx.fillRect(0,0,W,H)}
+  else if(G.mode==="map")drawMap();
+  else if(G.mode==="notes")drawNotes();
+  else if(G.mode==="choice")drawChoice();
+  else if(G.mode==="mini")drawMini();
+  else if(G.mode==="boss")drawBoss();
   // vignette
-  const grad=ctx.createRadialGradient(W/2,H/2,260,W/2,H/2,920);grad.addColorStop(0,"rgba(0,0,0,0)");grad.addColorStop(1,"rgba(0,0,0,.54)");ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-  ctx.restore();
-}
-
-function loop(ts){
-  const now=ts/1000,dt=Math.min(.033,G.last?now-G.last:.016);G.last=now;
-  update(dt);draw();requestAnimationFrame(loop);
+  const g=ctx.createRadialGradient(W/2,H/2,250,W/2,H/2,950);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.55)");ctx.fillStyle=g;ctx.fillRect(0,0,W,H)
 }
 
 function resetGame(){
-  hideChatIme();
-  G.running=true;G.paused=false;G.mode="explore";G.time=0;G.startedAt=performance.now()/1000;G.last=0;
-  G.message="";G.messageT=0;G.camX=0;G.camY=700;G.lightsOn=true;G.flashlight=false;
-  G.watcher={x:2360,y:730,active:false,targetX:0,targetY:0,repath:0};
-  G.evidence=new Set();G.statements=new Set();G.securityMarked=[];G.theory=null;G.finalMistakes=0;
-  G.flags={talkedCrab:false,talkedXue:false,talkedWei:false,pcUnlocked:false,officeUnlocked:false,cameraSolved:false,clockKnown:false,accessKnown:false,chatShadow:false,ventKnown:false,mahjongKnown:false,breakerKnown:false,blackoutCleared:false,foundRoger:false};
-  P.x=310;P.y=1010;P.faceX=1;P.faceY=0;G.camX=0;G.camY=620;
-  say("蟹老闆正在交誼廳找人。你沒有任務箭頭。",2.5);
+  G.running=true;G.paused=false;G.time=0;G.last=0;G.startedAt=performance.now()/1000;G.mode="room";G.room="gate";G.message="";G.messageT=0;G.prompt="";
+  G.visited=new Set(["gate"]);G.fastTravel=new Set(["gate"]);G.clues=new Set();G.flags={};G.notes=[];G.ending=null;G.redLevel=0;G.shaxyTrust=0;G.overloadHeart=0;G.pyramidKey=false;G.badCount=0;G.miniWins=0;G.wrongChoices=0;G.mini=null;G.boss=null;
+  P.x=250;P.y=620;SHAXY.x=180;SHAXY.y=660;
+  startDialogue(DIALOGUES.intro)
 }
+
+// map selection
+let mapIndex=0;
+function mapSelectable(){return [...G.fastTravel]}
+function handleMapKey(e){
+  const arr=mapSelectable();if(!arr.length)return;
+  if(e.code==="ArrowLeft"||e.code==="ArrowUp")mapIndex=(mapIndex-1+arr.length)%arr.length;
+  if(e.code==="ArrowRight"||e.code==="ArrowDown")mapIndex=(mapIndex+1)%arr.length;
+  if(e.code==="Enter"){changeRoom(arr[mapIndex]);G.mode="room"}
+  if(e.code==="KeyM"||e.code==="Escape")G.mode="room"
+}
+function handleNotesKey(e){if(e.code==="KeyQ"||e.code==="Escape")G.mode="room"}
+function handleDialogueKey(e){if(e.code==="Space"||e.code==="Enter"||e.code==="KeyE")nextDialogue();if(e.code==="Escape"){G.dialogue=null;G.mode="room"}}
 
 window.addEventListener("keydown",e=>{
   if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
-  if(G.running && G.mode==="device" && e.code==="Backspace")e.preventDefault();
-
-  if(G.running && G.mode==="device"){handleDeviceKey(e);return}
-  if(G.running && G.mode==="dialogue"){
-    if(e.code==="Space"||e.code==="Enter"||e.code==="KeyE")advanceDialogue();
-    if(e.code==="Escape"){G.dialogue=null;setMode("explore")}
-    return;
-  }
-  if(G.running && G.mode==="notebook"){
-    if(e.code==="KeyQ"||e.code==="Escape")setMode("explore");
-    return;
-  }
-  if(G.running && G.mode==="theory"){
-    if(/^Digit[1-3]$/.test(e.code))handleTheoryChoice(parseInt(e.code.slice(-1))-1);
-    if(e.code==="Escape"){G.theory=null;setMode("explore")}
-    return;
-  }
-  if(G.running && G.mode==="final"){
-    if(/^Digit[1-4]$/.test(e.code))input.pressed.add(e.code);
-    return;
-  }
-
-  if(!input.held.has(e.code))input.pressed.add(e.code);
-  input.held.add(e.code);
-
-  if(e.code==="Escape" && G.running){
-    G.paused=!G.paused;UI.pause.classList.toggle("show",G.paused);
-  }
+  if(!input.held.has(e.code))input.pressed.add(e.code);input.held.add(e.code);
+  if(!G.running)return;
+  if(G.mode==="dialogue"){handleDialogueKey(e);return}
+  if(G.mode==="map"){handleMapKey(e);return}
+  if(G.mode==="notes"){handleNotesKey(e);return}
+  if(e.code==="Escape"&&G.mode==="room"){G.paused=!G.paused;UI.pause.classList.toggle("show",G.paused)}
 });
 window.addEventListener("keyup",e=>input.held.delete(e.code));
-canvas.addEventListener("mousemove",e=>{
-  const r=canvas.getBoundingClientRect();input.mx=(e.clientX-r.left)/r.width*W;input.my=(e.clientY-r.top)/r.height*H;
-});
-canvas.addEventListener("mousedown",()=>input.mousePressed=true);
-
-// Real HTML input is used here so Windows/macOS IME composition works correctly.
-// This fixes Chinese/Japanese/Korean input and gives Backspace native editing behavior.
-chatImeInput.addEventListener("input",()=>{
-  G.searchInput=chatImeInput.value.slice(0,40);
-});
-chatImeInput.addEventListener("compositionend",()=>{
-  G.searchInput=chatImeInput.value.slice(0,40);
-});
-chatImeInput.addEventListener("keydown",e=>{
-  // Do not let the game's global key handler swallow IME/editing keys.
-  e.stopPropagation();
-
-  if(e.key==="Enter"){
-    if(e.isComposing)return;
-    e.preventDefault();
-    G.searchInput=chatImeInput.value.slice(0,40);
-    searchChat(G.searchInput);
-    return;
-  }
-
-  if(e.key==="Escape"){
-    e.preventDefault();
-    hideChatIme();
-    setMode("explore");
-    G.device=null;
-  }
-});
+canvas.addEventListener("mousemove",e=>{const r=canvas.getBoundingClientRect();input.mx=(e.clientX-r.left)/r.width*W;input.my=(e.clientY-r.top)/r.height*H});
+canvas.addEventListener("mousedown",()=>input.mouse=true);
 
 document.getElementById("startBtn").onclick=()=>{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();UI.title.classList.remove("show");resetGame()};
 document.getElementById("resumeBtn").onclick=()=>{G.paused=false;UI.pause.classList.remove("show")};
 document.getElementById("restartBtn").onclick=()=>{UI.pause.classList.remove("show");resetGame()};
 document.getElementById("againBtn").onclick=()=>{UI.ending.classList.remove("show");resetGame()};
 
-draw();
-requestAnimationFrame(loop);
+function loop(ts){
+  const now=ts/1000,dt=Math.min(.033,G.last?now-G.last:.016);G.last=now;
+  if(G.running&&!G.paused)update(dt);
+  draw();requestAnimationFrame(loop)
+}
+draw();requestAnimationFrame(loop);
 })();

@@ -3,55 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#09080d">
-  <title>羅正男：宿舍失蹤事件</title>
+  <meta name="theme-color" content="#07070b">
+  <title>羅正男：紅色學校</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="shell">
-    <canvas id="game" width="1600" height="900" aria-label="羅正男：宿舍失蹤事件"></canvas>
-    <div class="scanlines"></div>
+  <main id="app">
+    <canvas id="game" width="1600" height="900"></canvas>
+    <div class="crt"></div>
     <div class="grain"></div>
-    <input id="chatImeInput" class="game-ime-input" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="輸入關鍵字，例如：02:17、後面、影子、羅正男">
 
     <div id="titleOverlay" class="overlay show">
       <div class="title-card">
-        <div class="kicker">《羅正男：真假》CASE 01</div>
-        <h1>宿舍失蹤事件</h1>
-        <p>一個人不見了。每個人都記得自己看過他，但時間對不起來。</p>
-        <div class="controls">
+        <div class="eyebrow">《羅正男：真假》CASE 02</div>
+        <h1>紅色學校</h1>
+        <p>午夜之後，這所廢棄學校會多出一層樓。問題是，沒有人記得那一層原本是做什麼的。</p>
+        <div class="keys">
           <span>WASD / 方向鍵：移動</span>
           <span>E：調查／對話</span>
           <span>Shift：快走</span>
+          <span>M：校園地圖／快速移動</span>
           <span>Q：案件筆記</span>
-          <span>F：手電筒</span>
-          <span>Esc：暫停／返回</span>
+          <span>Esc：返回／暫停</span>
         </div>
-        <button id="startBtn">進入起圈宿舍</button>
-        <small>虛構作品。人物、組織與事件均經合成及戲劇化改編。</small>
+        <button id="startBtn">進入紅色學校</button>
+        <small>本作為虛構超自然喜劇。角色與實況文化為戲劇化創作；靈異、控制、Boss 等內容不代表對現實人物的事實陳述。</small>
       </div>
     </div>
 
     <div id="pauseOverlay" class="overlay">
       <div class="small-card">
-        <div class="kicker">PAUSED</div>
-        <h2>聊天室還在跑。</h2>
+        <div class="eyebrow">PAUSED</div>
+        <h2>薛喜：你真的要在這裡發呆？</h2>
         <button id="resumeBtn">繼續</button>
-        <button id="restartBtn">重新開始案件</button>
+        <button id="restartBtn">重新開始</button>
       </div>
     </div>
 
     <div id="endingOverlay" class="overlay">
       <div class="title-card">
-        <div class="kicker">CASE CLOSED?</div>
-        <h1 id="endingTitle">真假。</h1>
+        <div class="eyebrow">ENDING</div>
+        <h1 id="endingTitle"></h1>
         <p id="endingText"></p>
         <div id="endingStats" class="ending-stats"></div>
         <button id="againBtn">重新調查</button>
       </div>
     </div>
-  </div>
-
+  </main>
   <script src="js/game.js"></script>
 </body>
 </html>
