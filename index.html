@@ -1,71 +1,56 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0b0a10" />
-  <title>羅正男：真假</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09080d">
+  <title>羅正男：宿舍失蹤事件</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main class="frame">
-    <header class="topbar">
-      <div>
-        <h1>羅正男：真假</h1>
-        <p>單機敘事動作遊戲・Vertical Slice</p>
-      </div>
-      <div class="actions">
-        <button id="muteBtn">音效：開</button>
-        <button id="resetBtn">清除存檔</button>
-      </div>
-    </header>
+  <div id="shell">
+    <canvas id="game" width="1600" height="900" aria-label="羅正男：宿舍失蹤事件"></canvas>
+    <div class="scanlines"></div>
+    <div class="grain"></div>
 
-    <section class="screen-shell">
-      <canvas id="game" width="1280" height="720"></canvas>
-      <div class="scanlines"></div>
-      <div class="glass"></div>
-
-      <div id="start" class="overlay show">
-        <div class="card intro-card">
-          <div class="eyebrow">2026 / 台北</div>
-          <h2>網路上有一萬個羅正男。</h2>
-          <p>問題是，你控制的這個到底是不是真的？</p>
-          <div class="keys">
-            <span>WASD / 方向鍵　移動</span>
-            <span>Shift　衝刺</span>
-            <span>空白鍵 / 滑鼠左鍵　動作</span>
-            <span>E　互動</span>
-            <span>Esc　暫停</span>
-          </div>
-          <button id="startBtn">開始直播</button>
-          <small>本作角色、組織、平台與事件均經虛構化及戲劇化改編。</small>
+    <div id="titleOverlay" class="overlay show">
+      <div class="title-card">
+        <div class="kicker">《羅正男：真假》CASE 01</div>
+        <h1>宿舍失蹤事件</h1>
+        <p>一個人不見了。每個人都記得自己看過他，但時間對不起來。</p>
+        <div class="controls">
+          <span>WASD / 方向鍵：移動</span>
+          <span>E：調查／對話</span>
+          <span>Shift：快走</span>
+          <span>Q：案件筆記</span>
+          <span>F：手電筒</span>
+          <span>Esc：暫停／返回</span>
         </div>
+        <button id="startBtn">進入起圈宿舍</button>
+        <small>虛構作品。人物、組織與事件均經合成及戲劇化改編。</small>
       </div>
+    </div>
 
-      <div id="pause" class="overlay">
-        <div class="card small">
-          <div class="eyebrow">PAUSED</div>
-          <h2>聊天室還在跑。</h2>
-          <button id="resumeBtn">繼續</button>
-        </div>
+    <div id="pauseOverlay" class="overlay">
+      <div class="small-card">
+        <div class="kicker">PAUSED</div>
+        <h2>聊天室還在跑。</h2>
+        <button id="resumeBtn">繼續</button>
+        <button id="restartBtn">重新開始案件</button>
       </div>
+    </div>
 
-      <div id="ending" class="overlay">
-        <div class="card">
-          <div class="eyebrow">VERTICAL SLICE COMPLETE</div>
-          <h2 id="endingTitle">真假。</h2>
-          <p id="endingText"></p>
-          <div id="endingStats" class="stats"></div>
-          <button id="againBtn">再播一次</button>
-        </div>
+    <div id="endingOverlay" class="overlay">
+      <div class="title-card">
+        <div class="kicker">CASE CLOSED?</div>
+        <h1 id="endingTitle">真假。</h1>
+        <p id="endingText"></p>
+        <div id="endingStats" class="ending-stats"></div>
+        <button id="againBtn">重新調查</button>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <footer>
-      <span id="chapterLabel">2026：頭貼軍團</span>
-      <span id="hintLabel">別相信每一個叫「羅正男」的人。</span>
-    </footer>
-  </main>
   <script src="js/game.js"></script>
 </body>
 </html>
