@@ -1,0 +1,125 @@
+/* Auditorium-only correction: align interactions to the actual stage, seats and backstage prop. */
+#objectLayer[data-auditorium="1"] .aud-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-auditorium="1"] .aud-prop.embedded-hitbox>img,
+#objectLayer[data-auditorium="1"] .aud-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-auditorium="1"] .aud-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-auditorium="1"] .aud-prop.embedded-hitbox:hover::before,
+#objectLayer[data-auditorium="1"].hint-mode .aud-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.05);
+  box-shadow:0 0 22px rgba(255,63,87,.16),inset 0 0 20px rgba(255,63,87,.03);
+}
+#objectLayer[data-auditorium="1"] .aud-curtain::before{border-radius:18px!important}
+#objectLayer[data-auditorium="1"] .aud-seats::before{border-radius:48% 48% 16% 16% / 28% 28% 12% 12%!important}
+
+/* Keep the backstage wish box as a foreground prop, but make it sit naturally in the scene. */
+#objectLayer[data-auditorium="1"] .aud-wishbox{
+  width:205px!important;
+  height:175px!important;
+  filter:none!important;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  transform:scale(.92)!important;
+  transform-origin:center center!important;
+  filter:brightness(.78) saturate(.82) drop-shadow(0 10px 10px rgba(0,0,0,.52))!important;
+  opacity:.92;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox:hover img,
+#objectLayer[data-auditorium="1"].hint-mode .aud-wishbox img{
+  transform:scale(.98)!important;
+  filter:brightness(.98) saturate(.9) drop-shadow(0 10px 12px rgba(0,0,0,.56))!important;
+}
+
+/* Both exits are ground arrows instead of floating door icons. */
+#objectLayer[data-auditorium="1"] .aud-nav{
+  width:170px!important;
+  height:108px!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-auditorium="1"] .aud-nav>svg,
+#objectLayer[data-auditorium="1"] .aud-nav>img,
+#objectLayer[data-auditorium="1"] .aud-nav>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-auditorium="1"] .aud-nav::before,
+#objectLayer[data-auditorium="1"] .aud-nav::after{display:none!important}
+#objectLayer[data-auditorium="1"] .aud-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:78px;
+  height:82px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(255,105,122,.92),rgba(135,28,49,.68));
+  box-shadow:0 0 24px rgba(255,62,89,.32);
+  opacity:.67;
+  animation:audArrowPulse 1.5s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-auditorium="1"] .aud-nav-back .aud-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg);
+  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+}
+#objectLayer[data-auditorium="1"] .aud-nav:hover .aud-ground-arrow,
+#objectLayer[data-auditorium="1"].hint-mode .aud-nav .aud-ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+#objectLayer[data-auditorium="1"] .aud-nav-label{
+  position:absolute;
+  left:50%;
+  top:84px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(5,5,8,.82);
+  border:1px solid rgba(255,255,255,.14);
+  color:#f6eff7;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.03em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+#objectLayer[data-auditorium="1"] .aud-nav:hover .aud-nav-label,
+#objectLayer[data-auditorium="1"].hint-mode .aud-nav .aud-nav-label{opacity:1}
+@keyframes audArrowPulse{
+  0%,100%{opacity:.52;filter:brightness(.92)}
+  50%{opacity:.88;filter:brightness(1.13)}
+}
