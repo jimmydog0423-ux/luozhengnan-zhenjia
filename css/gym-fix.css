@@ -1,0 +1,113 @@
+/* Gym-only correction: align hotspots to the real background objects and use a ground return arrow. */
+#objectLayer[data-gym="1"] .gym-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-gym="1"] .gym-prop>img,
+#objectLayer[data-gym="1"] .gym-prop>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+#objectLayer[data-gym="1"] .gym-prop::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+
+#objectLayer[data-gym="1"] .gym-prop:hover::before,
+#objectLayer[data-gym="1"].hint-mode .gym-prop::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.055);
+  box-shadow:0 0 22px rgba(255,63,87,.16),inset 0 0 20px rgba(255,63,87,.035);
+}
+
+#objectLayer[data-gym="1"] .gym-bleacher::before{border-radius:18px}
+#objectLayer[data-gym="1"] .gym-ball::before{border-radius:50%}
+#objectLayer[data-gym="1"] .gym-locker::before{border-radius:14px}
+
+/* Keep the real basketball in the background; do not render a duplicate sprite. */
+#objectLayer[data-gym="1"] .gym-ball>img,
+#objectLayer[data-gym="1"] .gym-ball>svg{display:none!important}
+
+#objectLayer[data-gym="1"] .gym-nav{
+  width:170px!important;
+  height:108px!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-gym="1"] .gym-nav>svg,
+#objectLayer[data-gym="1"] .gym-nav>img,
+#objectLayer[data-gym="1"] .gym-nav>.done-mark{
+  display:none!important;
+}
+
+#objectLayer[data-gym="1"] .gym-nav::before,
+#objectLayer[data-gym="1"] .gym-nav::after{display:none!important}
+
+#objectLayer[data-gym="1"] .gym-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:82px;
+  height:86px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.64));
+  box-shadow:0 0 20px rgba(210,205,220,.2);
+  opacity:.64;
+  animation:gymArrowPulse 1.5s ease-in-out infinite;
+  pointer-events:none;
+}
+
+#objectLayer[data-gym="1"] .gym-nav:hover .gym-ground-arrow,
+#objectLayer[data-gym="1"].hint-mode .gym-nav .gym-ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+
+#objectLayer[data-gym="1"] .gym-nav-label{
+  position:absolute;
+  left:50%;
+  top:86px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(5,5,8,.82);
+  border:1px solid rgba(255,255,255,.14);
+  color:#f6eff7;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.03em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+
+#objectLayer[data-gym="1"] .gym-nav:hover .gym-nav-label,
+#objectLayer[data-gym="1"].hint-mode .gym-nav .gym-nav-label{opacity:1}
+
+@keyframes gymArrowPulse{
+  0%,100%{opacity:.5;filter:brightness(.92)}
+  50%{opacity:.86;filter:brightness(1.12)}
+}
