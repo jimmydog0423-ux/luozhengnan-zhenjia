@@ -1,0 +1,89 @@
+/* Desktop HUD scale pass: enlarge the four corner UI groups without changing scene geometry. */
+@media (min-width: 901px){
+  .hud{
+    left:24px;
+    right:24px;
+    top:18px;
+    gap:22px;
+  }
+  .room-name{
+    font-size:clamp(40px,3.1vw,54px);
+    line-height:1.02;
+    letter-spacing:.01em;
+  }
+  .room-sub{
+    margin-top:7px;
+    font-size:16px;
+    line-height:1.4;
+  }
+
+  .hud-stats{
+    gap:10px;
+    padding-top:2px;
+  }
+  .hud-stats span{
+    min-height:42px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:10px 15px;
+    font-size:14px;
+    border-radius:999px;
+  }
+  .hud-stats b{
+    font-size:16px;
+  }
+
+  .objective-panel{
+    left:22px;
+    bottom:22px;
+    width:min(620px,calc(100vw - 600px));
+    min-height:78px;
+    padding:15px 19px 16px;
+    border-left-width:4px;
+    border-radius:13px;
+  }
+  .objective-kicker{
+    font-size:12px;
+    letter-spacing:.16em;
+  }
+  .objective-text{
+    margin-top:7px;
+    font-size:17px;
+    line-height:1.55;
+  }
+
+  .toolbar{
+    right:20px;
+    bottom:20px;
+    gap:10px;
+  }
+  .toolbar button{
+    min-height:50px;
+    min-width:96px;
+    padding:13px 18px;
+    border-radius:12px;
+    font-size:16px;
+    line-height:1.2;
+  }
+
+  .message-box{
+    bottom:94px;
+    width:min(900px,calc(100vw - 44px));
+    padding:17px 20px;
+    font-size:16px;
+  }
+}
+
+@media (min-width: 1500px){
+  .hud{left:30px;right:30px;top:22px}
+  .room-name{font-size:56px}
+  .room-sub{font-size:17px}
+  .hud-stats span{min-height:46px;padding:11px 17px;font-size:15px}
+  .hud-stats b{font-size:17px}
+  .objective-panel{left:28px;bottom:26px;width:660px;min-height:84px;padding:17px 22px}
+  .objective-kicker{font-size:13px}
+  .objective-text{font-size:18px}
+  .toolbar{right:26px;bottom:24px}
+  .toolbar button{min-height:54px;min-width:104px;padding:14px 20px;font-size:17px}
+}
