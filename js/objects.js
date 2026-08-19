@@ -28,6 +28,10 @@
     "置物櫃": "assets/objects/locker.png"
   };
 
+  const COMPLETED_ART = {
+    "後台紙箱": "assets/objects/後台紙箱.png"
+  };
+
   const layer = document.getElementById("objectLayer");
   if (!layer) return;
 
@@ -35,13 +39,23 @@
 
   function normalizeLabel(label) {
     return String(label || "")
-      .replace(/^調查[:：]\s*/, "")
-      .replace(/^互動[:：]\s*/, "")
+      .replace(/^已完成[:：]?\s*/, "")
+      .replace(/^調查[:：]?\s*/, "")
+      .replace(/^互動[:：]?\s*/, "")
       .trim();
   }
 
-  function findObjectArt(label) {
+  function isCompleted(label, button) {
+    return button?.classList?.contains("done") || /^已完成[:：]?\s*/.test(String(label || ""));
+  }
+
+  function findObjectArt(label, button) {
     const normalized = normalizeLabel(label);
+
+    if (isCompleted(label, button) && COMPLETED_ART[normalized]) {
+      return COMPLETED_ART[normalized];
+    }
+
     const exact = OBJECT_ART[normalized];
     if (exact) return exact;
 
@@ -52,7 +66,7 @@
   function applyObjectArt() {
     layer.querySelectorAll("button.scene-object").forEach((button) => {
       const label = button.dataset.label || button.getAttribute("aria-label") || "";
-      const src = findObjectArt(label);
+      const src = findObjectArt(label, button);
       if (!src) return;
 
       let img = button.querySelector("img.object-sprite-img");
@@ -68,7 +82,9 @@
         img.style.pointerEvents = "none";
         if (svg) svg.replaceWith(img); else button.prepend(img);
       }
+
       if (img.getAttribute("src") !== src) img.src = src;
+      button.dataset.objectArtState = isCompleted(label, button) ? "completed" : "normal";
     });
   }
 
