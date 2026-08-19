@@ -18,7 +18,14 @@
     "老式保險箱": "assets/objects/safe.webp",
     "紅色電纜": "assets/objects/cable.webp",
     "舊錄音帶": "assets/objects/tape.webp",
-    "後台紙箱": "assets/objects/wish_items.webp"
+    "後台紙箱": "assets/objects/wish_items.webp",
+    "校牌": "assets/objects/school_sign.png",
+    "公告欄": "assets/objects/notice_board.png",
+    "停住的鐘": "assets/objects/clock.png",
+    "老榕樹": "assets/objects/banyan_tree.png",
+    "乾掉的噴水池": "assets/objects/fountain.png",
+    "破掉的校慶海報": "assets/objects/poster.png",
+    "置物櫃": "assets/objects/locker.png"
   };
 
   const layer = document.getElementById("objectLayer");
