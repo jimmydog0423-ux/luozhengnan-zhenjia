@@ -1,0 +1,147 @@
+/* Staff room correction: background-aligned desk/safe, desk-top roll, grounded NPC and exit arrow. */
+#objectLayer[data-staff="1"] .staff-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-staff="1"] .staff-prop.embedded-hitbox>img,
+#objectLayer[data-staff="1"] .staff-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-staff="1"] .staff-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-staff="1"] .staff-prop.embedded-hitbox:hover::before,
+#objectLayer[data-staff="1"].hint-mode .staff-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.04);
+  box-shadow:0 0 20px rgba(255,63,87,.14),inset 0 0 18px rgba(255,63,87,.025);
+}
+#objectLayer[data-staff="1"] .staff-desk::before{border-radius:14px!important}
+#objectLayer[data-staff="1"] .staff-safe::before{border-radius:12px!important}
+
+/* Attendance book sits on the actual centre desk instead of floating in the room. */
+#objectLayer[data-staff="1"] .staff-roll{
+  width:108px!important;
+  height:88px!important;
+  filter:none!important;
+}
+#objectLayer[data-staff="1"] .staff-roll img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  transform:rotate(-7deg) scale(.9)!important;
+  transform-origin:center center!important;
+  filter:brightness(.62) saturate(.72) drop-shadow(0 7px 8px rgba(0,0,0,.58))!important;
+  opacity:.9;
+}
+#objectLayer[data-staff="1"] .staff-roll:hover img,
+#objectLayer[data-staff="1"].hint-mode .staff-roll img{
+  transform:rotate(-5deg) scale(.98)!important;
+  filter:brightness(.9) saturate(.85) drop-shadow(0 8px 10px rgba(0,0,0,.62))!important;
+  opacity:1;
+}
+
+/* Tongshen stands on the floor and is large enough to read as an NPC, not a sticker on a crate. */
+#objectLayer[data-staff="1"] .staff-god{
+  width:205px!important;
+  height:280px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-staff="1"] .staff-god>svg{display:none!important}
+#objectLayer[data-staff="1"] .staff-god .scene-character-sprite,
+#objectLayer[data-staff="1"] .staff-god>img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:scale(.94)!important;
+  transform-origin:center bottom!important;
+  filter:brightness(.72) drop-shadow(0 15px 14px rgba(0,0,0,.65))!important;
+  opacity:.96;
+}
+#objectLayer[data-staff="1"] .staff-god:hover .scene-character-sprite,
+#objectLayer[data-staff="1"].hint-mode .staff-god .scene-character-sprite{
+  transform:scale(.99)!important;
+  filter:brightness(.92) drop-shadow(0 16px 16px rgba(0,0,0,.7))!important;
+}
+
+/* Exit uses a floor arrow at the right edge. */
+#objectLayer[data-staff="1"] .staff-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-staff="1"] .staff-nav>svg,
+#objectLayer[data-staff="1"] .staff-nav>img,
+#objectLayer[data-staff="1"] .staff-nav>.done-mark{display:none!important}
+#objectLayer[data-staff="1"] .staff-nav::before,
+#objectLayer[data-staff="1"] .staff-nav::after{display:none!important}
+#objectLayer[data-staff="1"] .staff-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:70px;
+  height:74px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(90deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.63));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+  opacity:.62;
+  animation:staffArrowPulse 1.55s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-staff="1"] .staff-nav:hover .staff-ground-arrow,
+#objectLayer[data-staff="1"].hint-mode .staff-nav .staff-ground-arrow{
+  opacity:1;
+  filter:brightness(1.16);
+}
+#objectLayer[data-staff="1"] .staff-nav-label{
+  position:absolute;
+  left:50%;
+  top:82%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+#objectLayer[data-staff="1"] .staff-nav:hover .staff-nav-label,
+#objectLayer[data-staff="1"].hint-mode .staff-nav .staff-nav-label{opacity:1}
+
+@keyframes staffArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.82;filter:brightness(1.1)}
+}
