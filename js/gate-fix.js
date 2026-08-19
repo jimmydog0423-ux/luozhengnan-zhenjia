@@ -49,7 +49,9 @@
       button.append(arrow, text);
     }
     const text = button.querySelector(".ground-nav-label");
-    if (text) text.textContent = label;
+    if (text && text.textContent !== label) {
+      text.textContent = label;
+    }
   }
 
   function decorateGateObjects() {
