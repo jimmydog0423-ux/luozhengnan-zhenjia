@@ -9,7 +9,11 @@
     gate: "assets/backgrounds/gate.webp",
     courtyard: "assets/backgrounds/courtyard.webp",
     hall1: "assets/backgrounds/hall1.webp",
-    auditorium: "assets/backgrounds/auditorium.webp"
+    auditorium: "assets/backgrounds/auditorium.webp",
+    class203: "assets/backgrounds/class203.webp",
+    infirmary: "assets/backgrounds/infirmary.webp",
+    computer: "assets/backgrounds/computer.webp",
+    hall2: "assets/backgrounds/hall2.webp"
   };
 
   const photo = document.createElement("img");
