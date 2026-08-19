@@ -63,3 +63,23 @@ small{display:block;margin-top:18px;color:#817786;line-height:1.6}
 .boss-panel{display:grid;grid-template-columns:260px 1fr;gap:22px;align-items:start}.boss-art{aspect-ratio:4/5;background:#0c0910;border:1px solid #49394e;border-radius:14px;overflow:hidden}.boss-art svg{width:100%;height:100%}.hp{font-size:18px;font-weight:900;color:#ff7180;margin:4px 0 16px}.boss-log{min-height:70px;padding:13px 14px;background:#0d0a10;border:1px solid #3e3244;border-radius:10px;line-height:1.55;color:#c9bdcc;margin-bottom:12px}
 .ending-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0}.stat{border:1px solid #403548;background:#0d0a11;border-radius:8px;padding:11px;color:#968d9d;font-size:12px}.stat b{display:block;color:#f1ecf4;font-size:22px;margin-top:4px}
 @media(max-width:760px){.hud{left:12px;right:12px;top:10px}.hud-stats{display:none}.toolbar{left:10px;right:10px;bottom:10px}.toolbar button{flex:1;padding:10px 8px}.message-box{bottom:68px}.card{padding:22px 18px}.dialogue-layout,.boss-panel{grid-template-columns:1fr}.portrait,.boss-art{width:min(230px,60vw);margin:auto}.dialogue-text{font-size:18px}.scene-object{width:76px;height:76px}.scene-object.door{width:66px;height:100px}.scene-object.npc{width:82px;height:112px}.ending-stats{grid-template-columns:1fr 1fr}}
+
+/* v3 investigation UX */
+.objective-panel{position:absolute;left:20px;bottom:22px;width:min(520px,calc(100vw - 420px));padding:12px 15px;background:rgba(10,8,14,.86);border:1px solid #4c3d55;border-radius:12px;backdrop-filter:blur(7px);box-shadow:0 14px 38px rgba(0,0,0,.35);pointer-events:none}
+.objective-kicker{font-size:10px;font-weight:950;letter-spacing:.18em;color:#ff6d79;text-transform:uppercase}
+.objective-text{margin-top:5px;color:#eee7f0;font-size:14px;line-height:1.55;font-weight:700}
+.title-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.title-actions button{flex:1;min-width:190px}
+.save-status{font-size:13px;margin:14px 0;color:#9f93a5}
+.scene-object.seen:not(.done){opacity:.74}.scene-object.done{border-color:rgba(102,223,187,.34);background:rgba(33,88,68,.12)}
+.scene-object.done:hover,.scene-object.done:focus-visible{border-color:#69deb8;box-shadow:0 0 0 3px rgba(105,222,184,.11),0 0 28px rgba(105,222,184,.22)}
+.scene-object.locked{filter:grayscale(.75) brightness(.7);opacity:.65}.scene-object.locked:hover{border-color:#a65a62}
+.done-mark{position:absolute;right:1px;top:1px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#183d31;border:1px solid #6cd8b5;color:#dffff3;font-weight:950;font-size:13px;pointer-events:none}
+.object-layer.hint-mode .scene-object{border-color:rgba(255,102,114,.58);background:rgba(113,34,52,.18);animation:hintPulse 1.7s ease-in-out infinite}
+.object-layer.hint-mode .scene-object.done{border-color:rgba(105,222,184,.62);background:rgba(33,88,68,.18)}
+.object-layer.hint-mode .scene-object::after{opacity:1}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,95,108,.08)}50%{box-shadow:0 0 0 7px rgba(255,95,108,.04)}}
+.map-grid button{min-height:78px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:5px}.map-grid button small{margin:0;color:#9f93a5;font-size:11px}.map-grid button.visited:not(.current){border-color:#51435a}.map-grid button.locked-map{opacity:.42;filter:grayscale(.5)}
+.case-summary{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 20px}.case-summary span{padding:7px 10px;border-radius:999px;background:#0f0c13;border:1px solid #3e3345;color:#bfb3c3;font-size:12px;font-weight:800}
+.deduction-list{display:grid;gap:9px;margin-bottom:24px}.deduction{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:13px 15px;background:#100d14;border:1px solid #3e3345;border-radius:10px}.deduction>div{display:grid;gap:5px}.deduction b{color:#eee8f0}.deduction span{font-size:12px;color:#9e92a3}.deduction strong{font-size:12px;color:#b98691;white-space:nowrap}.deduction.complete{border-color:#3e735f;background:#0d1915}.deduction.complete strong{color:#6fd8b7}
+@media(max-width:900px){.objective-panel{left:12px;right:12px;bottom:64px;width:auto}.toolbar{z-index:3}.message-box{bottom:120px}}
+@media(max-width:760px){.objective-panel{bottom:72px}.objective-text{font-size:12px}.toolbar{display:grid;grid-template-columns:1fr 1fr}.message-box{bottom:150px}.deduction{align-items:flex-start;flex-direction:column}.deduction strong{white-space:normal}}
