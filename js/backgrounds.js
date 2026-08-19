@@ -68,4 +68,11 @@
     objectScript.dataset.objectLoader = "true";
     document.body.appendChild(objectScript);
   }
+
+  if (!document.querySelector("script[data-minigame-art-loader]")) {
+    const minigameScript = document.createElement("script");
+    minigameScript.src = "js/minigames-art.js";
+    minigameScript.dataset.minigameArtLoader = "true";
+    document.body.appendChild(minigameScript);
+  }
 })();
