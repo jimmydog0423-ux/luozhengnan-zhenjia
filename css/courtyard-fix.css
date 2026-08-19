@@ -34,28 +34,28 @@
 #objectLayer[data-courtyard="1"] .courtyard-tree::before{border-radius:42% 36% 28% 34%!important}
 #objectLayer[data-courtyard="1"] .courtyard-fountain::before{border-radius:50%!important}
 
-/* The shoe is deliberately small, dim and tucked into the lower-right corner. */
+/* The shoe is deliberately small, dim and tucked under the lower-right bench. */
 #objectLayer[data-courtyard="1"] .courtyard-shoe{
-  width:86px!important;
-  height:62px!important;
-  opacity:.72;
+  width:72px!important;
+  height:50px!important;
+  opacity:.66;
   filter:none!important;
 }
 #objectLayer[data-courtyard="1"] .courtyard-shoe img{
   width:100%!important;
   height:100%!important;
   object-fit:contain!important;
-  transform:rotate(-13deg) scale(.82)!important;
+  transform:rotate(-13deg) scale(.78)!important;
   transform-origin:center center!important;
-  filter:brightness(.44) saturate(.72) contrast(.92) drop-shadow(0 7px 8px rgba(0,0,0,.62))!important;
-  opacity:.86;
+  filter:brightness(.36) saturate(.68) contrast(.9) drop-shadow(0 7px 8px rgba(0,0,0,.62))!important;
+  opacity:.82;
   transition:filter .16s ease,opacity .16s ease,transform .16s ease!important;
 }
 #objectLayer[data-courtyard="1"] .courtyard-shoe:hover img,
 #objectLayer[data-courtyard="1"].hint-mode .courtyard-shoe img{
-  filter:brightness(.72) saturate(.82) contrast(1) drop-shadow(0 7px 10px rgba(0,0,0,.65))!important;
+  filter:brightness(.64) saturate(.8) contrast(.98) drop-shadow(0 7px 10px rgba(0,0,0,.65))!important;
   opacity:1;
-  transform:rotate(-13deg) scale(.9)!important;
+  transform:rotate(-13deg) scale(.86)!important;
 }
 
 /* Courtyard movement is shown as arrows painted onto the ground, not floating doors. */
