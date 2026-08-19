@@ -3,7 +3,7 @@
 
   const GYM_PROPS = {
     "看台":   { x: 820,  y: 395, w: 430, h: 320, cls: "gym-bleacher" },
-    "籃球":   { x: 980,  y: 720, w: 104, h: 104, cls: "gym-ball" },
+    "籃球":   { x: 955,  y: 720, w: 104, h: 104, cls: "gym-ball" },
     "器材櫃": { x: 1490, y: 710, w: 190, h: 210, cls: "gym-locker" }
   };
 
