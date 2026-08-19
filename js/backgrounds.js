@@ -19,6 +19,8 @@
   photo.setAttribute("aria-hidden", "true");
   photo.style.display = "none";
   photo.style.pointerEvents = "none";
+  photo.style.objectFit = "cover";
+  photo.style.objectPosition = "center";
   roomArt.insertAdjacentElement("afterend", photo);
 
   function syncBackground() {
