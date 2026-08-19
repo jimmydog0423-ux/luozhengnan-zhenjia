@@ -31,12 +31,30 @@
   const layer = document.getElementById("objectLayer");
   if (!layer) return;
 
+  const ART_ENTRIES = Object.entries(OBJECT_ART).sort((a, b) => b[0].length - a[0].length);
+
+  function normalizeLabel(label) {
+    return String(label || "")
+      .replace(/^調查[:：]\s*/, "")
+      .replace(/^互動[:：]\s*/, "")
+      .trim();
+  }
+
+  function findObjectArt(label) {
+    const normalized = normalizeLabel(label);
+    const exact = OBJECT_ART[normalized];
+    if (exact) return exact;
+
+    const match = ART_ENTRIES.find(([name]) => normalized === name || normalized.startsWith(name + " ") || normalized.startsWith(name + "（") || normalized.startsWith(name + "("));
+    return match ? match[1] : null;
+  }
+
   function applyObjectArt() {
     layer.querySelectorAll("button.scene-object").forEach((button) => {
       const label = button.dataset.label || button.getAttribute("aria-label") || "";
-      const match = Object.entries(OBJECT_ART).find(([name]) => label.includes(name));
-      if (!match) return;
-      const [, src] = match;
+      const src = findObjectArt(label);
+      if (!src) return;
+
       let img = button.querySelector("img.object-sprite-img");
       if (!img) {
         const svg = button.querySelector("svg");
