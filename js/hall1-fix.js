@@ -7,12 +7,17 @@
     "拖行痕跡":       { x: 945,  y: 810, w: 330, h: 105, cls: "hall1-drag" }
   };
 
+  /*
+   * Door destinations on this background sit along the right wall in perspective.
+   * Markers are intentionally placed at each door threshold / floor seam rather than
+   * on the middle of the wall so they read as navigation arrows instead of stickers.
+   */
   const HALL1_NAV = {
-    "回中庭":   { x: 175,  y: 810, rot: 180, scale: 1.00, kind: "back" },
-    "二年三班": { x: 1260, y: 630, rot: 58,  scale: 0.92, kind: "room" },
-    "保健室":   { x: 1165, y: 555, rot: 54,  scale: 0.82, kind: "room" },
-    "電腦教室": { x: 1080, y: 495, rot: 50,  scale: 0.72, kind: "room" },
-    "二樓樓梯": { x: 1450, y: 785, rot: 58,  scale: 1.00, kind: "stairs" }
+    "回中庭":   { x: 175,  y: 820, rot: 180, scale: 0.92, kind: "back" },
+    "電腦教室": { x: 1080, y: 570, rot: 53,  scale: 0.62, kind: "room" },
+    "保健室":   { x: 1165, y: 635, rot: 56,  scale: 0.70, kind: "room" },
+    "二年三班": { x: 1260, y: 710, rot: 59,  scale: 0.80, kind: "room" },
+    "二樓樓梯": { x: 1415, y: 825, rot: 62,  scale: 0.88, kind: "stairs" }
   };
 
   function cleanLabel(raw) {
@@ -44,7 +49,7 @@
     button.dataset.hall1Nav = nav.kind;
     button.style.setProperty("--hall-arrow-rot", `${nav.rot}deg`);
     button.style.setProperty("--hall-arrow-scale", String(nav.scale));
-    setBox(button, { x: nav.x, y: nav.y, w: 150 * nav.scale, h: 105 * nav.scale });
+    setBox(button, { x: nav.x, y: nav.y, w: 132 * nav.scale, h: 92 * nav.scale });
 
     let arrow = button.querySelector(".hall1-ground-arrow");
     if (!arrow) {
@@ -98,7 +103,6 @@
     if (!layer || !roomName) return;
 
     syncHall1();
-    // Direct child replacement only: avoids the previous subtree MutationObserver loop.
     new MutationObserver(syncHall1).observe(layer, { childList: true });
     new MutationObserver(syncHall1).observe(roomName, { childList: true, characterData: true, subtree: true });
   }
