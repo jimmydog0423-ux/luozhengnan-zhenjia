@@ -2,10 +2,10 @@
   "use strict";
 
   const COURTYARD_PROPS = {
-    "停住的鐘":     { x: 675,  y: 318, w: 96,  h: 96,  type: "embedded", cls: "courtyard-clock" },
+    "停住的鐘":     { x: 675,  y: 276, w: 88,  h: 88,  type: "embedded", cls: "courtyard-clock" },
     "老榕樹":       { x: 1280, y: 430, w: 330, h: 470, type: "embedded", cls: "courtyard-tree" },
     "乾掉的噴水池": { x: 790,  y: 610, w: 450, h: 175, type: "embedded", cls: "courtyard-fountain" },
-    "單隻室內鞋":   { x: 1405, y: 705, w: 86,  h: 62,  type: "shoe",     cls: "courtyard-shoe" }
+    "單隻室內鞋":   { x: 1448, y: 744, w: 72,  h: 50,  type: "shoe",     cls: "courtyard-shoe" }
   };
 
   const COURTYARD_NAV = {
