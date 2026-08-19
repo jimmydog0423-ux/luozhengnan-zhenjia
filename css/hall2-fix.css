@@ -1,0 +1,151 @@
+/* Second-floor hallway correction: perspective-aware windows, room entrances and travel markers. */
+#objectLayer[data-hall2="1"] .hall2-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-hall2="1"] .hall2-prop.embedded-hitbox>img,
+#objectLayer[data-hall2="1"] .hall2-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-hall2="1"] .hall2-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-hall2="1"] .hall2-prop.embedded-hitbox:hover::before,
+#objectLayer[data-hall2="1"].hint-mode .hall2-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.045);
+  box-shadow:0 0 20px rgba(255,63,87,.15),inset 0 0 18px rgba(255,63,87,.025);
+}
+#objectLayer[data-hall2="1"] .hall2-window::before,
+#objectLayer[data-hall2="1"] .hall2-extra-window::before{
+  border-radius:12px!important;
+}
+
+/* The radio remains a physical foreground prop on the right wall. */
+#objectLayer[data-hall2="1"] .hall2-radio{
+  width:118px!important;
+  height:150px!important;
+  filter:none!important;
+}
+#objectLayer[data-hall2="1"] .hall2-radio img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  transform:scale(.86)!important;
+  transform-origin:center center!important;
+  filter:brightness(.66) saturate(.74) drop-shadow(0 9px 10px rgba(0,0,0,.58))!important;
+  opacity:.88;
+}
+#objectLayer[data-hall2="1"] .hall2-radio:hover img,
+#objectLayer[data-hall2="1"].hint-mode .hall2-radio img{
+  transform:scale(.93)!important;
+  filter:brightness(.92) saturate(.86) drop-shadow(0 9px 12px rgba(0,0,0,.62))!important;
+  opacity:1;
+}
+
+/* Remove the generic floating-door art. */
+#objectLayer[data-hall2="1"] .hall2-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-hall2="1"] .hall2-nav>svg,
+#objectLayer[data-hall2="1"] .hall2-nav>img,
+#objectLayer[data-hall2="1"] .hall2-nav>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-hall2="1"] .hall2-nav::before,
+#objectLayer[data-hall2="1"] .hall2-nav::after{display:none!important}
+
+/* Room entrances are subtle threshold arrows, not fake doors floating in space. */
+#objectLayer[data-hall2="1"] .hall2-nav-marker{
+  position:absolute;
+  left:50%;
+  top:48%;
+  pointer-events:none;
+  transform-origin:center center;
+}
+#objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-marker{
+  width:52px;
+  height:56px;
+  transform:translate(-50%,-50%) perspective(230px) rotateX(62deg) rotate(58deg) scale(var(--hall2-scale,1));
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(255,104,122,.86),rgba(130,28,48,.58));
+  box-shadow:0 0 15px rgba(255,62,89,.22);
+  opacity:.52;
+  animation:hall2Pulse 1.55s ease-in-out infinite;
+}
+
+/* Back / forward travel live on the floor. */
+#objectLayer[data-hall2="1"] .hall2-nav-back .hall2-nav-marker,
+#objectLayer[data-hall2="1"] .hall2-nav-forward .hall2-nav-marker{
+  width:74px;
+  height:78px;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(255,105,122,.9),rgba(135,28,49,.65));
+  box-shadow:0 0 22px rgba(255,62,89,.27);
+  opacity:.6;
+  animation:hall2Pulse 1.55s ease-in-out infinite;
+}
+#objectLayer[data-hall2="1"] .hall2-nav-forward .hall2-nav-marker{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) scale(var(--hall2-scale,1));
+}
+#objectLayer[data-hall2="1"] .hall2-nav-back .hall2-nav-marker{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg) scale(var(--hall2-scale,1));
+  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
+  box-shadow:0 0 18px rgba(210,205,220,.17);
+}
+#objectLayer[data-hall2="1"] .hall2-nav:hover .hall2-nav-marker,
+#objectLayer[data-hall2="1"].hint-mode .hall2-nav .hall2-nav-marker{
+  opacity:.98;
+  filter:brightness(1.16);
+}
+
+#objectLayer[data-hall2="1"] .hall2-nav-label{
+  position:absolute;
+  left:50%;
+  top:75%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.7;
+  pointer-events:none;
+}
+#objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-label{
+  font-size:10px;
+  transform:translate(-50%,4px) scale(var(--hall2-scale,1));
+}
+#objectLayer[data-hall2="1"] .hall2-nav:hover .hall2-nav-label,
+#objectLayer[data-hall2="1"].hint-mode .hall2-nav .hall2-nav-label{opacity:1}
+
+@keyframes hall2Pulse{
+  0%,100%{opacity:.45;filter:brightness(.92)}
+  50%{opacity:.8;filter:brightness(1.1)}
+}
