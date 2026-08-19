@@ -1,0 +1,139 @@
+/* Courtyard-only correction: align hotspots to actual background objects and use ground arrows for all exits. */
+#objectLayer[data-courtyard="1"] .courtyard-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+/* Embedded scenery uses the background art itself. */
+#objectLayer[data-courtyard="1"] .courtyard-prop.embedded-hitbox>img,
+#objectLayer[data-courtyard="1"] .courtyard-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  border-radius:14px;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-courtyard="1"] .courtyard-prop.embedded-hitbox:hover::before,
+#objectLayer[data-courtyard="1"].hint-mode .courtyard-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.055);
+  box-shadow:0 0 22px rgba(255,63,87,.16),inset 0 0 20px rgba(255,63,87,.035);
+}
+#objectLayer[data-courtyard="1"] .courtyard-clock::before{border-radius:50%!important}
+#objectLayer[data-courtyard="1"] .courtyard-tree::before{border-radius:42% 36% 28% 34%!important}
+#objectLayer[data-courtyard="1"] .courtyard-fountain::before{border-radius:50%!important}
+
+/* The shoe is deliberately small, dim and tucked into the lower-right corner. */
+#objectLayer[data-courtyard="1"] .courtyard-shoe{
+  width:86px!important;
+  height:62px!important;
+  opacity:.72;
+  filter:none!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-shoe img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  transform:rotate(-13deg) scale(.82)!important;
+  transform-origin:center center!important;
+  filter:brightness(.44) saturate(.72) contrast(.92) drop-shadow(0 7px 8px rgba(0,0,0,.62))!important;
+  opacity:.86;
+  transition:filter .16s ease,opacity .16s ease,transform .16s ease!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-shoe:hover img,
+#objectLayer[data-courtyard="1"].hint-mode .courtyard-shoe img{
+  filter:brightness(.72) saturate(.82) contrast(1) drop-shadow(0 7px 10px rgba(0,0,0,.65))!important;
+  opacity:1;
+  transform:rotate(-13deg) scale(.9)!important;
+}
+
+/* Courtyard movement is shown as arrows painted onto the ground, not floating doors. */
+#objectLayer[data-courtyard="1"] .courtyard-nav{
+  width:170px!important;
+  height:108px!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav>svg,
+#objectLayer[data-courtyard="1"] .courtyard-nav>img,
+#objectLayer[data-courtyard="1"] .courtyard-nav>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav::before,
+#objectLayer[data-courtyard="1"] .courtyard-nav::after{
+  display:none!important;
+}
+#objectLayer[data-courtyard="1"] .courtyard-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:78px;
+  height:82px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(255,105,122,.92),rgba(135,28,49,.68));
+  box-shadow:0 0 24px rgba(255,62,89,.32);
+  opacity:.67;
+  animation:courtyardArrowPulse 1.5s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav-back .courtyard-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg);
+  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav-left .courtyard-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(-58deg);
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav-right .courtyard-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(58deg);
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav:hover .courtyard-ground-arrow,
+#objectLayer[data-courtyard="1"].hint-mode .courtyard-nav .courtyard-ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav-label{
+  position:absolute;
+  left:50%;
+  top:84px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(5,5,8,.82);
+  border:1px solid rgba(255,255,255,.14);
+  color:#f6eff7;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.03em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+#objectLayer[data-courtyard="1"] .courtyard-nav:hover .courtyard-nav-label,
+#objectLayer[data-courtyard="1"].hint-mode .courtyard-nav .courtyard-nav-label{opacity:1}
+@keyframes courtyardArrowPulse{
+  0%,100%{opacity:.52;filter:brightness(.92)}
+  50%{opacity:.88;filter:brightness(1.13)}
+}
