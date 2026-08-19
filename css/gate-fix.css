@@ -1,0 +1,171 @@
+/* Gate scene correction: accurate hitboxes, ground navigation, RPG dialogue crop */
+#objectLayer[data-room="gate"] .gate-hotspot{
+  background:transparent!important;
+  border:0!important;
+  overflow:visible!important;
+}
+#objectLayer[data-room="gate"] .gate-hotspot>img,
+#objectLayer[data-room="gate"] .gate-hotspot>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-room="gate"] .gate-hotspot::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  border-radius:10px;
+  opacity:0;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+  pointer-events:none;
+}
+#objectLayer[data-room="gate"] .gate-hotspot:hover::before,
+#objectLayer[data-room="gate"].hint-mode .gate-hotspot::before{
+  opacity:1;
+  border-color:rgba(255,91,111,.8);
+  background:rgba(105,20,38,.08);
+  box-shadow:0 0 20px rgba(255,65,91,.18),inset 0 0 20px rgba(255,65,91,.04);
+}
+#objectLayer[data-room="gate"] .gate-plaque::before{border-radius:5px}
+#objectLayer[data-room="gate"] .gate-booth::before{border-radius:14px}
+#objectLayer[data-room="gate"] .gate-board::before{border-radius:8px}
+
+#objectLayer[data-room="gate"] .ground-nav{
+  width:190px!important;
+  height:120px!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-room="gate"] .ground-nav>svg,
+#objectLayer[data-room="gate"] .ground-nav>img,
+#objectLayer[data-room="gate"] .ground-nav>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-room="gate"] .ground-nav::before{
+  display:none!important;
+}
+#objectLayer[data-room="gate"] .ground-nav::after{
+  display:none!important;
+}
+#objectLayer[data-room="gate"] .ground-arrow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:92px;
+  height:94px;
+  transform:translate(-50%,-54%) perspective(260px) rotateX(58deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 48%,72% 48%,72% 100%,28% 100%,28% 48%,0 48%);
+  background:linear-gradient(180deg,rgba(255,111,128,.96),rgba(143,30,51,.76));
+  border-radius:8px;
+  box-shadow:0 0 28px rgba(255,62,89,.42);
+  opacity:.78;
+  animation:gateArrowPulse 1.35s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-room="gate"] .ground-nav-back .ground-arrow{
+  transform:translate(-50%,-46%) perspective(260px) rotateX(58deg) rotate(180deg);
+  background:linear-gradient(180deg,rgba(211,208,218,.82),rgba(89,82,101,.7));
+  box-shadow:0 0 22px rgba(210,205,220,.22);
+}
+#objectLayer[data-room="gate"] .ground-nav:hover .ground-arrow,
+#objectLayer[data-room="gate"].hint-mode .ground-nav .ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+#objectLayer[data-room="gate"] .ground-nav-label{
+  position:absolute;
+  left:50%;
+  top:94px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(6,6,9,.82);
+  border:1px solid rgba(255,255,255,.16);
+  color:#f6eef7;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-shadow:0 2px 7px #000;
+  opacity:.76;
+  pointer-events:none;
+}
+#objectLayer[data-room="gate"] .ground-nav:hover .ground-nav-label,
+#objectLayer[data-room="gate"].hint-mode .ground-nav .ground-nav-label{opacity:1}
+@keyframes gateArrowPulse{
+  0%,100%{opacity:.58;filter:brightness(.95)}
+  50%{opacity:.95;filter:brightness(1.18)}
+}
+
+/* Gate intro dialogue: keep the head in frame and crop lower body like an RPG portrait. */
+#modalBody.gate-dialogue .dialogue-layout{
+  min-height:440px;
+  grid-template-columns:minmax(310px,42%) 1fr;
+  gap:18px;
+  align-items:stretch;
+  overflow:hidden;
+}
+#modalBody.gate-dialogue .dialogue-layout .portrait{
+  height:440px;
+  align-self:stretch;
+  overflow:hidden;
+  background:radial-gradient(circle at 50% 32%,rgba(120,42,58,.18),transparent 60%);
+}
+#modalBody.gate-dialogue .dialogue-layout .portrait img.character-sprite{
+  top:0!important;
+  bottom:auto!important;
+  left:50%!important;
+  width:108%!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:contain!important;
+  object-position:center top!important;
+  transform:translateX(-50%)!important;
+  transform-origin:center top!important;
+}
+#modalBody.gate-dialogue .portrait[data-gate-shot="bust"] img.character-sprite{
+  top:-2%!important;
+  width:122%!important;
+}
+#modalBody.gate-dialogue .portrait[data-gate-shot="close"] img.character-sprite{
+  top:-4%!important;
+  width:138%!important;
+}
+#modalBody.gate-dialogue .portrait[data-gate-speaker="羅正男"] img.character-sprite{left:49%!important}
+#modalBody.gate-dialogue .portrait[data-gate-speaker="薛喜"] img.character-sprite{left:51%!important}
+#modalBody.gate-dialogue .dialogue-layout>div:not(.portrait):not(.dialogue-accent){
+  align-self:center;
+  padding:30px 30px 34px 18px;
+}
+#modalBody.gate-dialogue .dialogue-layout.speaker-right>div:not(.portrait):not(.dialogue-accent){
+  padding-left:30px;
+  padding-right:18px;
+}
+#modalBody.gate-dialogue .dialogue-text{
+  max-width:560px;
+  font-size:21px;
+  line-height:1.8;
+}
+#modalBody.gate-dialogue .dialogue-actions{margin-top:28px}
+
+@media(max-width:760px){
+  #modalBody.gate-dialogue .dialogue-layout{
+    grid-template-columns:42% 58%;
+    min-height:360px;
+    gap:6px;
+  }
+  #modalBody.gate-dialogue .dialogue-layout .portrait{height:360px}
+  #modalBody.gate-dialogue .dialogue-text{font-size:17px}
+  #modalBody.gate-dialogue .dialogue-layout>div:not(.portrait):not(.dialogue-accent){padding:18px 10px}
+}
