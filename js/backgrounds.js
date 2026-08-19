@@ -54,4 +54,11 @@
   });
 
   syncBackground();
+
+  if (!document.querySelector("script[data-character-loader]")) {
+    const characterScript = document.createElement("script");
+    characterScript.src = "js/characters.js";
+    characterScript.dataset.characterLoader = "true";
+    document.body.appendChild(characterScript);
+  }
 })();
