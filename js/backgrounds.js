@@ -61,4 +61,11 @@
     characterScript.dataset.characterLoader = "true";
     document.body.appendChild(characterScript);
   }
+
+  if (!document.querySelector("script[data-object-loader]")) {
+    const objectScript = document.createElement("script");
+    objectScript.src = "js/objects.js";
+    objectScript.dataset.objectLoader = "true";
+    document.body.appendChild(objectScript);
+  }
 })();
