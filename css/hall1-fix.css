@@ -1,0 +1,105 @@
+/* First-floor hallway correction: align props to actual background geometry and replace floating doors with ground arrows. */
+#objectLayer[data-hall1="1"] .hall1-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#objectLayer[data-hall1="1"] .hall1-prop>img,
+#objectLayer[data-hall1="1"] .hall1-prop>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-hall1="1"] .hall1-prop::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-hall1="1"] .hall1-prop:hover::before,
+#objectLayer[data-hall1="1"].hint-mode .hall1-prop::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.045);
+  box-shadow:0 0 20px rgba(255,63,87,.15),inset 0 0 18px rgba(255,63,87,.025);
+}
+#objectLayer[data-hall1="1"] .hall1-poster::before{border-radius:12px!important}
+#objectLayer[data-hall1="1"] .hall1-locker::before{border-radius:12px!important}
+#objectLayer[data-hall1="1"] .hall1-drag::before{border-radius:50%!important}
+
+/* Navigation markers live on the corridor floor / door thresholds. */
+#objectLayer[data-hall1="1"] .hall1-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-hall1="1"] .hall1-nav>svg,
+#objectLayer[data-hall1="1"] .hall1-nav>img,
+#objectLayer[data-hall1="1"] .hall1-nav>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-hall1="1"] .hall1-nav::before,
+#objectLayer[data-hall1="1"] .hall1-nav::after{display:none!important}
+#objectLayer[data-hall1="1"] .hall1-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:46%;
+  width:74px;
+  height:78px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(var(--hall-arrow-rot,0deg)) scale(var(--hall-arrow-scale,1));
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(255,105,122,.9),rgba(135,28,49,.64));
+  box-shadow:0 0 22px rgba(255,62,89,.28);
+  opacity:.62;
+  animation:hall1ArrowPulse 1.5s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-hall1="1"] .hall1-nav-back .hall1-ground-arrow{
+  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
+  box-shadow:0 0 18px rgba(210,205,220,.17);
+}
+#objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-ground-arrow,
+#objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-ground-arrow{
+  opacity:1;
+  filter:brightness(1.16);
+}
+#objectLayer[data-hall1="1"] .hall1-nav-label{
+  position:absolute;
+  left:50%;
+  top:76%;
+  transform:translate(-50%,10px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.7;
+  pointer-events:none;
+}
+#objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
+  font-size:11px;
+  transform:translate(-50%,6px) scale(var(--hall-arrow-scale,1));
+}
+#objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-nav-label,
+#objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-nav-label{opacity:1}
+@keyframes hall1ArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.82;filter:brightness(1.12)}
+}
