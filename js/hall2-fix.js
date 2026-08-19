@@ -4,15 +4,15 @@
   const HALL2_PROPS = {
     "窗戶":         { x: 290, y: 325, w: 235, h: 250, cls: "hall2-window", type: "embedded" },
     "不存在的窗戶": { x: 555, y: 365, w: 155, h: 205, cls: "hall2-extra-window", type: "embedded" },
-    "無線電":       { x: 1185, y: 520, w: 118, h: 150, cls: "hall2-radio", type: "prop" }
+    "無線電":       { x: 1135, y: 490, w: 92, h: 122, cls: "hall2-radio", type: "prop" }
   };
 
   const HALL2_NAV = {
-    "音樂教室": { x: 1045, y: 548, scale: 0.56, kind: "door" },
-    "圖書館":   { x: 1215, y: 565, scale: 0.72, kind: "door" },
-    "教職員室": { x: 1400, y: 590, scale: 0.90, kind: "door" },
+    "音樂教室": { x: 1015, y: 555, scale: 0.52, kind: "door" },
+    "圖書館":   { x: 1270, y: 635, scale: 0.62, kind: "door" },
+    "教職員室": { x: 1470, y: 650, scale: 0.78, kind: "door" },
     "回一樓":   { x: 165,  y: 805, scale: 1.00, kind: "back" },
-    "舊校舍":   { x: 805,  y: 700, scale: 0.90, kind: "forward" }
+    "舊校舍":   { x: 805,  y: 720, scale: 0.88, kind: "forward" }
   };
 
   function cleanLabel(raw) {
