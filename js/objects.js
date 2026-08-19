@@ -6,7 +6,19 @@
     "班級照片": "assets/objects/classphoto.webp",
     "紫外線燈": "assets/objects/uvlight.webp",
     "鏡子": "assets/objects/mirror.webp",
-    "不存在的窗戶": "assets/objects/window8.webp"
+    "不存在的窗戶": "assets/objects/window8.webp",
+    "電腦 A": "assets/objects/computer.webp",
+    "電腦 B": "assets/objects/computer.webp",
+    "電腦 C": "assets/objects/computer.webp",
+    "伺服器櫃": "assets/objects/server.webp",
+    "無線電": "assets/objects/radio.webp",
+    "節拍器": "assets/objects/metronome.webp",
+    "泛黃樂譜": "assets/objects/score.webp",
+    "點名簿": "assets/objects/roll.webp",
+    "老式保險箱": "assets/objects/safe.webp",
+    "紅色電纜": "assets/objects/cable.webp",
+    "舊錄音帶": "assets/objects/tape.webp",
+    "後台紙箱": "assets/objects/wish_items.webp"
   };
 
   const layer = document.getElementById("objectLayer");
