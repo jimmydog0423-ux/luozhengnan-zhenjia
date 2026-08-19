@@ -1,4 +1,4 @@
-/* First-floor hallway correction: align props to actual background geometry and replace floating doors with ground arrows. */
+/* First-floor hallway correction: align props to actual background geometry and keep navigation markers on door thresholds / floor seams. */
 #objectLayer[data-hall1="1"] .hall1-prop{
   background:transparent!important;
   border:0!important;
@@ -31,7 +31,6 @@
 #objectLayer[data-hall1="1"] .hall1-locker::before{border-radius:12px!important}
 #objectLayer[data-hall1="1"] .hall1-drag::before{border-radius:50%!important}
 
-/* Navigation markers live on the corridor floor / door thresholds. */
 #objectLayer[data-hall1="1"] .hall1-nav{
   min-width:0!important;
   min-height:0!important;
@@ -51,55 +50,63 @@
 }
 #objectLayer[data-hall1="1"] .hall1-nav::before,
 #objectLayer[data-hall1="1"] .hall1-nav::after{display:none!important}
+
+/* Smaller, flatter arrows so they visually sit on the floor instead of floating on the wall. */
 #objectLayer[data-hall1="1"] .hall1-ground-arrow{
   position:absolute;
   left:50%;
-  top:46%;
-  width:74px;
-  height:78px;
-  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(var(--hall-arrow-rot,0deg)) scale(var(--hall-arrow-scale,1));
+  top:48%;
+  width:58px;
+  height:62px;
+  transform:translate(-50%,-50%) perspective(300px) rotateX(70deg) rotate(var(--hall-arrow-rot,0deg)) scale(var(--hall-arrow-scale,1));
   transform-origin:center center;
   clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
-  background:linear-gradient(180deg,rgba(255,105,122,.9),rgba(135,28,49,.64));
-  box-shadow:0 0 22px rgba(255,62,89,.28);
-  opacity:.62;
-  animation:hall1ArrowPulse 1.5s ease-in-out infinite;
+  background:linear-gradient(180deg,rgba(255,105,122,.82),rgba(112,22,43,.55));
+  box-shadow:0 0 14px rgba(255,62,89,.22);
+  opacity:.48;
+  animation:hall1ArrowPulse 1.65s ease-in-out infinite;
   pointer-events:none;
 }
 #objectLayer[data-hall1="1"] .hall1-nav-back .hall1-ground-arrow{
-  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
-  box-shadow:0 0 18px rgba(210,205,220,.17);
+  background:linear-gradient(180deg,rgba(210,207,216,.72),rgba(82,76,94,.52));
+  box-shadow:0 0 14px rgba(210,205,220,.14);
+}
+#objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-ground-arrow{
+  width:64px;
+  height:68px;
 }
 #objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-ground-arrow,
 #objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-ground-arrow{
-  opacity:1;
-  filter:brightness(1.16);
+  opacity:.92;
+  filter:brightness(1.18);
 }
+
 #objectLayer[data-hall1="1"] .hall1-nav-label{
   position:absolute;
   left:50%;
-  top:76%;
-  transform:translate(-50%,10px);
+  top:70%;
+  transform:translate(-50%,8px);
   white-space:nowrap;
-  padding:5px 9px;
+  padding:4px 8px;
   border-radius:999px;
-  background:rgba(5,5,8,.84);
-  border:1px solid rgba(255,255,255,.13);
+  background:rgba(5,5,8,.78);
+  border:1px solid rgba(255,255,255,.11);
   color:#f6eff7;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.025em;
-  text-shadow:0 2px 7px #000;
-  opacity:.7;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.02em;
+  text-shadow:0 2px 6px #000;
+  opacity:.62;
   pointer-events:none;
 }
 #objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
-  font-size:11px;
-  transform:translate(-50%,6px) scale(var(--hall-arrow-scale,1));
+  font-size:10px;
+  transform:translate(-50%,5px) scale(var(--hall-arrow-scale,1));
 }
 #objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-nav-label,
 #objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-nav-label{opacity:1}
+
 @keyframes hall1ArrowPulse{
-  0%,100%{opacity:.48;filter:brightness(.92)}
-  50%{opacity:.82;filter:brightness(1.12)}
+  0%,100%{opacity:.38;filter:brightness(.9)}
+  50%{opacity:.68;filter:brightness(1.10)}
 }
