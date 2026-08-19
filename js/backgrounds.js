@@ -1,0 +1,45 @@
+(() => {
+  "use strict";
+
+  const roomArt = document.getElementById("roomArt");
+  const roomUse = document.getElementById("roomArtUse");
+  if (!roomArt || !roomUse) return;
+
+  const BACKGROUNDS = {
+    gate: "assets/backgrounds/gate.webp",
+    courtyard: "assets/backgrounds/courtyard.webp",
+    hall1: "assets/backgrounds/hall1.webp",
+    auditorium: "assets/backgrounds/auditorium.webp"
+  };
+
+  const photo = document.createElement("img");
+  photo.id = "photoRoomArt";
+  photo.className = "room-art photo-room-art";
+  photo.alt = "";
+  photo.setAttribute("aria-hidden", "true");
+  photo.style.display = "none";
+  photo.style.pointerEvents = "none";
+  roomArt.insertAdjacentElement("afterend", photo);
+
+  function syncBackground() {
+    const href = roomUse.getAttribute("href") || "";
+    const room = href.includes("#room-") ? href.split("#room-")[1] : "";
+    const src = BACKGROUNDS[room];
+
+    if (src) {
+      if (photo.getAttribute("src") !== src) photo.setAttribute("src", src);
+      photo.style.display = "block";
+      roomArt.style.display = "none";
+    } else {
+      photo.style.display = "none";
+      roomArt.style.display = "block";
+    }
+  }
+
+  new MutationObserver(syncBackground).observe(roomUse, {
+    attributes: true,
+    attributeFilter: ["href"]
+  });
+
+  syncBackground();
+})();
