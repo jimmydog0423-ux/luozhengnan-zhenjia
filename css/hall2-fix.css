@@ -33,25 +33,25 @@
   border-radius:12px!important;
 }
 
-/* The radio remains a physical foreground prop on the right wall. */
+/* The radio remains a small physical foreground prop and no longer overlaps the library marker. */
 #objectLayer[data-hall2="1"] .hall2-radio{
-  width:118px!important;
-  height:150px!important;
+  width:92px!important;
+  height:122px!important;
   filter:none!important;
 }
 #objectLayer[data-hall2="1"] .hall2-radio img{
   width:100%!important;
   height:100%!important;
   object-fit:contain!important;
-  transform:scale(.86)!important;
+  transform:scale(.82)!important;
   transform-origin:center center!important;
-  filter:brightness(.66) saturate(.74) drop-shadow(0 9px 10px rgba(0,0,0,.58))!important;
-  opacity:.88;
+  filter:brightness(.62) saturate(.72) drop-shadow(0 8px 9px rgba(0,0,0,.58))!important;
+  opacity:.84;
 }
 #objectLayer[data-hall2="1"] .hall2-radio:hover img,
 #objectLayer[data-hall2="1"].hint-mode .hall2-radio img{
-  transform:scale(.93)!important;
-  filter:brightness(.92) saturate(.86) drop-shadow(0 9px 12px rgba(0,0,0,.62))!important;
+  transform:scale(.9)!important;
+  filter:brightness(.9) saturate(.84) drop-shadow(0 9px 11px rgba(0,0,0,.62))!important;
   opacity:1;
 }
 
@@ -76,7 +76,7 @@
 #objectLayer[data-hall2="1"] .hall2-nav::before,
 #objectLayer[data-hall2="1"] .hall2-nav::after{display:none!important}
 
-/* Room entrances are subtle threshold arrows, not fake doors floating in space. */
+/* Room entrances are small threshold arrows. */
 #objectLayer[data-hall2="1"] .hall2-nav-marker{
   position:absolute;
   left:50%;
@@ -85,13 +85,13 @@
   transform-origin:center center;
 }
 #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-marker{
-  width:52px;
-  height:56px;
+  width:48px;
+  height:52px;
   transform:translate(-50%,-50%) perspective(230px) rotateX(62deg) rotate(58deg) scale(var(--hall2-scale,1));
   clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
   background:linear-gradient(180deg,rgba(255,104,122,.86),rgba(130,28,48,.58));
-  box-shadow:0 0 15px rgba(255,62,89,.22);
-  opacity:.52;
+  box-shadow:0 0 14px rgba(255,62,89,.20);
+  opacity:.48;
   animation:hall2Pulse 1.55s ease-in-out infinite;
 }
 
@@ -123,8 +123,8 @@
 #objectLayer[data-hall2="1"] .hall2-nav-label{
   position:absolute;
   left:50%;
-  top:75%;
-  transform:translate(-50%,7px);
+  top:78%;
+  transform:translate(-50%,8px);
   white-space:nowrap;
   padding:5px 9px;
   border-radius:999px;
@@ -139,8 +139,9 @@
   pointer-events:none;
 }
 #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-label{
+  top:88%;
   font-size:10px;
-  transform:translate(-50%,4px) scale(var(--hall2-scale,1));
+  transform:translate(-50%,5px) scale(var(--hall2-scale,1));
 }
 #objectLayer[data-hall2="1"] .hall2-nav:hover .hall2-nav-label,
 #objectLayer[data-hall2="1"].hint-mode .hall2-nav .hall2-nav-label{opacity:1}
