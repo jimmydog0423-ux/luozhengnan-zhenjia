@@ -52,6 +52,28 @@
   filter:brightness(.98) saturate(.9) drop-shadow(0 10px 12px rgba(0,0,0,.56))!important;
 }
 
+/* Completed backstage box uses the dedicated uploaded artwork, which already contains its check and caption. */
+#objectLayer[data-auditorium="1"] .aud-wishbox[data-object-art-state="completed"]{
+  width:245px!important;
+  height:195px!important;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox[data-object-art-state="completed"] img{
+  transform:scale(.98)!important;
+  filter:brightness(.82) saturate(.86) drop-shadow(0 12px 12px rgba(0,0,0,.56))!important;
+  opacity:.96;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox[data-object-art-state="completed"]:hover img,
+#objectLayer[data-auditorium="1"].hint-mode .aud-wishbox[data-object-art-state="completed"] img{
+  transform:scale(1.02)!important;
+  filter:brightness(1) saturate(.94) drop-shadow(0 12px 14px rgba(0,0,0,.6))!important;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox[data-object-art-state="completed"]>.done-mark{
+  display:none!important;
+}
+#objectLayer[data-auditorium="1"] .aud-wishbox[data-object-art-state="completed"]::after{
+  display:none!important;
+}
+
 /* Both exits are ground arrows instead of floating door icons. */
 #objectLayer[data-auditorium="1"] .aud-nav{
   width:170px!important;
