@@ -13,7 +13,13 @@
     class203: "assets/backgrounds/class203.webp",
     infirmary: "assets/backgrounds/infirmary.webp",
     computer: "assets/backgrounds/computer.webp",
-    hall2: "assets/backgrounds/hall2.webp"
+    hall2: "assets/backgrounds/hall2.webp",
+    music: "assets/backgrounds/music.webp",
+    library: "assets/backgrounds/library.webp",
+    staff: "assets/backgrounds/staff.webp",
+    gym: "assets/backgrounds/gym.webp",
+    oldhall: "assets/backgrounds/oldhall.webp",
+    basement: "assets/backgrounds/basement.webp"
   };
 
   const photo = document.createElement("img");
