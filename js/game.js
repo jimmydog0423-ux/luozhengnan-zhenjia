@@ -4,12 +4,14 @@
 const $ = (id) => document.getElementById(id);
 const UI = {
   roomArtUse: $("roomArtUse"), objectLayer: $("objectLayer"), roomName: $("roomName"), roomSub: $("roomSub"),
-  clueCount: $("clueCount"), winCount: $("winCount"), messageBox: $("messageBox"),
+  clueCount: $("clueCount"), winCount: $("winCount"), roomProgress: $("roomProgress"), objectiveText: $("objectiveText"), messageBox: $("messageBox"),
   title: $("titleOverlay"), modal: $("modalOverlay"), modalCard: $("modalCard"), modalBody: $("modalBody"), modalClose: $("modalClose"),
-  pause: $("pauseOverlay"), ending: $("endingOverlay"), endingTitle: $("endingTitle"), endingText: $("endingText"), endingStats: $("endingStats")
+  pause: $("pauseOverlay"), ending: $("endingOverlay"), endingTitle: $("endingTitle"), endingText: $("endingText"), endingStats: $("endingStats"),
+  continueBtn: $("continueBtn"), hintBtn: $("hintBtn"), saveStatus: $("saveStatus")
 };
 
-const SAVE_KEY = "red_school_roger_click_v2";
+const SAVE_KEY = "red_school_roger_click_v3";
+const RUN_KEY = "red_school_roger_run_v3";
 const loadSave = () => { try { return Object.assign({clears:0,badEnds:0,trueEnds:0,best:null}, JSON.parse(localStorage.getItem(SAVE_KEY)||"{}")); } catch { return {clears:0,badEnds:0,trueEnds:0,best:null}; } };
 let save = loadSave();
 const persist = () => localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -77,8 +79,31 @@ let G;
 let messageTimer = null;
 
 function freshState(){
-  return {running:true,startedAt:performance.now()/1000,room:"gate",visited:new Set(["gate"]),fastTravel:new Set(["gate"]),clues:new Set(),notes:[],flags:{},miniWins:0,wrongChoices:0,shaxyTrust:0,overloadHeart:0,pyramidKey:false,dialogue:null,boss:null};
+  return {running:true,startedAt:performance.now()/1000,room:"gate",visited:new Set(["gate"]),fastTravel:new Set(["gate"]),clues:new Set(),notes:[],examined:new Set(),flags:{},miniWins:0,wrongChoices:0,shaxyTrust:0,overloadHeart:0,pyramidKey:false,dialogue:null,boss:null};
 }
+
+function elapsedSeconds(){ return Math.max(0, Math.floor(performance.now()/1000 - G.startedAt)); }
+function saveRun(){
+  if(!G?.running || G.boss) return;
+  const data={
+    room:G.room,visited:[...G.visited],fastTravel:[...G.fastTravel],clues:[...G.clues],notes:G.notes,examined:[...G.examined],
+    flags:G.flags,miniWins:G.miniWins,wrongChoices:G.wrongChoices,shaxyTrust:G.shaxyTrust,overloadHeart:G.overloadHeart,pyramidKey:G.pyramidKey,elapsed:elapsedSeconds()
+  };
+  localStorage.setItem(RUN_KEY,JSON.stringify(data));
+  refreshContinueButton();
+}
+function hasRunSave(){ try{return !!JSON.parse(localStorage.getItem(RUN_KEY)||"null")}catch{return false} }
+function restoreRun(){
+  try{
+    const d=JSON.parse(localStorage.getItem(RUN_KEY)||"null"); if(!d)return false;
+    G=freshState(); G.room=d.room&&ROOMS[d.room]?d.room:"gate"; G.visited=new Set(d.visited||[G.room]); G.fastTravel=new Set(d.fastTravel||[G.room]);
+    G.clues=new Set(d.clues||[]); G.notes=Array.isArray(d.notes)?d.notes:[]; G.examined=new Set(d.examined||[]); G.flags=d.flags||{};
+    G.miniWins=d.miniWins||0; G.wrongChoices=d.wrongChoices||0; G.shaxyTrust=d.shaxyTrust||0; G.overloadHeart=d.overloadHeart||0; G.pyramidKey=!!d.pyramidKey;
+    G.startedAt=performance.now()/1000-(d.elapsed||0); G.dialogue=null; G.boss=null; return true;
+  }catch{return false}
+}
+function clearRunSave(){ localStorage.removeItem(RUN_KEY); refreshContinueButton(); }
+function refreshContinueButton(){ if(UI.continueBtn)UI.continueBtn.hidden=!hasRunSave(); }
 
 function art(symbol, cls="") { return `<svg class="${cls}" viewBox="0 0 300 380" aria-hidden="true"><use href="assets/art.svg#${symbol}" width="100%" height="100%"></use></svg>`; }
 function objectSymbol(id){
@@ -95,22 +120,58 @@ function objectSymbol(id){
 }
 function propClass(id){ return id.startsWith("npc") || id==="shaxy" ? "npc" : (id==="door"||id==="exit" ? "door" : ""); }
 
+function propKey(room,id){return `${room}:${id}`}
+function propDone(room,id){
+  const clueByProp={
+    "courtyard:shoe":"shoe","class203:photo":"photo32","class203:drawer":"heart1","infirmary:uv":"uv",
+    "computer:pc1":"post","computer:pc2":"post","computer:pc3":"post","hall2:extra":"window","music:score":"score",
+    "library:photoWall":"yearbook","library:table":"heart2","staff:roll":"roll","auditorium:wish":"heart3","basement:cable":"cable","basement:tape":"tape"
+  };
+  const clue=clueByProp[propKey(room,id)]; if(clue&&G.clues.has(clue))return true;
+  if(room==="music"&&id==="npcFinger")return !!G.flags.fingerWon;
+  if(room==="library"&&id==="npcToyz")return !!G.flags.toyzWon;
+  if(room==="staff"&&id==="npcGod")return !!G.flags.pokerWon;
+  if(room==="oldhall"&&id==="shaxy")return !!G.flags.fakeSeen;
+  return false;
+}
+function roomProgress(){
+  const props=PROPS[G.room]||[]; const done=props.filter(([id])=>G.examined.has(propKey(G.room,id))||propDone(G.room,id)).length; return [done,props.length];
+}
+function bossReady(){return G.clues.has("roll")&&G.clues.has("window")&&G.miniWins>=2}
+function objective(){
+  if(G.pyramidKey)return G.room==="basement"?"找到地下機房中新出現的入口，面對金字塔紹安。":"前往地下機房，追查控制紅色學校的真正源頭。";
+  const hearts=["heart1","heart2","heart3"].filter(x=>G.clues.has(x)).length;
+  if(bossReady())return hearts===3?"三個心願碎片已集齊。前往紅色禮堂舞台深處。":"舞台門已可開啟；若想找出真相，先找齊三個心願碎片。";
+  const tasks=[]; if(!G.clues.has("window"))tasks.push("確認二樓第八扇窗"); if(!G.clues.has("roll"))tasks.push("取得教職員室點名簿"); if(G.miniWins<2)tasks.push(`完成 NPC 挑戰 ${G.miniWins}/2`);
+  return tasks.length?tasks.join("・"):"繼續調查校園異常。";
+}
+function deductionStatus(){
+  const rules=[
+    ["舞台門條件",G.clues.has("window")&&G.clues.has("roll")&&G.miniWins>=2,`第八扇窗 ${G.clues.has("window")?"✓":"○"}　點名簿 ${G.clues.has("roll")?"✓":"○"}　NPC 協助 ${Math.min(G.miniWins,2)}/2`],
+    ["超負荷的心願",["heart1","heart2","heart3"].every(x=>G.clues.has(x)),`心願碎片 ${["heart1","heart2","heart3"].filter(x=>G.clues.has(x)).length}/3`],
+    ["地下的真正源頭",G.clues.has("cable")&&G.clues.has("tape"),`紅色電纜 ${G.clues.has("cable")?"✓":"○"}　舊錄音帶 ${G.clues.has("tape")?"✓":"○"}`]
+  ];
+  return rules;
+}
+
 function renderRoom(){
   const room = ROOMS[G.room];
   UI.roomArtUse.setAttribute("href", `assets/art.svg#room-${G.room}`);
   UI.roomName.textContent = room.name; UI.roomSub.textContent = room.sub;
   UI.clueCount.textContent = G.clues.size; UI.winCount.textContent = G.miniWins;
+  const [done,total]=roomProgress(); if(UI.roomProgress)UI.roomProgress.textContent=`${done}/${total}`; if(UI.objectiveText)UI.objectiveText.textContent=objective();
   UI.objectLayer.innerHTML = "";
 
   for(const [id,x,y,label] of PROPS[G.room]||[]){
+    const seen=G.examined.has(propKey(G.room,id)), doneProp=propDone(G.room,id);
     const b = document.createElement("button");
-    b.type="button"; b.className=`scene-object ${propClass(id)}`; b.dataset.label=`調查：${label}`; b.setAttribute("aria-label",`調查 ${label}`);
+    b.type="button"; b.className=`scene-object ${propClass(id)}${seen?" seen":""}${doneProp?" done":""}`; b.dataset.label=`${doneProp?"已完成":"調查"}：${label}`; b.setAttribute("aria-label",`${doneProp?"已完成":"調查"} ${label}`);
     b.style.left=`${x/16}%`; b.style.top=`${y/9}%`;
-    b.innerHTML=`<svg viewBox="0 0 180 180" aria-hidden="true"><use href="assets/art.svg#${objectSymbol(id)}" width="100%" height="100%"></use></svg>`;
+    b.innerHTML=`<svg viewBox="0 0 180 180" aria-hidden="true"><use href="assets/art.svg#${objectSymbol(id)}" width="100%" height="100%"></use></svg>${doneProp?'<span class="done-mark">✓</span>':''}`;
     b.addEventListener("click",()=>interactProp(id)); UI.objectLayer.appendChild(b);
   }
   for(const [target,x,y,label] of room.doors){
-    const b=document.createElement("button"); b.type="button"; b.className="scene-object door"; b.dataset.label=label; b.setAttribute("aria-label",label);
+    const b=document.createElement("button"); b.type="button"; b.className=`scene-object door${target==="boss"&&!bossReady()?" locked":""}${target==="pyramid"&&!G.pyramidKey?" locked":""}`; b.dataset.label=label; b.setAttribute("aria-label",label);
     b.style.left=`${x/16}%`; b.style.top=`${y/9}%`;
     b.innerHTML='<svg viewBox="0 0 100 160" aria-hidden="true"><use href="assets/art.svg#door" width="100%" height="100%"></use></svg>';
     b.addEventListener("click",()=>changeRoom(target)); UI.objectLayer.appendChild(b);
@@ -124,7 +185,7 @@ function setMsg(text, ms=2400){
 function addClue(id){
   if(G.clues.has(id)) { setMsg("這條線索已經記錄過了。",1200); return; }
   G.clues.add(id); const c=CLUE_INFO[id]; if(c){G.notes.push(c); setMsg(`取得線索：${c[0]}`);}
-  renderRoom();
+  renderRoom(); saveRun();
 }
 
 function showModal(html,{closable=true,onClose=null}={}){
@@ -147,10 +208,11 @@ function showChoice(title,choices,onChoice){
 function changeRoom(id){
   if(id==="boss"){ startOverloadBoss(); return; }
   if(id==="pyramid"){ if(G.pyramidKey) startPyramidBoss(); else setMsg("下面只有封死的牆。你還不知道真正入口在哪。"); return; }
-  G.room=id; G.visited.add(id); G.fastTravel.add(id); renderRoom();
+  G.room=id; G.visited.add(id); G.fastTravel.add(id); renderRoom(); saveRun();
 }
 
 function interactProp(id){
+  G.examined.add(propKey(G.room,id)); saveRun(); renderRoom();
   if(id==="exit"){ endGame("BAD END：放學","羅正男覺得事情太麻煩，直接離開。隔天早上，薛喜的手機仍留在學校裡，但沒有人記得他什麼時候回去過。","bad"); return; }
   if(G.room==="courtyard"&&id==="shoe") return addClue("shoe");
   if(G.room==="class203"&&id==="photo"){ if(!G.flags.photoGame){G.flags.photoGame=true;startPhotoMini()} else addClue("photo32"); return; }
@@ -166,7 +228,7 @@ function interactProp(id){
   if(G.room==="staff"&&id==="roll"){ if(G.flags.pokerWon)addClue("roll"); else setMsg("點名簿被鎖在透明盒裡。統神拿著鑰匙。"); return; }
   if(G.room==="staff"&&id==="npcGod"){ if(!G.flags.pokerWon)startDialogue(DIALOGUES.god,startPokerMini); else setMsg("統神：下一把再說。"); return; }
   if(G.room==="auditorium"&&id==="wish") return addClue("heart3");
-  if(G.room==="oldhall"&&id==="shaxy"){ if(!G.flags.fakeSeen){G.flags.fakeSeen=true;startDialogue(DIALOGUES.fakeShaxy,startFakeChoice)} else setMsg("那個『薛喜』已經不見了。"); return; }
+  if(G.room==="oldhall"&&id==="shaxy"){ if(!G.flags.fakeSeen){G.flags.fakeSeen=true;saveRun();startDialogue(DIALOGUES.fakeShaxy,startFakeChoice)} else setMsg("那個『薛喜』已經不見了。"); return; }
   if(G.room==="basement"&&id==="cable") return addClue("cable");
   if(G.room==="basement"&&id==="tape") return addClue("tape");
   setMsg(genericPropText(G.room,id));
@@ -179,13 +241,19 @@ function genericPropText(room,id){
 }
 
 function openMap(){
-  let html='<div class="eyebrow">FAST TRAVEL</div><h2 class="modal-title">紅色學校平面圖</h2><p>已經親自到過的房間可以直接點擊移動。</p><div id="mapGrid" class="map-grid"></div>';
+  let html='<div class="eyebrow">FAST TRAVEL</div><h2 class="modal-title">紅色學校平面圖</h2><p>到過的房間可以直接移動；尚未踏入的區域會保留鎖定狀態。</p><div id="mapGrid" class="map-grid"></div>';
   showModal(html); const box=$("mapGrid");
-  [...G.fastTravel].forEach(id=>{const b=document.createElement("button");b.type="button";b.className=id===G.room?"current":"";b.textContent=ROOMS[id].name;b.onclick=()=>{hideModal();changeRoom(id)};box.appendChild(b)});
+  Object.entries(ROOMS).forEach(([id,room])=>{
+    const visited=G.fastTravel.has(id), b=document.createElement("button"); b.type="button"; b.disabled=!visited;
+    b.className=[id===G.room?"current":"",visited?"visited":"locked-map"].filter(Boolean).join(" ");
+    b.innerHTML=`<b>${visited?(id===G.room?"● ":"✓ "):"🔒 "}${room.name}</b><small>${visited?room.sub:"尚未探索"}</small>`;
+    if(visited)b.onclick=()=>{hideModal();changeRoom(id)}; box.appendChild(b);
+  });
 }
 function openNotes(){
   const notes=G.notes.length?G.notes.map(([a,b])=>`<div class="note"><b>${a}</b><span>${b}</span></div>`).join(""):"<p>目前還沒有記錄到線索。</p>";
-  showModal(`<div class="eyebrow">CASE NOTES</div><h2 class="modal-title">案件筆記</h2><div class="notes-list">${notes}</div>`);
+  const deductions=deductionStatus().map(([name,ok,detail])=>`<div class="deduction ${ok?"complete":""}"><div><b>${ok?"✓":"○"} ${name}</b><span>${detail}</span></div><strong>${ok?"推理成立":"尚缺線索"}</strong></div>`).join("");
+  showModal(`<div class="eyebrow">CASE NOTES</div><h2 class="modal-title">案件筆記</h2><div class="case-summary"><span>線索 ${G.clues.size}/13</span><span>NPC 協助 ${G.miniWins}</span><span>探索房間 ${G.visited.size}/${Object.keys(ROOMS).length}</span></div><h3>推理進度</h3><div class="deduction-list">${deductions}</div><h3>已取得線索</h3><div class="notes-list">${notes}</div>`);
 }
 
 function startPhotoMini(){
@@ -211,17 +279,17 @@ function startRollMini(){
   const draw=()=>{showModal(`<div class="eyebrow">TOYZ CHALLENGE</div><h2>紙捲競速</h2><p>用按鈕調整鬆緊，品質保持在綠區時再捲動。</p><h3>品質 ${quality}</h3><div class="meter"><i style="width:${quality}%"></i></div><h3>你的進度 ${progress}%</h3><div class="meter"><i style="width:${progress}%"></i></div><p>TOYZ 進度：${opponent}%</p><div class="grid-buttons"><button id="loose">放鬆</button><button id="roll" class="primary">捲動</button><button id="tight">拉緊</button></div>`,{closable:true});
     $("loose").onclick=()=>act(-9,0);$("tight").onclick=()=>act(9,0);$("roll").onclick=()=>act(0,15);
   };
-  function act(q,p){quality=Math.max(0,Math.min(100,quality+q));opponent=Math.min(100,opponent+(p?10:5));if(p)progress=Math.min(100,progress+(quality>=37&&quality<=73?p:5));if(progress>=100){hideModal();G.flags.toyzWon=true;G.miniWins++;setMsg("TOYZ：速度有，品質也有。去看照片牆。");renderRoom();return}if(opponent>=100){hideModal();G.wrongChoices++;setMsg("TOYZ：太鬆、太緊、太慢都不行。");return}draw()} draw();
+  function act(q,p){quality=Math.max(0,Math.min(100,quality+q));opponent=Math.min(100,opponent+(p?10:5));if(p)progress=Math.min(100,progress+(quality>=37&&quality<=73?p:5));if(progress>=100){hideModal();G.flags.toyzWon=true;G.miniWins++;setMsg("TOYZ：速度有，品質也有。去看照片牆。");renderRoom();saveRun();return}if(opponent>=100){hideModal();G.wrongChoices++;setMsg("TOYZ：太鬆、太緊、太慢都不行。");return}draw()} draw();
 }
 function startPokerMini(){
   let round=0,player=6,god=6;const patterns=[{face:"快跟",tell:"看牌後立刻整理籌碼",truth:"strong"},{face:"皺眉",tell:"嘴上一直說爛牌，手卻沒放鬆",truth:"strong"},{face:"安靜",tell:"第一次沒有碎念",truth:"bluff"},{face:"大聲",tell:"突然一直催你快點",truth:"bluff"}];
   const draw=()=>{const p=patterns[round%patterns.length];showModal(`<div class="eyebrow">READING GAME</div><h2>統神 vs 薛喜：讀人</h2><p>薛喜籌碼 ${player}　統神 ${god}</p><div class="note"><b>表情：${p.face}</b><span>${p.tell}</span></div><div id="pokerButtons" class="grid-buttons"></div>`,{closable:true});const opts=["跟注／抓 Bluff","蓋牌／尊重大牌","反向讀取"];const box=$("pokerButtons");opts.forEach((t,i)=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>play(i,p.truth);box.appendChild(b)})};
-  function play(choice,truth){let win=choice===0?truth==="bluff":choice===1?truth==="strong":round%2===0;if(win){player+=2;god-=2}else{player-=2;god+=2;G.wrongChoices++}round++;if(player<=0||god<=0||round>=4){hideModal();if(player>god){G.flags.pokerWon=true;G.miniWins++;setMsg("統神：可以啦。點名簿你拿去。");renderRoom()}else setMsg("統神：你們兩個讀人能力還要練。");return}draw()}draw();
+  function play(choice,truth){let win=choice===0?truth==="bluff":choice===1?truth==="strong":round%2===0;if(win){player+=2;god-=2}else{player-=2;god+=2;G.wrongChoices++}round++;if(player<=0||god<=0||round>=4){hideModal();if(player>god){G.flags.pokerWon=true;G.miniWins++;setMsg("統神：可以啦。點名簿你拿去。");renderRoom();saveRun()}else setMsg("統神：你們兩個讀人能力還要練。");return}draw()}draw();
 }
-function startFakeChoice(){ showChoice("你面前有兩個選擇。",["跟這個薛喜走","用無線電叫真正的薛喜報暗號"],i=>{if(i===0)endGame("BAD END：另一個薛喜","你跟著他走進不存在的四樓。真正的薛喜在無線電另一端不斷叫你，但樓梯已經沒有回頭路。","bad");else{G.shaxyTrust++;setMsg("無線電那端的薛喜罵了一句你才聽得懂的話。眼前的『薛喜』笑容瞬間僵住，然後消失。")}}); }
+function startFakeChoice(){ showChoice("你面前有兩個選擇。",["跟這個薛喜走","用無線電叫真正的薛喜報暗號"],i=>{if(i===0)endGame("BAD END：另一個薛喜","你跟著他走進不存在的四樓。真正的薛喜在無線電另一端不斷叫你，但樓梯已經沒有回頭路。","bad");else{G.shaxyTrust++;saveRun();setMsg("無線電那端的薛喜罵了一句你才聽得懂的話。眼前的『薛喜』笑容瞬間僵住，然後消失。")}}); }
 
 function startOverloadBoss(){
-  if(!(G.clues.has("roll")&&G.clues.has("window")&&G.miniWins>=2)){setMsg("舞台深處的門沒有打開。你還缺足夠的校園規則與至少兩位 NPC 的協助。");return}
+  if(!bossReady()){const missing=[];if(!G.clues.has("window"))missing.push("第八扇窗");if(!G.clues.has("roll"))missing.push("點名簿");if(G.miniWins<2)missing.push(`NPC 協助 ${G.miniWins}/2`);setMsg(`舞台深處仍被鎖住：還缺 ${missing.join("、")}。`,3600);return}
   G.boss={kind:"overload",phase:1,hp:30,player:5,side:Math.random()<.5?"L":"R",danger:Math.floor(Math.random()*5),round:0,selectedLane:null};renderBoss();
 }
 function renderBoss(){
@@ -237,7 +305,7 @@ function overloadSide(side){const b=G.boss;if(b.phase===1){if(side===b.side)b.hp
 function overloadLane(lane){const b=G.boss;if(b.phase===2){if(lane===b.danger){b.player--;G.wrongChoices++}b.round++;if(b.player<=0)return bossBad();if(b.round>=7){b.phase=3;b.hp=10;b.selectedLane=null}else b.danger=Math.floor(Math.random()*5);renderBoss();return}if(b.phase===3){b.selectedLane=lane;renderBoss()}}
 function bossBad(){hideModal();G.boss=null;endGame("BAD END：過載","聊天室、音樂、畫面與叫聲同時壓上來。羅正男最後分不清哪一個提示是真的。","bad")}
 function overloadDefeated(){hideModal();G.boss=null;if(G.clues.has("heart1")&&G.clues.has("heart2")&&G.clues.has("heart3"))startDialogue(DIALOGUES.overloadReveal,startOverloadChoice);else endGame("NORMAL END：超負荷","你擊敗了紅色禮堂裡的超負荷。學校暫時安靜，但地下機房仍有紅光。你們帶著『應該結束了吧』的錯覺離開。","normal")}
-function startOverloadChoice(){showChoice("超負荷沒有繼續攻擊。你要怎麼做？",["離開，事情已經解決","把三個心願碎片交給他"],i=>{if(i===0)endGame("NORMAL END：差一步","你選擇離開。超負荷沒有追上來，但他最後一句『不是我』一直留在羅正男腦中。","normal");else startDialogue(DIALOGUES.pyramidReveal,()=>{G.pyramidKey=true;G.room="basement";G.visited.add("basement");G.fastTravel.add("basement");renderRoom();setMsg("TRUE ROUTE：地下機房出現新的門。")})})}
+function startOverloadChoice(){showChoice("超負荷沒有繼續攻擊。你要怎麼做？",["離開，事情已經解決","把三個心願碎片交給他"],i=>{if(i===0)endGame("NORMAL END：差一步","你選擇離開。超負荷沒有追上來，但他最後一句『不是我』一直留在羅正男腦中。","normal");else startDialogue(DIALOGUES.pyramidReveal,()=>{G.pyramidKey=true;G.room="basement";G.visited.add("basement");G.fastTravel.add("basement");renderRoom();saveRun();setMsg("TRUE ROUTE：地下機房出現新的門。")})})}
 
 function startPyramidBoss(){G.boss={kind:"pyramid",phase:1,hp:10,player:4,q:0,danger:Math.floor(Math.random()*3)};renderPyramid()}
 function renderPyramid(){const b=G.boss;const qs=[["二年三班真正異常的是？",["黑板","第 32 張桌子","窗簾"],1],["哪個地方的數量對不上外牆？",["音樂教室","二樓窗戶","圖書館書架"],1],["超負荷真正想要的是？",["繼續留校","完成放學前沒完成的三件事","打敗所有學生"],1]];let body;if(b.phase===1){const q=qs[b.q];body=`<div class="boss-log">${q[0]}</div><div id="pyramidChoices" class="grid-buttons">${q[1].map((x,i)=>`<button data-q="${i}">${x}</button>`).join("")}</div>`}else{body=`<div class="boss-log">紅線落在第 ${b.danger+1} 線。點安全線反擊。</div><div id="pyramidLanes" class="grid-buttons">${[0,1,2].map(i=>`<button data-lane="${i}">第 ${i+1} 線</button>`).join("")}</div>`}showModal(`<div class="boss-panel"><div class="boss-art">${art("portrait-pyramid")}</div><div><div class="eyebrow">HIDDEN BOSS</div><h2>金字塔紹安</h2><div class="hp">HP ${b.hp}　／　羅正男 ${b.player} HP</div>${body}</div></div>`,{closable:false});document.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>pyramidAnswer(Number(x.dataset.q),qs[b.q][2]));document.querySelectorAll("#pyramidLanes [data-lane]").forEach(x=>x.onclick=()=>pyramidLane(Number(x.dataset.lane)))}
@@ -245,17 +313,20 @@ function pyramidAnswer(i,correct){const b=G.boss;if(i===correct)b.q++;else{b.pla
 function pyramidLane(lane){const b=G.boss;if(lane===b.danger){b.player--;G.wrongChoices++}else b.hp--;if(b.player<=0){hideModal();G.boss=null;return endGame("BAD END：BAN","畫面只剩 CONNECTION LOST。你以為重新整理能解決一切，但紅色學校從此再也沒有入口。","bad")}if(b.hp<=0){hideModal();G.boss=null;return endGame("TRUE END：金字塔之下","紅色電纜終於熄滅。超負荷第一次走出禮堂，學校的第八扇窗在天亮前消失。羅正男問：『所以真的結束了？』薛喜沒有回答。","true")}b.danger=Math.floor(Math.random()*3);renderPyramid()}
 
 function endGame(title,text,type="bad"){
-  G.running=false; save.clears++; if(type==="bad")save.badEnds++; if(type==="true")save.trueEnds++;
+  G.running=false; clearRunSave(); save.clears++; if(type==="bad")save.badEnds++; if(type==="true")save.trueEnds++;
   const sec=Math.floor(performance.now()/1000-G.startedAt); if(save.best==null||sec<save.best)save.best=sec; persist(); hideModal();
   UI.endingTitle.textContent=title; UI.endingText.textContent=text; UI.endingStats.innerHTML=[["線索",`${G.clues.size}/13`],["挑戰",String(G.miniWins)],["錯誤選擇",String(G.wrongChoices)],["結局",type.toUpperCase()]].map(([a,b])=>`<div class="stat">${a}<b>${b}</b></div>`).join(""); UI.ending.classList.add("show");
 }
 
-function resetGame(){G=freshState();UI.pause.classList.remove("show");UI.ending.classList.remove("show");hideModal();renderRoom();startDialogue(DIALOGUES.intro)}
+function resetGame(){clearRunSave();G=freshState();UI.pause.classList.remove("show");UI.ending.classList.remove("show");hideModal();renderRoom();saveRun();startDialogue(DIALOGUES.intro,saveRun)}
+function continueGame(){if(!restoreRun()){setMsg("找不到可用的自動存檔。");refreshContinueButton();return}UI.title.classList.remove("show");UI.pause.classList.remove("show");UI.ending.classList.remove("show");hideModal();renderRoom();setMsg("已載入上次的調查進度。") }
 
 $("startBtn").onclick=()=>{UI.title.classList.remove("show");resetGame()};
+if(UI.continueBtn)UI.continueBtn.onclick=continueGame;
 $("mapBtn").onclick=()=>{if(G?.running)openMap()}; $("notesBtn").onclick=()=>{if(G?.running)openNotes()};
-$("pauseBtn").onclick=()=>{if(G?.running)UI.pause.classList.add("show")}; $("resumeBtn").onclick=()=>UI.pause.classList.remove("show");
+if(UI.hintBtn)UI.hintBtn.onclick=()=>{const on=!UI.objectLayer.classList.contains("hint-mode");UI.objectLayer.classList.toggle("hint-mode",on);UI.hintBtn.classList.toggle("primary",on);UI.hintBtn.setAttribute("aria-pressed",String(on));UI.hintBtn.textContent=on?"隱藏互動點":"顯示互動點"};
+$("pauseBtn").onclick=()=>{if(G?.running){saveRun();if(UI.saveStatus)UI.saveStatus.textContent=`已自動儲存：${ROOMS[G.room].name}・${G.clues.size}/13 線索`;UI.pause.classList.add("show")}}; $("resumeBtn").onclick=()=>UI.pause.classList.remove("show");
 $("restartBtn").onclick=resetGame; $("againBtn").onclick=resetGame;
 
-G=freshState(); G.running=false; renderRoom();
+G=freshState(); G.running=false; renderRoom(); refreshContinueButton();
 })();
