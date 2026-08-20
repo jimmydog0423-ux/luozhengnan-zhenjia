@@ -1,0 +1,126 @@
+/* Infirmary correction: align interactions to the actual bed, cabinet and wall mirror. */
+#objectLayer[data-infirmary="1"] .infirmary-prop{
+  overflow:visible!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-infirmary="1"] .infirmary-prop.embedded-hitbox{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#objectLayer[data-infirmary="1"] .infirmary-prop.embedded-hitbox>img,
+#objectLayer[data-infirmary="1"] .infirmary-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-infirmary="1"] .infirmary-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-infirmary="1"] .infirmary-prop.embedded-hitbox:hover::before,
+#objectLayer[data-infirmary="1"].hint-mode .infirmary-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.76);
+  background:rgba(105,20,38,.045);
+  box-shadow:0 0 18px rgba(255,63,87,.13),inset 0 0 16px rgba(255,63,87,.025);
+}
+#objectLayer[data-infirmary="1"] .infirmary-bed::before{border-radius:24px 20px 16px 16px!important}
+#objectLayer[data-infirmary="1"] .infirmary-cabinet::before{border-radius:10px!important}
+#objectLayer[data-infirmary="1"] .infirmary-mirror::before{border-radius:12px!important}
+
+#objectLayer[data-infirmary="1"] .infirmary-uv{
+  z-index:11!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 12px 13px rgba(0,0,0,.58)) brightness(.82)!important;
+}
+#objectLayer[data-infirmary="1"] .infirmary-uv>img{
+  width:78%!important;
+  height:78%!important;
+  object-fit:contain!important;
+  opacity:.78;
+  transition:transform .16s ease,filter .16s ease,opacity .16s ease;
+}
+#objectLayer[data-infirmary="1"] .infirmary-uv:hover>img,
+#objectLayer[data-infirmary="1"].hint-mode .infirmary-uv>img{
+  opacity:1;
+  transform:scale(1.04)!important;
+  filter:brightness(1.08) drop-shadow(0 0 10px rgba(145,77,255,.25));
+}
+
+#objectLayer[data-infirmary="1"] .infirmary-nav{
+  z-index:9!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-infirmary="1"] .infirmary-nav>svg,
+#objectLayer[data-infirmary="1"] .infirmary-nav>img,
+#objectLayer[data-infirmary="1"] .infirmary-nav>.done-mark{display:none!important}
+#objectLayer[data-infirmary="1"] .infirmary-nav::before,
+#objectLayer[data-infirmary="1"] .infirmary-nav::after{display:none!important}
+
+#objectLayer[data-infirmary="1"] .infirmary-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:47%;
+  width:64px;
+  height:68px;
+  transform:translate(-50%,-50%) perspective(300px) rotateX(70deg) rotate(var(--infirmary-arrow-rot,132deg)) scale(var(--infirmary-arrow-scale,1));
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.74),rgba(82,76,94,.5));
+  box-shadow:0 0 15px rgba(210,205,220,.13);
+  opacity:.5;
+  animation:infirmaryArrowPulse 1.6s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-infirmary="1"] .infirmary-nav:hover .infirmary-ground-arrow,
+#objectLayer[data-infirmary="1"].hint-mode .infirmary-nav .infirmary-ground-arrow{
+  opacity:.92;
+  filter:brightness(1.14);
+}
+#objectLayer[data-infirmary="1"] .infirmary-nav-label{
+  position:absolute;
+  left:50%;
+  top:72%;
+  transform:translate(-50%,8px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.8);
+  border:1px solid rgba(255,255,255,.11);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  text-shadow:0 2px 6px #000;
+  opacity:.68;
+  pointer-events:none;
+}
+#objectLayer[data-infirmary="1"] .infirmary-nav:hover .infirmary-nav-label,
+#objectLayer[data-infirmary="1"].hint-mode .infirmary-nav .infirmary-nav-label{opacity:1}
+
+@media (max-width:1500px),(max-height:920px){
+  #objectLayer[data-infirmary="1"] .infirmary-ground-arrow{width:56px;height:60px}
+  #objectLayer[data-infirmary="1"] .infirmary-nav-label{font-size:10px}
+}
+
+@keyframes infirmaryArrowPulse{
+  0%,100%{opacity:.4;filter:brightness(.9)}
+  50%{opacity:.7;filter:brightness(1.08)}
+}
