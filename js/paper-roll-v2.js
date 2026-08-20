@@ -52,26 +52,25 @@
     };
 
     body.innerHTML = `<div class="paper-roll-v2">
-      <div class="pr2-head"><div><div class="eyebrow">TOYZ CHALLENGE · PAPER ROLL V2</div><h2>紙捲競速：張力決鬥</h2></div><p>按住操作。捲動會加速，但張力會跟著上升；太鬆會皺、太緊會打滑。先捲完且品質不能低於 55。</p></div>
+      <div class="pr2-head"><div><div class="eyebrow">TOYZ CHALLENGE · PAPER ROLL V2</div><h2>紙捲競速：張力決鬥</h2></div></div>
       <div class="pr2-race">${machineHtml("player","你 / 薛喜")}${machineHtml("foe","TOYZ")}</div>
       <div class="pr2-stats">
         <div class="pr2-stat pr2-tension"><div class="pr2-stat-top"><span>紙張張力</span><b data-tension-label>55</b></div><div class="pr2-gauge"><span class="pr2-safe"></span><span class="pr2-needle"></span></div></div>
         <div class="pr2-stat pr2-speed"><div class="pr2-stat-top"><span>捲動速度</span><b data-speed-label>0.0</b></div><div class="pr2-gauge"><i></i></div></div>
-        <div class="pr2-stat pr2-quality"><div class="pr2-stat-top"><span>成品質量</span><b data-quality-label>96</b></div><div class="pr2-gauge"><i style="width:96%"></i></div></div>
+        <div class="pr2-stat pr2-quality"><div class="pr2-stat-top"><span>成品質量</span><b data-quality-label>94</b></div><div class="pr2-gauge"><i style="width:94%"></i></div></div>
       </div>
-      <div class="pr2-message">按住「捲動」開始，看到紙帶下垂或泛紅就修正張力。</div>
+      <div class="pr2-message">準備完成。</div>
       <div class="pr2-controls">
         <button type="button" data-act="loose">放鬆<span class="pr2-key">A / ←</span></button>
         <button type="button" class="primary" data-act="roll">捲動<span class="pr2-key">SPACE / 按住</span></button>
         <button type="button" data-act="tight">拉緊<span class="pr2-key">D / →</span></button>
       </div>
-      <div class="pr2-help">最佳狀態不是固定值：綠色安全區會緩慢漂移。穩定速度比狂按更快。</div>
     </div>`;
 
     const root = body.querySelector(".paper-roll-v2");
     const s = {
       root, original, dead:false, raf:0, last:performance.now(), elapsed:0,
-      progress:0, rival:0, tension:55, speed:0, quality:96, wobble:0, skew:0,
+      progress:0, rival:0, tension:55, speed:0, quality:94, wobble:0, skew:0, strain:0,
       spin:0, rivalSpin:0, jamCooldown:0, messageUntil:0,
       input:{loose:false,roll:false,tight:false}
     };
@@ -87,9 +86,9 @@
     s.input[act] = on;
     if (btn) btn.classList.toggle("is-held", on);
     if (on) {
-      if (act === "roll") s.speed = clamp(s.speed + .5, 0, 8);
-      if (act === "tight") s.tension = clamp(s.tension + 2.5, 0, 100);
-      if (act === "loose") s.tension = clamp(s.tension - 2.5, 0, 100);
+      if (act === "roll") s.speed = clamp(s.speed + .62, 0, 8);
+      if (act === "tight") s.tension = clamp(s.tension + 3.1, 0, 100);
+      if (act === "loose") s.tension = clamp(s.tension - 3.1, 0, 100);
     }
   }
 
@@ -99,7 +98,7 @@
       btn.addEventListener("pointerdown", ev => { ev.preventDefault(); btn.setPointerCapture?.(ev.pointerId); setInput(s,act,true,btn); });
       const end = ev => { try{btn.releasePointerCapture?.(ev.pointerId)}catch(_){} setInput(s,act,false,btn); };
       btn.addEventListener("pointerup", end); btn.addEventListener("pointercancel", end); btn.addEventListener("pointerleave", ev => { if(ev.buttons===0)setInput(s,act,false,btn); });
-      btn.addEventListener("click", () => { if(act==="roll") s.speed=clamp(s.speed+.35,0,8); });
+      btn.addEventListener("click", () => { if(act==="roll") s.speed=clamp(s.speed+.42,0,8); });
     });
 
     const keyAct = key => {
@@ -117,65 +116,79 @@
     if (s.dead || session !== s || !document.contains(s.root)) { stopSession(); return; }
     const dt = clamp((now - s.last) / 1000, 0, .05); s.last = now; s.elapsed += dt;
 
-    const center = 52 + Math.sin(s.elapsed * .48) * 7 + Math.sin(s.elapsed * .17) * 3;
-    const safeLow = center - 14, safeHigh = center + 14;
+    // V2 hard mode: narrower, faster moving safe window with a small irregular wobble.
+    const center = 50 + Math.sin(s.elapsed * .86) * 8 + Math.sin(s.elapsed * .31 + 1.2) * 5 + Math.sin(s.elapsed * 1.73) * 2.2;
+    const safeHalf = 9;
+    const safeLow = center - safeHalf, safeHigh = center + safeHalf;
 
-    if (s.input.roll) s.speed += 5.6 * dt; else s.speed -= 2.1 * dt;
+    if (s.input.roll) s.speed += 6.5 * dt; else s.speed -= 2.8 * dt;
     s.speed = clamp(s.speed, 0, 8);
 
-    if (s.input.tight) s.tension += 22 * dt;
-    if (s.input.loose) s.tension -= 24 * dt;
-    if (s.input.roll) s.tension += s.speed * .42 * dt;
-    s.tension += (50 - s.tension) * .018 * dt;
+    if (s.input.tight) s.tension += 30 * dt;
+    if (s.input.loose) s.tension -= 32 * dt;
+    if (s.input.roll) s.tension += (s.speed * .62 + s.strain * .035) * dt;
+    s.tension += (50 - s.tension) * .012 * dt;
     s.tension = clamp(s.tension, 0, 100);
+
+    // Sustained fast rolling heats/loads the paper. It takes time to recover.
+    const strainTarget = Math.max(0, s.speed - 4.15) * 12 + (s.input.roll ? 3 : 0);
+    s.strain += (strainTarget - s.strain) * clamp(dt * (strainTarget > s.strain ? 2.3 : .72), 0, 1);
+    s.strain = clamp(s.strain, 0, 46);
 
     const lowErr = Math.max(0, safeLow - s.tension);
     const highErr = Math.max(0, s.tension - safeHigh);
-    const overSpeed = Math.max(0, s.speed - 5.6);
-    const targetWobble = lowErr * .075 + overSpeed * .55;
-    s.wobble += (targetWobble - s.wobble) * clamp(dt * 4.2, 0, 1);
-    const targetSkew = (s.tension - center) * .11 + Math.sin(s.elapsed * 6.3) * s.wobble;
-    s.skew += (targetSkew - s.skew) * clamp(dt * 3.5,0,1);
+    const overSpeed = Math.max(0, s.speed - 5.05);
+    const targetWobble = lowErr * .11 + overSpeed * .78 + s.strain * .035;
+    s.wobble += (targetWobble - s.wobble) * clamp(dt * 4.8, 0, 1);
+    const targetSkew = (s.tension - center) * .16 + Math.sin(s.elapsed * 7.6) * s.wobble + Math.sin(s.elapsed * 2.1) * s.strain * .025;
+    s.skew += (targetSkew - s.skew) * clamp(dt * 4.1,0,1);
 
-    if (lowErr > 0 || highErr > 0) s.quality -= (lowErr + highErr) * .13 * dt;
-    if (overSpeed > 0) s.quality -= overSpeed * 1.7 * dt;
-    if (!lowErr && !highErr && s.speed >= 2.0 && s.speed <= 5.4) s.quality += 1.1 * dt;
-    if (s.speed < .6 && s.input.loose) s.quality -= .16 * dt;
+    if (lowErr > 0 || highErr > 0) s.quality -= (lowErr + highErr) * .22 * dt;
+    if (overSpeed > 0) s.quality -= overSpeed * 2.65 * dt;
+    if (s.strain > 18) s.quality -= (s.strain - 18) * .045 * dt;
+    if (!lowErr && !highErr && s.speed >= 2.35 && s.speed <= 4.85 && s.strain < 19) s.quality += .42 * dt;
+    if (s.speed < .55 && s.input.loose) s.quality -= .25 * dt;
     s.quality = clamp(s.quality, 0, 100);
 
     if (s.jamCooldown > 0) s.jamCooldown -= dt;
-    if (s.jamCooldown <= 0 && s.tension > 91 && s.speed > 5.5) {
-      s.jamCooldown = 2.6; s.quality = clamp(s.quality - 7,0,100); s.speed *= .34; s.tension -= 13;
-      flash(s,"紙張打滑！先放鬆再重新加速。","warn",450); navigator.vibrate?.(35);
+    if (s.jamCooldown <= 0 && s.tension > 84 && s.speed > 4.9) {
+      s.jamCooldown = 2.9; s.quality = clamp(s.quality - 9,0,100); s.speed *= .27; s.tension -= 16; s.strain *= .56;
+      flash(s,"紙張打滑！","warn",520); navigator.vibrate?.(45);
     }
-    if (s.jamCooldown <= 0 && s.tension < 12 && s.speed > 3.2) {
-      s.jamCooldown = 2.2; s.quality = clamp(s.quality - 4,0,100); s.speed *= .58; s.tension += 7;
-      flash(s,"紙太鬆，捲軸空轉了。","warn",360);
+    if (s.jamCooldown <= 0 && s.tension < 18 && s.speed > 2.7) {
+      s.jamCooldown = 2.5; s.quality = clamp(s.quality - 6,0,100); s.speed *= .48; s.tension += 9;
+      flash(s,"捲軸空轉！","warn",440);
     }
 
-    const efficiency = .54 + s.quality / 240;
-    s.progress = clamp(s.progress + s.speed * efficiency * dt, 0, 100);
-    s.spin += s.speed * 92 * dt;
+    const qualityFactor = .40 + s.quality / 205;
+    const strainPenalty = 1 - Math.min(.28, s.strain / 165);
+    s.progress = clamp(s.progress + s.speed * qualityFactor * strainPenalty * dt, 0, 100);
+    s.spin += s.speed * 98 * dt;
 
-    const rivalBase = 2.55 + Math.sin(s.elapsed*.7)*.28 + (Math.sin(s.elapsed*.21+1.7)>.78 ? .72 : 0);
+    // TOYZ is intentionally competitive and has short acceleration bursts.
+    const burst = Math.sin(s.elapsed * .47 + .9) > .70 ? 1.02 : 0;
+    const chase = s.progress > s.rival + 7 ? .38 : 0;
+    const late = s.rival > 62 ? .24 : 0;
+    const rivalBase = 2.92 + Math.sin(s.elapsed*.83)*.26 + burst + chase + late;
     s.rival = clamp(s.rival + rivalBase * dt, 0, 100);
-    s.rivalSpin += rivalBase * 78 * dt;
+    s.rivalSpin += rivalBase * 84 * dt;
 
     updateUi(s, false, safeLow, safeHigh, center);
 
     if (s.progress >= 100) {
-      if (s.quality >= 55) finish(s, true, `你先捲完，品質 ${Math.round(s.quality)}。紙面夠平，TOYZ 認輸。`);
-      else finish(s, false, `雖然先捲完，但品質只剩 ${Math.round(s.quality)}。TOYZ：這叫捲爛，不算。`);
+      if (s.quality >= 68) finish(s, true, `你先捲完，品質 ${Math.round(s.quality)}。紙面夠平，TOYZ 認輸。`);
+      else finish(s, false, `雖然先捲完，但品質只有 ${Math.round(s.quality)}。TOYZ：這種成品不算。`);
       return;
     }
     if (s.rival >= 100) { finish(s, false, `TOYZ 先完成了。你的進度 ${Math.round(s.progress)}%，品質 ${Math.round(s.quality)}。`); return; }
 
     if (now > s.messageUntil) {
-      if (s.tension < safeLow) setMessage(s,"太鬆：紙帶正在下垂起皺，按住「拉緊」。","warn");
-      else if (s.tension > safeHigh) setMessage(s,"太緊：紙面開始拉扯，按住「放鬆」。","warn");
-      else if (s.speed > 5.6) setMessage(s,"速度過快：先穩住，不然品質會掉。","warn");
-      else if (s.speed >= 2.2) setMessage(s,"張力穩定，維持這個節奏！","good");
-      else setMessage(s,"按住「捲動」建立速度。","");
+      if (s.tension < safeLow) setMessage(s,"太鬆 · 紙帶起皺","warn");
+      else if (s.tension > safeHigh) setMessage(s,"太緊 · 紙面拉扯","warn");
+      else if (s.strain > 27) setMessage(s,"紙張負荷過高 · 降速","warn");
+      else if (s.speed > 5.05) setMessage(s,"速度過快 · 品質下降","warn");
+      else if (s.speed >= 2.35) setMessage(s,"穩定","good");
+      else setMessage(s,"待加速","");
     }
     s.raf = requestAnimationFrame(n => frame(s,n));
   }
@@ -202,11 +215,13 @@
     m.querySelector(".pr2-paper-fiber").style.strokeDashoffset=`${-spin*.13}px`;
   }
 
-  function updateUi(s, initial=false, safeLow=38, safeHigh=66, center=52) {
+  function updateUi(s, initial=false, safeLow=41, safeHigh=59, center=50) {
     updateMachine(s,"player",s.progress,s.spin,s.wobble,s.skew);
     updateMachine(s,"foe",s.rival,s.rivalSpin,Math.sin(s.elapsed*2.4)*.45,Math.sin(s.elapsed*.8)*.7);
     const player=s.root.querySelector('[data-machine="player"]');
-    player.classList.toggle("is-rolling",s.speed>1); player.classList.toggle("danger",s.tension<safeLow||s.tension>safeHigh||s.speed>5.6); player.classList.toggle("good",s.tension>=safeLow&&s.tension<=safeHigh&&s.speed>=2&&s.speed<=5.4);
+    player.classList.toggle("is-rolling",s.speed>1);
+    player.classList.toggle("danger",s.tension<safeLow||s.tension>safeHigh||s.speed>5.05||s.strain>27);
+    player.classList.toggle("good",s.tension>=safeLow&&s.tension<=safeHigh&&s.speed>=2.35&&s.speed<=4.85&&s.strain<19);
     s.root.querySelector("[data-tension-label]").textContent=Math.round(s.tension);
     s.root.querySelector("[data-speed-label]").textContent=s.speed.toFixed(1);
     s.root.querySelector("[data-quality-label]").textContent=Math.round(s.quality);
