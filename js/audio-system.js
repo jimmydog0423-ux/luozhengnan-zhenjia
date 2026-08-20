@@ -5,18 +5,24 @@
   const CROSSFADE_MS = 1200;
   const MODE_LABEL = {
     explore: "校園探索",
+    roll: "紙捲競速",
     poker: "Poker",
     boss: "Boss",
     basement: "地下機房"
   };
   const BGM_FILES = {
     explore: "assets/audio/bgm/explore.mp3",
+    // Paper-roll challenge gets its own mode immediately. It currently reuses
+    // the tense poker track; replacing this path with roll.mp3 later requires
+    // no gameplay changes.
+    roll: "assets/audio/bgm/poker.mp3",
     poker: "assets/audio/bgm/poker.mp3",
     boss: "assets/audio/bgm/boss.mp3",
     basement: "assets/audio/bgm/basement.mp3"
   };
   const BGM_VOLUME = {
     explore: 0.30,
+    roll: 0.31,
     poker: 0.28,
     boss: 0.34,
     basement: 0.30
@@ -213,6 +219,16 @@
     const overlay = document.getElementById("modalOverlay");
     const modal = document.getElementById("modalBody");
     const modalOpen = overlay?.classList.contains("show");
+
+    // Paper Roll V2 must win over the generic modal/explore mode so the race
+    // gets its own music as soon as the takeover UI appears.
+    if (modalOpen && modal?.querySelector(".paper-roll-v2")) {
+      return "roll";
+    }
+    // Also catch the brief legacy frame before V2 takes over.
+    if (modalOpen && modal && /紙捲競速/.test(modal.querySelector("h2")?.textContent || "")) {
+      return "roll";
+    }
 
     if (modalOpen && modal?.querySelector(".poker-v2, .poker-v2-stage, .poker-table-v2, .poker-opponent-v2, #pokerButtons")) {
       return "poker";
