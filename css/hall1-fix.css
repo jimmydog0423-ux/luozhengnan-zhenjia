@@ -42,10 +42,10 @@
   overflow:visible!important;
   display:block!important;
   transform:translate(-50%,-50%)!important;
-  z-index:8!important;
+  z-index:9!important;
 }
-#objectLayer[data-hall1="1"] .hall1-nav-room{z-index:8!important}
-#objectLayer[data-hall1="1"] .hall1-nav-stairs{z-index:10!important}
+#objectLayer[data-hall1="1"] .hall1-nav-room{z-index:9!important}
+#objectLayer[data-hall1="1"] .hall1-nav-forward{z-index:10!important}
 #objectLayer[data-hall1="1"] .hall1-nav>svg,
 #objectLayer[data-hall1="1"] .hall1-nav>img,
 #objectLayer[data-hall1="1"] .hall1-nav>.done-mark{
@@ -54,84 +54,91 @@
 #objectLayer[data-hall1="1"] .hall1-nav::before,
 #objectLayer[data-hall1="1"] .hall1-nav::after{display:none!important}
 
-/* Small, flattened floor arrows. */
+/* Larger floor arrows: still flattened for perspective, but readable at normal browser sizes. */
 #objectLayer[data-hall1="1"] .hall1-ground-arrow{
   position:absolute;
   left:50%;
-  top:48%;
-  width:58px;
-  height:62px;
-  transform:translate(-50%,-50%) perspective(300px) rotateX(70deg) rotate(var(--hall-arrow-rot,0deg)) scale(var(--hall-arrow-scale,1));
+  top:46%;
+  width:78px;
+  height:82px;
+  transform:translate(-50%,-50%) perspective(300px) rotateX(68deg) rotate(var(--hall-arrow-rot,0deg)) scale(var(--hall-arrow-scale,1));
   transform-origin:center center;
   clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
-  background:linear-gradient(180deg,rgba(255,105,122,.82),rgba(112,22,43,.55));
-  box-shadow:0 0 14px rgba(255,62,89,.22);
-  opacity:.48;
+  background:linear-gradient(180deg,rgba(255,105,122,.88),rgba(112,22,43,.62));
+  box-shadow:0 0 18px rgba(255,62,89,.28);
+  opacity:.62;
   animation:hall1ArrowPulse 1.65s ease-in-out infinite;
   pointer-events:none;
 }
 #objectLayer[data-hall1="1"] .hall1-nav-back .hall1-ground-arrow{
-  background:linear-gradient(180deg,rgba(210,207,216,.72),rgba(82,76,94,.52));
-  box-shadow:0 0 14px rgba(210,205,220,.14);
+  background:linear-gradient(180deg,rgba(210,207,216,.78),rgba(82,76,94,.58));
+  box-shadow:0 0 17px rgba(210,205,220,.18);
 }
-#objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-ground-arrow{
-  width:64px;
-  height:68px;
+#objectLayer[data-hall1="1"] .hall1-nav-forward .hall1-ground-arrow{
+  width:84px;
+  height:88px;
+  background:linear-gradient(180deg,rgba(255,118,133,.95),rgba(132,27,49,.72));
+  box-shadow:0 0 22px rgba(255,62,89,.35);
 }
 #objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-ground-arrow,
 #objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-ground-arrow{
-  opacity:.92;
+  opacity:1;
   filter:brightness(1.18);
 }
 
 #objectLayer[data-hall1="1"] .hall1-nav-label{
   position:absolute;
   left:50%;
-  top:70%;
-  transform:translate(-50%,8px);
+  top:72%;
+  transform:translate(-50%,10px);
   white-space:nowrap;
-  padding:4px 8px;
+  padding:6px 10px;
   border-radius:999px;
-  background:rgba(5,5,8,.78);
-  border:1px solid rgba(255,255,255,.11);
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.14);
   color:#f6eff7;
-  font-size:11px;
-  font-weight:850;
+  font-size:12px;
+  font-weight:900;
   letter-spacing:.02em;
-  text-shadow:0 2px 6px #000;
-  opacity:.62;
+  text-shadow:0 2px 7px #000;
+  opacity:.82;
   pointer-events:none;
   z-index:11!important;
 }
+/* Do not shrink labels with arrow scale. This was the main reason the room names became unreadably tiny. */
 #objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
-  font-size:10px;
-  transform:translate(-50%,5px) scale(var(--hall-arrow-scale,1));
+  font-size:11px;
+  transform:translate(-50%,8px);
+}
+#objectLayer[data-hall1="1"] .hall1-nav-forward .hall1-nav-label{
+  font-size:12px;
+  transform:translate(-50%,8px);
 }
 #objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-nav-label,
 #objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-nav-label{opacity:1}
 
-/* Compact browser windows use the JS compact coordinates and slightly smaller markers. */
+/* Compact browser windows still keep useful marker sizes. */
 @media (max-width:1500px), (max-height:920px){
   #objectLayer[data-hall1="1"] .hall1-ground-arrow{
-    width:52px;
-    height:56px;
+    width:70px;
+    height:74px;
   }
-  #objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-ground-arrow{
-    width:58px;
-    height:62px;
+  #objectLayer[data-hall1="1"] .hall1-nav-forward .hall1-ground-arrow{
+    width:76px;
+    height:80px;
   }
   #objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
-    font-size:9px;
-    padding:3px 7px;
-    transform:translate(-50%,4px) scale(var(--hall-arrow-scale,1));
-  }
-  #objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-nav-label{
     font-size:10px;
-    transform:translate(-50%,5px);
+    padding:5px 9px;
+    transform:translate(-50%,7px);
+  }
+  #objectLayer[data-hall1="1"] .hall1-nav-forward .hall1-nav-label{
+    font-size:11px;
+    padding:5px 9px;
   }
 }
 
 @keyframes hall1ArrowPulse{
-  0%,100%{opacity:.38;filter:brightness(.9)}
-  50%{opacity:.68;filter:brightness(1.10)}
+  0%,100%{opacity:.50;filter:brightness(.92)}
+  50%{opacity:.82;filter:brightness(1.12)}
 }
