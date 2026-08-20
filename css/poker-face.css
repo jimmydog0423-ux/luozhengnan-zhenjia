@@ -1,4 +1,4 @@
-/* Poker opponent expression states. Image assets are optional; these animations are the fallback. */
+/* Poker opponent expression states. GIFs provide the main motion; CSS adds subtle state emphasis. */
 .poker-avatar-v2.poker-face-system{
   transition:filter .18s ease,box-shadow .18s ease,transform .18s ease;
   will-change:transform,filter;
@@ -26,6 +26,15 @@
 
 .poker-avatar-v2.poker-face-state-win{animation:pokerFaceWin .88s ease-in-out infinite alternate}
 .poker-avatar-v2.poker-face-state-win img{filter:brightness(1.06) contrast(1.06) saturate(1.06)}
+
+.poker-avatar-v2.poker-face-state-angry{animation:pokerFaceAngry .34s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-angry img{filter:contrast(1.14) saturate(1.08) brightness(.94)}
+
+.poker-avatar-v2.poker-face-state-bluff{animation:pokerFaceBluff 1.15s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-bluff img{filter:contrast(1.05) saturate(1.04) brightness(.98)}
+
+.poker-avatar-v2.poker-face-state-trickster{animation:pokerFaceTrickster 1.05s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-trickster img{filter:contrast(1.07) saturate(1.08) brightness(1.01)}
 
 @keyframes pokerFaceSwap{
   0%{opacity:.35;transform:scale(1.12) translateY(3px)}
@@ -57,6 +66,18 @@
 @keyframes pokerFaceWin{
   0%{transform:translateY(0) rotate(-.4deg) scale(1)}
   100%{transform:translateY(-2px) rotate(.4deg) scale(1.025)}
+}
+@keyframes pokerFaceAngry{
+  0%{transform:translate(-2px,0) rotate(-.45deg) scale(1.01)}
+  100%{transform:translate(2px,-2px) rotate(.45deg) scale(1.035)}
+}
+@keyframes pokerFaceBluff{
+  0%{transform:translateY(0) rotate(-.6deg) scale(1)}
+  100%{transform:translateY(-1px) rotate(.6deg) scale(1.018)}
+}
+@keyframes pokerFaceTrickster{
+  0%{transform:translateX(-1px) rotate(-.5deg) scale(1.005)}
+  100%{transform:translateX(1px) rotate(.5deg) scale(1.022)}
 }
 
 @media (prefers-reduced-motion: reduce){
