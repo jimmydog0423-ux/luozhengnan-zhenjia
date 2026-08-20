@@ -7,13 +7,29 @@
     "無線電":       { x: 1135, y: 490, w: 92, h: 122, cls: "hall2-radio", type: "prop" }
   };
 
-  const HALL2_NAV = {
-    "音樂教室": { x: 1015, y: 555, scale: 0.52, kind: "door" },
-    "圖書館":   { x: 1270, y: 635, scale: 0.62, kind: "door" },
-    "教職員室": { x: 1470, y: 650, scale: 0.78, kind: "door" },
-    "回一樓":   { x: 165,  y: 805, scale: 1.00, kind: "back" },
-    "舊校舍":   { x: 805,  y: 720, scale: 0.88, kind: "forward" }
+  /* Keep second-floor destinations readable at the same visual scale as the first floor. */
+  const HALL2_NAV_BASE = {
+    "音樂教室": { x: 1015, y: 555, scale: 0.86, kind: "door" },
+    "圖書館":   { x: 1270, y: 635, scale: 0.94, kind: "door" },
+    "教職員室": { x: 1470, y: 650, scale: 1.05, kind: "door" },
+    "回一樓":   { x: 165,  y: 805, scale: 1.12, kind: "back" },
+    "舊校舍":   { x: 805,  y: 720, scale: 1.08, kind: "forward" }
   };
+
+  /* On shorter/narrower windows pull the near-right marker inward, but do not make icons tiny. */
+  const HALL2_NAV_COMPACT = {
+    "音樂教室": { x: 1015, y: 555, scale: 0.80, kind: "door" },
+    "圖書館":   { x: 1255, y: 625, scale: 0.88, kind: "door" },
+    "教職員室": { x: 1425, y: 635, scale: 0.96, kind: "door" },
+    "回一樓":   { x: 165,  y: 790, scale: 1.02, kind: "back" },
+    "舊校舍":   { x: 805,  y: 700, scale: 1.00, kind: "forward" }
+  };
+
+  function getNavMap() {
+    return (window.innerWidth <= 1500 || window.innerHeight <= 920)
+      ? HALL2_NAV_COMPACT
+      : HALL2_NAV_BASE;
+  }
 
   function cleanLabel(raw) {
     return String(raw || "")
@@ -39,14 +55,18 @@
   }
 
   function makeNav(button, label, nav) {
-    button.classList.remove("embedded-hitbox", "foreground-prop", "world-door");
+    button.classList.remove(
+      "embedded-hitbox", "foreground-prop", "world-door",
+      "hall2-nav-door", "hall2-nav-back", "hall2-nav-forward"
+    );
     button.classList.add("hall2-nav", `hall2-nav-${nav.kind}`);
     button.dataset.hall2Nav = nav.kind;
     button.style.setProperty("--hall2-scale", String(nav.scale));
 
+    /* Larger click targets match the enlarged visual markers. */
     const box = nav.kind === "door"
-      ? { x: nav.x, y: nav.y, w: 120 * nav.scale, h: 150 * nav.scale }
-      : { x: nav.x, y: nav.y, w: 160 * nav.scale, h: 105 * nav.scale };
+      ? { x: nav.x, y: nav.y, w: 160 * nav.scale, h: 175 * nav.scale }
+      : { x: nav.x, y: nav.y, w: 190 * nav.scale, h: 130 * nav.scale };
     setBox(button, box);
 
     let marker = button.querySelector(".hall2-nav-marker");
@@ -86,7 +106,7 @@
       return;
     }
 
-    const nav = HALL2_NAV[label];
+    const nav = getNavMap()[label];
     if (nav) makeNav(button, label, nav);
   }
 
@@ -112,6 +132,12 @@
     // Watch only direct scene-object replacement to avoid observer feedback loops.
     new MutationObserver(syncHall2).observe(layer, { childList: true });
     new MutationObserver(syncHall2).observe(roomName, { childList: true, characterData: true, subtree: true });
+
+    let resizeTimer = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(syncHall2, 70);
+    }, { passive: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
