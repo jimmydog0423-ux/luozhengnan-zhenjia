@@ -67,6 +67,7 @@
   overflow:visible!important;
   display:block!important;
   transform:translate(-50%,-50%)!important;
+  z-index:9!important;
 }
 #objectLayer[data-hall2="1"] .hall2-nav>svg,
 #objectLayer[data-hall2="1"] .hall2-nav>img,
@@ -76,7 +77,7 @@
 #objectLayer[data-hall2="1"] .hall2-nav::before,
 #objectLayer[data-hall2="1"] .hall2-nav::after{display:none!important}
 
-/* Room entrances are small threshold arrows. */
+/* Room entrances are readable threshold arrows instead of tiny floating markers. */
 #objectLayer[data-hall2="1"] .hall2-nav-marker{
   position:absolute;
   left:50%;
@@ -85,25 +86,25 @@
   transform-origin:center center;
 }
 #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-marker{
-  width:48px;
-  height:52px;
+  width:76px;
+  height:82px;
   transform:translate(-50%,-50%) perspective(230px) rotateX(62deg) rotate(58deg) scale(var(--hall2-scale,1));
   clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
-  background:linear-gradient(180deg,rgba(255,104,122,.86),rgba(130,28,48,.58));
-  box-shadow:0 0 14px rgba(255,62,89,.20);
-  opacity:.48;
+  background:linear-gradient(180deg,rgba(255,104,122,.92),rgba(130,28,48,.66));
+  box-shadow:0 0 18px rgba(255,62,89,.27);
+  opacity:.68;
   animation:hall2Pulse 1.55s ease-in-out infinite;
 }
 
-/* Back / forward travel live on the floor. */
+/* Back / forward travel live on the floor and are intentionally larger than room arrows. */
 #objectLayer[data-hall2="1"] .hall2-nav-back .hall2-nav-marker,
 #objectLayer[data-hall2="1"] .hall2-nav-forward .hall2-nav-marker{
-  width:74px;
-  height:78px;
+  width:94px;
+  height:98px;
   clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
-  background:linear-gradient(180deg,rgba(255,105,122,.9),rgba(135,28,49,.65));
-  box-shadow:0 0 22px rgba(255,62,89,.27);
-  opacity:.6;
+  background:linear-gradient(180deg,rgba(255,105,122,.94),rgba(135,28,49,.68));
+  box-shadow:0 0 24px rgba(255,62,89,.31);
+  opacity:.74;
   animation:hall2Pulse 1.55s ease-in-out infinite;
 }
 #objectLayer[data-hall2="1"] .hall2-nav-forward .hall2-nav-marker{
@@ -111,42 +112,65 @@
 }
 #objectLayer[data-hall2="1"] .hall2-nav-back .hall2-nav-marker{
   transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg) scale(var(--hall2-scale,1));
-  background:linear-gradient(180deg,rgba(210,207,216,.8),rgba(82,76,94,.62));
-  box-shadow:0 0 18px rgba(210,205,220,.17);
+  background:linear-gradient(180deg,rgba(210,207,216,.86),rgba(82,76,94,.66));
+  box-shadow:0 0 20px rgba(210,205,220,.2);
 }
 #objectLayer[data-hall2="1"] .hall2-nav:hover .hall2-nav-marker,
 #objectLayer[data-hall2="1"].hint-mode .hall2-nav .hall2-nav-marker{
-  opacity:.98;
-  filter:brightness(1.16);
+  opacity:1;
+  filter:brightness(1.18);
 }
 
 #objectLayer[data-hall2="1"] .hall2-nav-label{
   position:absolute;
   left:50%;
   top:78%;
-  transform:translate(-50%,8px);
+  transform:translate(-50%,9px);
   white-space:nowrap;
-  padding:5px 9px;
+  padding:7px 11px;
   border-radius:999px;
-  background:rgba(5,5,8,.84);
-  border:1px solid rgba(255,255,255,.13);
+  background:rgba(5,5,8,.86);
+  border:1px solid rgba(255,255,255,.14);
   color:#f6eff7;
-  font-size:11px;
+  font-size:13px;
   font-weight:900;
   letter-spacing:.025em;
   text-shadow:0 2px 7px #000;
-  opacity:.7;
+  opacity:.84;
   pointer-events:none;
+  z-index:11!important;
 }
 #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-label{
   top:88%;
-  font-size:10px;
-  transform:translate(-50%,5px) scale(var(--hall2-scale,1));
+  font-size:12px;
+  /* Do not scale the text down with perspective; keep it readable. */
+  transform:translate(-50%,7px);
 }
 #objectLayer[data-hall2="1"] .hall2-nav:hover .hall2-nav-label,
 #objectLayer[data-hall2="1"].hint-mode .hall2-nav .hall2-nav-label{opacity:1}
 
+/* Compact browser windows keep readable icons; only trim them slightly. */
+@media (max-width:1500px), (max-height:920px){
+  #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-marker{
+    width:70px;
+    height:76px;
+  }
+  #objectLayer[data-hall2="1"] .hall2-nav-back .hall2-nav-marker,
+  #objectLayer[data-hall2="1"] .hall2-nav-forward .hall2-nav-marker{
+    width:86px;
+    height:90px;
+  }
+  #objectLayer[data-hall2="1"] .hall2-nav-label{
+    font-size:12px;
+    padding:6px 10px;
+  }
+  #objectLayer[data-hall2="1"] .hall2-nav-door .hall2-nav-label{
+    font-size:11px;
+    transform:translate(-50%,6px);
+  }
+}
+
 @keyframes hall2Pulse{
-  0%,100%{opacity:.45;filter:brightness(.92)}
-  50%{opacity:.8;filter:brightness(1.1)}
+  0%,100%{opacity:.52;filter:brightness(.92)}
+  50%{opacity:.86;filter:brightness(1.12)}
 }
