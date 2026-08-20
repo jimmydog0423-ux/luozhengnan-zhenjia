@@ -1,0 +1,68 @@
+/* Poker opponent expression states. Image assets are optional; these animations are the fallback. */
+.poker-avatar-v2.poker-face-system{
+  transition:filter .18s ease,box-shadow .18s ease,transform .18s ease;
+  will-change:transform,filter;
+}
+.poker-avatar-v2.poker-face-system img{
+  transition:opacity .16s ease,filter .18s ease,transform .18s ease;
+  will-change:transform,filter,opacity;
+}
+.poker-avatar-v2.poker-face-state-enter img{animation:pokerFaceSwap .28s cubic-bezier(.2,.8,.2,1)}
+
+.poker-avatar-v2.poker-face-state-neutral{animation:pokerFaceIdle 2.8s ease-in-out infinite}
+.poker-avatar-v2.poker-face-state-neutral img{filter:contrast(1.02) brightness(.98)}
+
+.poker-avatar-v2.poker-face-state-focus{animation:pokerFaceFocus 1.9s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-focus img{filter:contrast(1.08) brightness(.92)}
+
+.poker-avatar-v2.poker-face-state-pressure{animation:pokerFacePressure .58s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-pressure img{filter:contrast(1.07) brightness(.9) saturate(.9)}
+
+.poker-avatar-v2.poker-face-state-aggressive{animation:pokerFaceAggressive .7s cubic-bezier(.2,.8,.2,1) infinite alternate}
+.poker-avatar-v2.poker-face-state-aggressive img{filter:contrast(1.12) saturate(1.08) brightness(.95)}
+
+.poker-avatar-v2.poker-face-state-shocked{animation:pokerFaceShock .42s cubic-bezier(.15,.9,.2,1) 3}
+.poker-avatar-v2.poker-face-state-shocked img{filter:brightness(1.08) contrast(1.08)}
+
+.poker-avatar-v2.poker-face-state-win{animation:pokerFaceWin .88s ease-in-out infinite alternate}
+.poker-avatar-v2.poker-face-state-win img{filter:brightness(1.06) contrast(1.06) saturate(1.06)}
+
+@keyframes pokerFaceSwap{
+  0%{opacity:.35;transform:scale(1.12) translateY(3px)}
+  55%{opacity:1;transform:scale(1.2) translateY(-2px)}
+  100%{opacity:1}
+}
+@keyframes pokerFaceIdle{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-1px) scale(1.006)}
+}
+@keyframes pokerFaceFocus{
+  0%{transform:translateY(0) scale(1)}
+  100%{transform:translateY(-2px) scale(1.018)}
+}
+@keyframes pokerFacePressure{
+  0%{transform:translateX(-1.5px) rotate(-.35deg)}
+  100%{transform:translateX(1.5px) rotate(.35deg)}
+}
+@keyframes pokerFaceAggressive{
+  0%{transform:translateY(0) scale(1)}
+  100%{transform:translateY(-3px) scale(1.025)}
+}
+@keyframes pokerFaceShock{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.08) translateY(-2px)}
+  70%{transform:scale(.97)}
+  100%{transform:scale(1)}
+}
+@keyframes pokerFaceWin{
+  0%{transform:translateY(0) rotate(-.4deg) scale(1)}
+  100%{transform:translateY(-2px) rotate(.4deg) scale(1.025)}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .poker-avatar-v2.poker-face-system,
+  .poker-avatar-v2.poker-face-system img{
+    animation:none!important;
+    transition:none!important;
+  }
+}
