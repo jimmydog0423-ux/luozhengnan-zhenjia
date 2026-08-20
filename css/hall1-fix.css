@@ -42,7 +42,10 @@
   overflow:visible!important;
   display:block!important;
   transform:translate(-50%,-50%)!important;
+  z-index:8!important;
 }
+#objectLayer[data-hall1="1"] .hall1-nav-room{z-index:8!important}
+#objectLayer[data-hall1="1"] .hall1-nav-stairs{z-index:10!important}
 #objectLayer[data-hall1="1"] .hall1-nav>svg,
 #objectLayer[data-hall1="1"] .hall1-nav>img,
 #objectLayer[data-hall1="1"] .hall1-nav>.done-mark{
@@ -51,7 +54,7 @@
 #objectLayer[data-hall1="1"] .hall1-nav::before,
 #objectLayer[data-hall1="1"] .hall1-nav::after{display:none!important}
 
-/* Smaller, flatter arrows so they visually sit on the floor instead of floating on the wall. */
+/* Small, flattened floor arrows. */
 #objectLayer[data-hall1="1"] .hall1-ground-arrow{
   position:absolute;
   left:50%;
@@ -98,6 +101,7 @@
   text-shadow:0 2px 6px #000;
   opacity:.62;
   pointer-events:none;
+  z-index:11!important;
 }
 #objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
   font-size:10px;
@@ -105,6 +109,27 @@
 }
 #objectLayer[data-hall1="1"] .hall1-nav:hover .hall1-nav-label,
 #objectLayer[data-hall1="1"].hint-mode .hall1-nav .hall1-nav-label{opacity:1}
+
+/* Compact browser windows use the JS compact coordinates and slightly smaller markers. */
+@media (max-width:1500px), (max-height:920px){
+  #objectLayer[data-hall1="1"] .hall1-ground-arrow{
+    width:52px;
+    height:56px;
+  }
+  #objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-ground-arrow{
+    width:58px;
+    height:62px;
+  }
+  #objectLayer[data-hall1="1"] .hall1-nav-room .hall1-nav-label{
+    font-size:9px;
+    padding:3px 7px;
+    transform:translate(-50%,4px) scale(var(--hall-arrow-scale,1));
+  }
+  #objectLayer[data-hall1="1"] .hall1-nav-stairs .hall1-nav-label{
+    font-size:10px;
+    transform:translate(-50%,5px);
+  }
+}
 
 @keyframes hall1ArrowPulse{
   0%,100%{opacity:.38;filter:brightness(.9)}
