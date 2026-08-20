@@ -1,0 +1,161 @@
+/* Music room: align all interactions to the photographed background. */
+#objectLayer[data-music-fix="1"] .music-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  filter:none!important;
+}
+
+/* Piano is part of the background: only its hit area should remain. */
+#objectLayer[data-music-fix="1"] .music-piano>img,
+#objectLayer[data-music-fix="1"] .music-piano>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-music-fix="1"] .music-piano::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  border-radius:14px;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-music-fix="1"] .music-piano:hover::before,
+#objectLayer[data-music-fix="1"].hint-mode .music-piano::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.035);
+  box-shadow:0 0 20px rgba(255,63,87,.14),inset 0 0 18px rgba(255,63,87,.025);
+}
+
+/* Small physical props sit on/around the real piano instead of floating at blackboard height. */
+#objectLayer[data-music-fix="1"] .music-metronome,
+#objectLayer[data-music-fix="1"] .music-score{
+  padding:0!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-music-fix="1"] .music-metronome img,
+#objectLayer[data-music-fix="1"] .music-score img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  opacity:.84;
+  filter:brightness(.64) saturate(.78) drop-shadow(0 8px 9px rgba(0,0,0,.62))!important;
+  transition:transform .16s ease,filter .16s ease,opacity .16s ease;
+}
+#objectLayer[data-music-fix="1"] .music-metronome img{
+  transform:scale(.82)!important;
+}
+#objectLayer[data-music-fix="1"] .music-score img{
+  transform:rotate(-4deg) scale(.83)!important;
+}
+#objectLayer[data-music-fix="1"] .music-metronome:hover img,
+#objectLayer[data-music-fix="1"].hint-mode .music-metronome img{
+  transform:translateY(-3px) scale(.9)!important;
+  filter:brightness(.95) saturate(.9) drop-shadow(0 9px 11px rgba(0,0,0,.68))!important;
+  opacity:1;
+}
+#objectLayer[data-music-fix="1"] .music-score:hover img,
+#objectLayer[data-music-fix="1"].hint-mode .music-score img{
+  transform:rotate(-3deg) translateY(-3px) scale(.9)!important;
+  filter:brightness(.96) saturate(.9) drop-shadow(0 9px 11px rgba(0,0,0,.68))!important;
+  opacity:1;
+}
+
+/* NPC stands on the floor at the right side. */
+#objectLayer[data-music-fix="1"] .music-finger{
+  width:180px!important;
+  height:255px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-music-fix="1"] .music-finger>svg{display:none!important}
+#objectLayer[data-music-fix="1"] .music-finger .scene-character-sprite,
+#objectLayer[data-music-fix="1"] .music-finger>img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:scale(.92)!important;
+  transform-origin:center bottom!important;
+  filter:brightness(.72) drop-shadow(0 14px 14px rgba(0,0,0,.66))!important;
+  opacity:.97;
+}
+#objectLayer[data-music-fix="1"] .music-finger:hover .scene-character-sprite,
+#objectLayer[data-music-fix="1"].hint-mode .music-finger .scene-character-sprite{
+  transform:scale(.98)!important;
+  filter:brightness(.94) drop-shadow(0 15px 16px rgba(0,0,0,.7))!important;
+}
+
+/* Replace the floating door icon with the same floor navigation language used elsewhere. */
+#objectLayer[data-music-fix="1"] .music-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-music-fix="1"] .music-nav>svg,
+#objectLayer[data-music-fix="1"] .music-nav>img,
+#objectLayer[data-music-fix="1"] .music-nav>.done-mark{display:none!important}
+#objectLayer[data-music-fix="1"] .music-nav::before,
+#objectLayer[data-music-fix="1"] .music-nav::after{display:none!important}
+#objectLayer[data-music-fix="1"] .music-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:46%;
+  width:68px;
+  height:74px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(62deg) rotate(90deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.63));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+  opacity:.62;
+  animation:musicArrowPulse 1.55s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-music-fix="1"] .music-nav:hover .music-ground-arrow,
+#objectLayer[data-music-fix="1"].hint-mode .music-nav .music-ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+#objectLayer[data-music-fix="1"] .music-nav-label{
+  position:absolute;
+  left:50%;
+  top:82%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+#objectLayer[data-music-fix="1"] .music-nav:hover .music-nav-label,
+#objectLayer[data-music-fix="1"].hint-mode .music-nav .music-nav-label{opacity:1}
+
+@keyframes musicArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.84;filter:brightness(1.12)}
+}
