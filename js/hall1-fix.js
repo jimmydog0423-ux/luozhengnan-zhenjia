@@ -7,23 +7,25 @@
     "拖行痕跡":       { x: 945,  y: 810, w: 330, h: 105, cls: "hall1-drag" }
   };
 
-  /* Full-size desktop positions. Keep all destinations inside the safe stage area. */
+  /* Full desktop positions. Room markers follow the right-side door perspective.
+     The route to floor 2 is represented by the corridor vanishing point because
+     the background itself has no visible staircase. */
   const HALL1_NAV_BASE = {
-    "回中庭":   { x: 170,  y: 812, rot: 180, scale: 0.94, kind: "back" },
-    "電腦教室": { x: 1070, y: 555, rot: 53,  scale: 0.54, kind: "room" },
-    "保健室":   { x: 1160, y: 620, rot: 56,  scale: 0.63, kind: "room" },
-    "二年三班": { x: 1250, y: 685, rot: 59,  scale: 0.72, kind: "room" },
-    /* The background has no visible stairs. Treat the far end of the corridor as the route upstairs. */
-    "二樓樓梯": { x: 900,  y: 590, rot: 0,   scale: 0.58, kind: "forward", displayLabel: "往走廊盡頭" }
+    "回中庭":   { x: 170,  y: 812, rot: 180, scale: 1.06, kind: "back" },
+    "電腦教室": { x: 1070, y: 555, rot: 53,  scale: 0.88, kind: "room" },
+    "保健室":   { x: 1160, y: 620, rot: 56,  scale: 0.96, kind: "room" },
+    "二年三班": { x: 1250, y: 685, rot: 59,  scale: 1.04, kind: "room" },
+    "二樓樓梯": { x: 825,  y: 535, rot: 0,   scale: 0.84, kind: "forward", displayLabel: "往二樓" }
   };
 
-  /* Smaller browser windows use the same vanishing-point route, so it stays clear of the toolbar. */
+  /* Compact windows keep the same geometry, but pull the right-side destinations
+     inward slightly so they remain clear of the toolbar. Icons stay readable. */
   const HALL1_NAV_COMPACT = {
-    "回中庭":   { x: 165,  y: 800, rot: 180, scale: 0.90, kind: "back" },
-    "電腦教室": { x: 1025, y: 540, rot: 53,  scale: 0.47, kind: "room" },
-    "保健室":   { x: 1100, y: 590, rot: 56,  scale: 0.54, kind: "room" },
-    "二年三班": { x: 1180, y: 640, rot: 59,  scale: 0.62, kind: "room" },
-    "二樓樓梯": { x: 900,  y: 590, rot: 0,   scale: 0.54, kind: "forward", displayLabel: "往走廊盡頭" }
+    "回中庭":   { x: 165,  y: 800, rot: 180, scale: 1.00, kind: "back" },
+    "電腦教室": { x: 1035, y: 545, rot: 53,  scale: 0.82, kind: "room" },
+    "保健室":   { x: 1110, y: 600, rot: 56,  scale: 0.90, kind: "room" },
+    "二年三班": { x: 1190, y: 655, rot: 59,  scale: 0.98, kind: "room" },
+    "二樓樓梯": { x: 825,  y: 540, rot: 0,   scale: 0.80, kind: "forward", displayLabel: "往二樓" }
   };
 
   function getNavMap() {
@@ -64,7 +66,7 @@
     button.dataset.hall1Nav = nav.kind;
     button.style.setProperty("--hall-arrow-rot", `${nav.rot}deg`);
     button.style.setProperty("--hall-arrow-scale", String(nav.scale));
-    setBox(button, { x: nav.x, y: nav.y, w: 132 * nav.scale, h: 92 * nav.scale });
+    setBox(button, { x: nav.x, y: nav.y, w: 154 * nav.scale, h: 112 * nav.scale });
 
     let arrow = button.querySelector(".hall1-ground-arrow");
     if (!arrow) {
@@ -83,7 +85,8 @@
 
     const displayLabel = nav.displayLabel || label;
     if (text.textContent !== displayLabel) text.textContent = displayLabel;
-    if (nav.displayLabel) button.title = displayLabel;
+    button.title = displayLabel;
+    button.setAttribute("aria-label", displayLabel);
   }
 
   function decorateButton(button) {
@@ -98,8 +101,11 @@
       return;
     }
 
-    const nav = getNavMap()[label];
-    if (nav) makeGroundNav(button, label, nav);
+    /* aria-label may have been changed to the display text on an earlier sync,
+       so prefer the stable data-label for destination lookup whenever possible. */
+    const stableLabel = cleanLabel(button.dataset.label || label);
+    const nav = getNavMap()[stableLabel];
+    if (nav) makeGroundNav(button, stableLabel, nav);
   }
 
   function syncHall1() {
