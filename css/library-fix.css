@@ -1,0 +1,133 @@
+/* Library correction: align hotspots with background shelf/table/photo wall, ground TOYZ and replace exit icon with floor arrow. */
+#objectLayer[data-library="1"] .library-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-library="1"] .library-prop.embedded-hitbox>img,
+#objectLayer[data-library="1"] .library-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+#objectLayer[data-library="1"] .library-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+
+#objectLayer[data-library="1"] .library-prop.embedded-hitbox:hover::before,
+#objectLayer[data-library="1"].hint-mode .library-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.045);
+  box-shadow:0 0 20px rgba(255,63,87,.14),inset 0 0 18px rgba(255,63,87,.03);
+}
+
+#objectLayer[data-library="1"] .library-shelf::before{border-radius:14px!important}
+#objectLayer[data-library="1"] .library-table::before{border-radius:18px!important}
+#objectLayer[data-library="1"] .library-photo::before{border-radius:12px!important}
+
+#objectLayer[data-library="1"] .library-toyz{
+  width:185px!important;
+  height:250px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-library="1"] .library-toyz>svg{display:none!important}
+#objectLayer[data-library="1"] .library-toyz .scene-character-sprite,
+#objectLayer[data-library="1"] .library-toyz>img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:scale(.92)!important;
+  transform-origin:center bottom!important;
+  filter:brightness(.78) drop-shadow(0 15px 14px rgba(0,0,0,.66))!important;
+}
+
+#objectLayer[data-library="1"] .library-toyz:hover .scene-character-sprite,
+#objectLayer[data-library="1"].hint-mode .library-toyz .scene-character-sprite{
+  transform:scale(.98)!important;
+  filter:brightness(.96) drop-shadow(0 16px 16px rgba(0,0,0,.7))!important;
+}
+
+#objectLayer[data-library="1"] .library-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-library="1"] .library-nav>svg,
+#objectLayer[data-library="1"] .library-nav>img,
+#objectLayer[data-library="1"] .library-nav>.done-mark{display:none!important}
+#objectLayer[data-library="1"] .library-nav::before,
+#objectLayer[data-library="1"] .library-nav::after{display:none!important}
+
+#objectLayer[data-library="1"] .library-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:76px;
+  height:80px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(90deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.63));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+  opacity:.62;
+  animation:libraryArrowPulse 1.55s ease-in-out infinite;
+  pointer-events:none;
+}
+
+#objectLayer[data-library="1"] .library-nav:hover .library-ground-arrow,
+#objectLayer[data-library="1"].hint-mode .library-nav .library-ground-arrow{
+  opacity:1;
+  filter:brightness(1.16);
+}
+
+#objectLayer[data-library="1"] .library-nav-label{
+  position:absolute;
+  left:50%;
+  top:82%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+
+#objectLayer[data-library="1"] .library-nav:hover .library-nav-label,
+#objectLayer[data-library="1"].hint-mode .library-nav .library-nav-label{opacity:1}
+
+@keyframes libraryArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.82;filter:brightness(1.1)}
+}
