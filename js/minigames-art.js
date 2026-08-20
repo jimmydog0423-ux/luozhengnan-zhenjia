@@ -5,7 +5,7 @@
   if (!body) return;
 
   const MINIGAMES = [
-    { key:"classphoto", match:"班級照片：找出 3 個異常點", src:"assets/minigames/mini_classphoto.webp", stage:true, hotspots:[[31,33],[74,28],[59,60]] },
+    { key:"classphoto", match:"班級照片：找出 3 個異常點", src:"assets/minigames/mini_classphoto.webp", stage:true, hotspots:[[31.5,32.7],[73.8,25.5],[59,62.4]] },
     { key:"uv", match:"紫外線調查", src:"assets/minigames/mini_uv_mirror.webp", stage:true, hotspots:[[45,40],[57,35],[49,58]] },
     { key:"computer", match:"四台機器啟動順序", src:"assets/minigames/mini_computer_order.webp" },
     { key:"rhythm", match:"中指通：六指逆拍", src:"assets/minigames/mini_rhythm.webp" },
