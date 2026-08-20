@@ -2,11 +2,24 @@
   "use strict";
 
   const MUTE_KEY = "red_school_audio_muted_v1";
+  const CROSSFADE_MS = 1200;
   const MODE_LABEL = {
     explore: "校園探索",
     poker: "Poker",
     boss: "Boss",
     basement: "地下機房"
+  };
+  const BGM_FILES = {
+    explore: "assets/audio/bgm/explore.mp3",
+    poker: "assets/audio/bgm/poker.mp3",
+    boss: "assets/audio/bgm/boss.mp3",
+    basement: "assets/audio/bgm/basement.mp3"
+  };
+  const BGM_VOLUME = {
+    explore: 0.30,
+    poker: 0.28,
+    boss: 0.34,
+    basement: 0.30
   };
 
   const state = {
@@ -16,8 +29,10 @@
     muted: localStorage.getItem(MUTE_KEY) === "1",
     started: false,
     mode: "explore",
-    theme: null,
-    themeSerial: 0,
+    tracks: new Map(),
+    currentTrack: null,
+    currentMode: null,
+    fadeToken: 0,
     syncQueued: false
   };
 
@@ -49,281 +64,148 @@
     param.linearRampToValueAtTime(value, now + seconds);
   }
 
+  function getTrack(mode) {
+    if (!MODE_LABEL[mode]) mode = "explore";
+    if (state.tracks.has(mode)) return state.tracks.get(mode);
+
+    const audio = new Audio(BGM_FILES[mode]);
+    audio.loop = true;
+    audio.preload = mode === "explore" ? "auto" : "metadata";
+    audio.volume = 0;
+    audio.dataset.bgmMode = mode;
+
+    audio.addEventListener("error", () => {
+      console.warn(`[BGM] 無法載入 ${mode}: ${BGM_FILES[mode]}`);
+    });
+
+    state.tracks.set(mode, audio);
+    return audio;
+  }
+
+  function preloadTracks() {
+    Object.keys(BGM_FILES).forEach(mode => getTrack(mode));
+  }
+
+  function desiredVolume(mode) {
+    if (state.muted || document.hidden) return 0;
+    return BGM_VOLUME[mode] ?? 0.30;
+  }
+
   function syncSoundButton() {
     const btn = document.getElementById("soundBtn");
     if (!btn) return;
     btn.textContent = state.muted ? "聲音：關" : "聲音：開";
     btn.setAttribute("aria-pressed", state.muted ? "false" : "true");
-    btn.title = `目前 BGM：${MODE_LABEL[state.mode] || "校園探索"}`;
+    btn.title = `目前 BGM：${MODE_LABEL[state.mode] || "校園探索"}（MP3）`;
   }
 
-  function setMuted(value) {
-    state.muted = !!value;
-    localStorage.setItem(MUTE_KEY, state.muted ? "1" : "0");
-    if (state.master) ramp(state.master.gain, state.muted ? 0 : 0.72, 0.08);
-    syncSoundButton();
-  }
+  function fadeElement(audio, from, to, duration, token, onDone) {
+    if (!audio) return;
+    const start = performance.now();
+    audio.volume = Math.max(0, Math.min(1, from));
 
-  function createThemeBus(mode) {
-    const ctx = state.ctx;
-    const bus = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    const delay = ctx.createDelay(1.4);
-    const feedback = ctx.createGain();
-    const wet = ctx.createGain();
-
-    const settings = {
-      explore:  { volume: 0.17, cutoff: 1350, delay: 0.34, feedback: 0.17, wet: 0.20 },
-      poker:    { volume: 0.16, cutoff: 3000, delay: 0.19, feedback: 0.10, wet: 0.10 },
-      boss:     { volume: 0.215, cutoff: 2300, delay: 0.15, feedback: 0.12, wet: 0.11 },
-      basement: { volume: 0.195, cutoff: 920,  delay: 0.41, feedback: 0.24, wet: 0.22 }
-    }[mode] || { volume: 0.17, cutoff: 1350, delay: 0.34, feedback: 0.17, wet: 0.20 };
-
-    bus.gain.value = 0.0001;
-    filter.type = "lowpass";
-    filter.frequency.value = settings.cutoff;
-    filter.Q.value = mode === "basement" ? 1.8 : 0.75;
-    delay.delayTime.value = settings.delay;
-    feedback.gain.value = settings.feedback;
-    wet.gain.value = settings.wet;
-
-    bus.connect(filter);
-    filter.connect(state.master);
-    filter.connect(delay);
-    delay.connect(feedback);
-    feedback.connect(delay);
-    delay.connect(wet);
-    wet.connect(state.master);
-
-    return {
-      mode,
-      bus,
-      filter,
-      delay,
-      feedback,
-      wet,
-      volume: settings.volume,
-      nodes: [],
-      timers: [],
-      stopped: false,
-      serial: ++state.themeSerial
+    const step = now => {
+      if (token !== state.fadeToken) return;
+      const p = Math.min(1, (now - start) / Math.max(1, duration));
+      const eased = p * p * (3 - 2 * p);
+      audio.volume = Math.max(0, Math.min(1, from + (to - from) * eased));
+      if (p < 1) requestAnimationFrame(step);
+      else if (onDone) onDone();
     };
+    requestAnimationFrame(step);
   }
 
-  function addTimer(theme, fn, ms) {
-    if (!theme || theme.stopped) return null;
-    const id = setTimeout(() => {
-      theme.timers = theme.timers.filter(x => x !== id);
-      if (!theme.stopped && state.theme === theme) fn();
-    }, ms);
-    theme.timers.push(id);
-    return id;
+  async function safePlay(audio) {
+    if (!audio) return false;
+    try {
+      await audio.play();
+      return true;
+    } catch (err) {
+      console.warn("[BGM] 播放被瀏覽器暫停，等待下一次使用者互動。", err);
+      return false;
+    }
   }
 
-  function makeDrone(theme, freq, gainValue, type = "sine", lfoHz = 0.08, lfoDepth = 0.18) {
-    const ctx = state.ctx;
-    if (!ctx || !theme || theme.stopped) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.value = gainValue;
-    lfo.type = "sine";
-    lfo.frequency.value = lfoHz;
-    lfoGain.gain.value = gainValue * lfoDepth;
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(gain.gain);
-    osc.connect(gain);
-    gain.connect(theme.bus);
-    osc.start();
-    lfo.start();
-
-    theme.nodes.push(osc, lfo, gain, lfoGain);
+  function stopOtherTracks(except) {
+    state.tracks.forEach(track => {
+      if (track === except) return;
+      track.pause();
+      track.volume = 0;
+      try { track.currentTime = 0; } catch (_) {}
+    });
   }
 
-  function themeNote(theme, freq, length = 0.35, volume = 0.03, type = "triangle", attack = 0.01, detune = 0) {
-    if (!state.ctx || state.ctx.state !== "running" || state.muted || !theme || theme.stopped) return;
-    const ctx = state.ctx;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+  async function launchTrack(mode, { restart = true } = {}) {
+    if (!state.started) return;
+    if (!MODE_LABEL[mode]) mode = "explore";
 
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, now);
-    osc.detune.value = detune;
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), now + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+    const next = getTrack(mode);
+    const old = state.currentTrack;
 
-    osc.connect(gain);
-    gain.connect(theme.bus);
-    osc.start(now);
-    osc.stop(now + length + 0.04);
-  }
-
-  function noiseHit(theme, length = 0.13, volume = 0.018, center = 900) {
-    if (!state.ctx || state.ctx.state !== "running" || state.muted || !theme || theme.stopped) return;
-    const ctx = state.ctx;
-    const frames = Math.max(1, Math.floor(ctx.sampleRate * length));
-    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < frames; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
-
-    const src = ctx.createBufferSource();
-    const band = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    src.buffer = buffer;
-    band.type = "bandpass";
-    band.frequency.value = center;
-    band.Q.value = 3.5;
-    gain.gain.value = volume;
-    src.connect(band);
-    band.connect(gain);
-    gain.connect(theme.bus);
-    src.start();
-  }
-
-  function startExplore(theme) {
-    makeDrone(theme, 55.0, 0.017, "sine", 0.065, 0.22);
-    makeDrone(theme, 82.41, 0.008, "triangle", 0.09, 0.18);
-    const motif = [
-      [110.00, 130.81, 155.56],
-      [98.00, 116.54, 146.83],
-      [110.00, 123.47, 164.81],
-      [92.50, 110.00, 138.59]
-    ];
-    let index = 0;
-    const loop = () => {
-      const chord = motif[index++ % motif.length];
-      themeNote(theme, chord[0], 3.1, 0.032, "triangle", 0.18, (Math.random() - 0.5) * 7);
-      addTimer(theme, () => themeNote(theme, chord[1], 2.3, 0.022, "triangle", 0.16), 560);
-      addTimer(theme, () => themeNote(theme, chord[2], 1.8, 0.017, "sine", 0.12), 1120);
-      addTimer(theme, loop, 4300);
-    };
-    loop();
-  }
-
-  function startPoker(theme) {
-    makeDrone(theme, 65.41, 0.007, "sine", 0.14, 0.12);
-    const bass = [65.41, 73.42, 77.78, 58.27];
-    const chords = [
-      [130.81, 155.56, 196.00],
-      [146.83, 174.61, 220.00],
-      [155.56, 185.00, 233.08],
-      [116.54, 146.83, 174.61]
-    ];
-    let beat = 0;
-    const tick = () => {
-      const bar = Math.floor(beat / 4) % bass.length;
-      const pos = beat % 4;
-      themeNote(theme, pos === 0 ? bass[bar] : bass[bar] * 2, pos === 0 ? 0.34 : 0.16, pos === 0 ? 0.043 : 0.017, pos === 0 ? "triangle" : "sine", 0.008);
-      if (pos === 0) {
-        const chord = chords[bar];
-        chord.forEach((f, i) => addTimer(theme, () => themeNote(theme, f, 0.48, 0.012, "triangle", 0.012), i * 45));
-      }
-      if (pos === 2 && Math.random() < 0.55) noiseHit(theme, 0.055, 0.006, 2200);
-      beat++;
-      addTimer(theme, tick, 620);
-    };
-    tick();
-  }
-
-  function startBoss(theme) {
-    makeDrone(theme, 46.25, 0.014, "sawtooth", 0.22, 0.12);
-    makeDrone(theme, 92.50, 0.008, "triangle", 0.31, 0.14);
-    const pulse = [55.00, 55.00, 65.41, 49.00, 55.00, 73.42, 65.41, 49.00];
-    let step = 0;
-    const hit = () => {
-      const f = pulse[step % pulse.length];
-      const accent = step % 4 === 0;
-      themeNote(theme, f, accent ? 0.36 : 0.23, accent ? 0.060 : 0.035, "sawtooth", 0.006);
-      themeNote(theme, f * 2, 0.18, accent ? 0.024 : 0.012, "triangle", 0.004);
-      noiseHit(theme, accent ? 0.11 : 0.065, accent ? 0.020 : 0.010, accent ? 150 : 280);
-      if (step % 8 === 6) themeNote(theme, 311.13, 0.65, 0.022, "square", 0.015);
-      step++;
-      addTimer(theme, hit, 430);
-    };
-    hit();
-  }
-
-  function startBasement(theme) {
-    makeDrone(theme, 43.65, 0.024, "sine", 0.045, 0.28);
-    makeDrone(theme, 46.25, 0.009, "triangle", 0.052, 0.24);
-    makeDrone(theme, 87.31, 0.005, "sine", 0.12, 0.18);
-
-    const machinery = () => {
-      const metal = 620 + Math.random() * 1250;
-      noiseHit(theme, 0.08 + Math.random() * 0.13, 0.010 + Math.random() * 0.009, metal);
-      if (Math.random() < 0.65) {
-        themeNote(theme, 41 + Math.random() * 7, 0.28, 0.025, "square", 0.003, (Math.random() - 0.5) * 16);
-      }
-      addTimer(theme, machinery, 900 + Math.random() * 1700);
-    };
-
-    const warning = () => {
-      themeNote(theme, 123.47, 0.9, 0.014, "sine", 0.08);
-      addTimer(theme, () => themeNote(theme, 116.54, 1.15, 0.012, "sine", 0.08), 470);
-      addTimer(theme, warning, 6500 + Math.random() * 3200);
-    };
-
-    machinery();
-    addTimer(theme, warning, 1900);
-  }
-
-  function stopTheme(theme, fade = 0.85) {
-    if (!theme || theme.stopped) return;
-    theme.stopped = true;
-    theme.timers.forEach(clearTimeout);
-    theme.timers.length = 0;
-
-    if (state.ctx) {
-      const now = state.ctx.currentTime;
-      try {
-        theme.bus.gain.cancelScheduledValues(now);
-        theme.bus.gain.setValueAtTime(Math.max(0.0001, theme.bus.gain.value), now);
-        theme.bus.gain.linearRampToValueAtTime(0.0001, now + fade);
-      } catch (_) {}
+    if (old === next) {
+      state.currentMode = mode;
+      if (!state.muted && !document.hidden && next.paused) await safePlay(next);
+      next.volume = desiredVolume(mode);
+      return;
     }
 
-    setTimeout(() => {
-      theme.nodes.forEach(node => {
-        try { if (typeof node.stop === "function") node.stop(); } catch (_) {}
-        try { if (typeof node.disconnect === "function") node.disconnect(); } catch (_) {}
+    const token = ++state.fadeToken;
+    const target = desiredVolume(mode);
+
+    if (restart) {
+      try { next.currentTime = 0; } catch (_) {}
+    }
+    next.volume = 0;
+    state.currentTrack = next;
+    state.currentMode = mode;
+
+    if (!state.muted && !document.hidden) await safePlay(next);
+
+    if (old) {
+      const oldStart = old.volume;
+      fadeElement(old, oldStart, 0, CROSSFADE_MS, token, () => {
+        if (token !== state.fadeToken) return;
+        old.pause();
+        old.volume = 0;
+        try { old.currentTime = 0; } catch (_) {}
       });
-      [theme.bus, theme.filter, theme.delay, theme.feedback, theme.wet].forEach(node => {
-        try { node.disconnect(); } catch (_) {}
-      });
-    }, Math.ceil((fade + 0.15) * 1000));
+    }
+
+    fadeElement(next, next.volume, target, CROSSFADE_MS, token, () => {
+      if (token !== state.fadeToken) return;
+      stopOtherTracks(next);
+    });
   }
 
-  function launchTheme(mode) {
-    if (!state.ctx || !state.started) return;
-    const old = state.theme;
-    const theme = createThemeBus(mode);
-    state.theme = theme;
+  async function setMuted(value) {
+    state.muted = !!value;
+    localStorage.setItem(MUTE_KEY, state.muted ? "1" : "0");
 
-    if (mode === "poker") startPoker(theme);
-    else if (mode === "boss") startBoss(theme);
-    else if (mode === "basement") startBasement(theme);
-    else startExplore(theme);
+    if (state.master) ramp(state.master.gain, state.muted ? 0 : 0.72, 0.08);
+    syncSoundButton();
 
-    const now = state.ctx.currentTime;
-    theme.bus.gain.setValueAtTime(0.0001, now);
-    theme.bus.gain.linearRampToValueAtTime(theme.volume, now + 1.15);
-    if (old) stopTheme(old, 0.9);
+    const track = state.currentTrack || getTrack(state.mode);
+    if (state.muted) {
+      ++state.fadeToken;
+      state.tracks.forEach(audio => {
+        audio.pause();
+        audio.volume = 0;
+      });
+    } else if (state.started && !document.hidden) {
+      state.currentTrack = track;
+      state.currentMode = state.mode;
+      await safePlay(track);
+      const token = ++state.fadeToken;
+      fadeElement(track, 0, desiredVolume(state.mode), 420, token);
+    }
   }
 
-  function setMode(mode, { force = false } = {}) {
+  function setMode(mode, { force = false, restart = true } = {}) {
     if (!MODE_LABEL[mode]) mode = "explore";
-    if (!force && state.mode === mode) return;
+    if (!force && state.mode === mode && state.currentMode === mode) return;
     state.mode = mode;
     syncSoundButton();
-    if (state.started && state.ctx?.state === "running") launchTheme(mode);
+    if (state.started) launchTrack(mode, { restart });
   }
 
   function detectMode() {
@@ -332,7 +214,9 @@
     const modal = document.getElementById("modalBody");
     const modalOpen = overlay?.classList.contains("show");
 
-    if (modalOpen && modal?.querySelector(".poker-v2")) return "poker";
+    if (modalOpen && modal?.querySelector(".poker-v2, .poker-v2-stage, .poker-table-v2, .poker-opponent-v2, #pokerButtons")) {
+      return "poker";
+    }
 
     if (modalOpen && modal) {
       const text = modal.textContent || "";
@@ -349,7 +233,8 @@
 
   function syncModeFromUi() {
     state.syncQueued = false;
-    setMode(detectMode());
+    const detected = detectMode();
+    if (detected !== state.mode || detected !== state.currentMode) setMode(detected);
   }
 
   function scheduleModeSync() {
@@ -360,15 +245,23 @@
 
   async function ensureStarted() {
     const ctx = makeContext();
-    if (!ctx) return false;
-    try {
-      if (ctx.state === "suspended") await ctx.resume();
-    } catch (_) {}
-    state.started = true;
-    state.mode = detectMode();
-    if (!state.theme) launchTheme(state.mode);
+    if (ctx) {
+      try {
+        if (ctx.state === "suspended") await ctx.resume();
+      } catch (_) {}
+    }
+
+    if (!state.started) {
+      state.started = true;
+      state.mode = detectMode();
+      await launchTrack(state.mode, { restart: true });
+    } else if (!state.muted && !document.hidden && state.currentTrack?.paused) {
+      await safePlay(state.currentTrack);
+      state.currentTrack.volume = desiredVolume(state.mode);
+    }
+
     syncSoundButton();
-    return ctx.state === "running";
+    return true;
   }
 
   function shortTone(freq, duration, volume, type = "triangle", detune = 0) {
@@ -425,6 +318,8 @@
   }
 
   function bindUnlock() {
+    preloadTracks();
+
     const unlock = () => ensureStarted();
     document.addEventListener("pointerdown", unlock, { once: true, capture: true });
     document.addEventListener("keydown", unlock, { once: true, capture: true });
@@ -433,18 +328,36 @@
     if (btn) {
       btn.addEventListener("click", async () => {
         await ensureStarted();
-        setMuted(!state.muted);
+        await setMuted(!state.muted);
       });
     }
+
     syncSoundButton();
     bindModeDetection();
   }
 
-  document.addEventListener("visibilitychange", () => {
-    if (!state.ctx) return;
-    if (document.hidden) state.ctx.suspend().catch(() => {});
-    else if (state.started && !state.muted) {
-      state.ctx.resume().then(scheduleModeSync).catch(() => {});
+  document.addEventListener("visibilitychange", async () => {
+    if (document.hidden) {
+      ++state.fadeToken;
+      state.tracks.forEach(audio => {
+        audio.pause();
+        audio.volume = 0;
+      });
+      if (state.ctx?.state === "running") state.ctx.suspend().catch(() => {});
+      return;
+    }
+
+    if (state.ctx && state.started && !state.muted) {
+      state.ctx.resume().catch(() => {});
+    }
+    if (state.started && !state.muted) {
+      state.mode = detectMode();
+      const track = getTrack(state.mode);
+      state.currentTrack = track;
+      state.currentMode = state.mode;
+      await safePlay(track);
+      const token = ++state.fadeToken;
+      fadeElement(track, 0, desiredVolume(state.mode), 500, token);
     }
   });
 
@@ -457,7 +370,8 @@
     setMode,
     refreshBgmMode: scheduleModeSync,
     isMuted: () => state.muted,
-    getMode: () => state.mode
+    getMode: () => state.mode,
+    bgmFiles: { ...BGM_FILES }
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindUnlock, { once: true });
