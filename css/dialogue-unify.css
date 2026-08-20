@@ -1,0 +1,143 @@
+/* Global dialogue presentation: every character uses the same safe RPG framing. */
+#modalBody .dialogue-layout.dialogue-unified{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:minmax(300px,38%) minmax(0,62%)!important;
+  gap:26px!important;
+  min-height:500px!important;
+  align-items:stretch!important;
+  overflow:hidden!important;
+  padding:18px 26px 20px!important;
+}
+
+/* Always place the character on the LEFT and copy on the RIGHT. */
+#modalBody .dialogue-layout.dialogue-unified .portrait{
+  order:1!important;
+  position:relative!important;
+  align-self:stretch!important;
+  width:100%!important;
+  height:500px!important;
+  min-width:0!important;
+  aspect-ratio:auto!important;
+  overflow:hidden!important;
+  border:0!important;
+  background:radial-gradient(circle at 50% 54%,rgba(117,43,58,.14),transparent 65%)!important;
+}
+#modalBody .dialogue-layout.dialogue-unified>div:not(.portrait):not(.dialogue-accent){
+  order:2!important;
+  align-self:center!important;
+  position:relative!important;
+  z-index:2!important;
+  min-width:0!important;
+  padding:34px 30px 34px 10px!important;
+}
+
+/* Kill every old medium/bust/close/dramatic zoom rule. */
+#modalBody .dialogue-layout.dialogue-unified .portrait img,
+#modalBody .dialogue-layout.dialogue-unified .portrait img.character-sprite,
+#modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img,
+#modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img.character-sprite{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:0!important;
+  width:auto!important;
+  height:94%!important;
+  max-width:92%!important;
+  max-height:94%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:translateX(-50%)!important;
+  transform-origin:center bottom!important;
+  filter:drop-shadow(0 20px 25px rgba(0,0,0,.65))!important;
+}
+
+/* Consistent text hierarchy and button position for every speaker. */
+#modalBody .dialogue-layout.dialogue-unified .dialogue-who{
+  margin:4px 0 16px!important;
+  font-size:30px!important;
+  line-height:1.15!important;
+  letter-spacing:.04em!important;
+}
+#modalBody .dialogue-layout.dialogue-unified .dialogue-text{
+  min-height:108px!important;
+  max-width:720px!important;
+  font-size:22px!important;
+  line-height:1.8!important;
+  text-shadow:0 2px 8px rgba(0,0,0,.45)!important;
+}
+#modalBody .dialogue-layout.dialogue-unified .dialogue-actions{
+  display:flex!important;
+  justify-content:flex-start!important;
+  margin-top:24px!important;
+}
+#modalBody .dialogue-layout.dialogue-unified .dialogue-actions button{
+  min-width:112px!important;
+}
+
+/* One accent line direction only. */
+#modalBody .dialogue-layout.dialogue-unified .dialogue-accent{
+  left:38%!important;
+  right:22px!important;
+  bottom:24px!important;
+  background:linear-gradient(90deg,rgba(231,200,94,.58),transparent)!important;
+}
+
+/* Speaker-specific old padding/order rules must not leak through. */
+#modalBody .dialogue-layout.dialogue-unified.speaker-right .portrait,
+#modalBody .dialogue-layout.dialogue-unified.speaker-left .portrait{order:1!important}
+#modalBody .dialogue-layout.dialogue-unified.speaker-right>div:not(.portrait):not(.dialogue-accent),
+#modalBody .dialogue-layout.dialogue-unified.speaker-left>div:not(.portrait):not(.dialogue-accent){
+  order:2!important;
+  padding:34px 30px 34px 10px!important;
+}
+
+@media (max-width:1500px), (max-height:820px){
+  #modalBody .dialogue-layout.dialogue-unified{
+    grid-template-columns:minmax(270px,36%) minmax(0,64%)!important;
+    min-height:430px!important;
+    gap:20px!important;
+    padding:12px 20px 16px!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified .portrait{height:430px!important}
+  #modalBody .dialogue-layout.dialogue-unified .portrait img,
+  #modalBody .dialogue-layout.dialogue-unified .portrait img.character-sprite,
+  #modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img,
+  #modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img.character-sprite{
+    height:92%!important;
+    max-height:92%!important;
+    max-width:90%!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified .dialogue-text{font-size:20px!important;min-height:96px!important}
+  #modalBody .dialogue-layout.dialogue-unified .dialogue-who{font-size:27px!important}
+}
+
+@media (max-width:760px){
+  #modalBody .dialogue-layout.dialogue-unified{
+    grid-template-columns:1fr!important;
+    grid-template-rows:270px auto!important;
+    min-height:0!important;
+    gap:8px!important;
+    padding:10px 14px 16px!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified .portrait{
+    grid-row:1!important;
+    height:270px!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified>div:not(.portrait):not(.dialogue-accent){
+    grid-row:2!important;
+    padding:12px 8px 18px!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified .portrait img,
+  #modalBody .dialogue-layout.dialogue-unified .portrait img.character-sprite,
+  #modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img,
+  #modalBody .dialogue-layout.dialogue-unified .portrait[data-shot] img.character-sprite{
+    height:96%!important;
+    max-height:96%!important;
+    max-width:88%!important;
+  }
+  #modalBody .dialogue-layout.dialogue-unified .dialogue-text{font-size:18px!important;min-height:76px!important}
+  #modalBody .dialogue-layout.dialogue-unified .dialogue-who{font-size:24px!important;margin-bottom:10px!important}
+  #modalBody .dialogue-layout.dialogue-unified .dialogue-accent{display:none!important}
+}
