@@ -13,17 +13,17 @@
     "電腦教室": { x: 1070, y: 555, rot: 53,  scale: 0.54, kind: "room" },
     "保健室":   { x: 1160, y: 620, rot: 56,  scale: 0.63, kind: "room" },
     "二年三班": { x: 1250, y: 685, rot: 59,  scale: 0.72, kind: "room" },
-    "二樓樓梯": { x: 1340, y: 755, rot: 62,  scale: 0.82, kind: "stairs" }
+    /* The background has no visible stairs. Treat the far end of the corridor as the route upstairs. */
+    "二樓樓梯": { x: 900,  y: 590, rot: 0,   scale: 0.58, kind: "forward", displayLabel: "往走廊盡頭" }
   };
 
-  /* Smaller browser windows: pull the whole right-side route inward and upward
-     so the stairs marker never sits underneath the bottom-right toolbar. */
+  /* Smaller browser windows use the same vanishing-point route, so it stays clear of the toolbar. */
   const HALL1_NAV_COMPACT = {
     "回中庭":   { x: 165,  y: 800, rot: 180, scale: 0.90, kind: "back" },
     "電腦教室": { x: 1025, y: 540, rot: 53,  scale: 0.47, kind: "room" },
     "保健室":   { x: 1100, y: 590, rot: 56,  scale: 0.54, kind: "room" },
     "二年三班": { x: 1180, y: 640, rot: 59,  scale: 0.62, kind: "room" },
-    "二樓樓梯": { x: 1245, y: 700, rot: 62,  scale: 0.72, kind: "stairs" }
+    "二樓樓梯": { x: 900,  y: 590, rot: 0,   scale: 0.54, kind: "forward", displayLabel: "往走廊盡頭" }
   };
 
   function getNavMap() {
@@ -56,7 +56,10 @@
   }
 
   function makeGroundNav(button, label, nav) {
-    button.classList.remove("embedded-hitbox", "foreground-prop", "world-door");
+    button.classList.remove(
+      "embedded-hitbox", "foreground-prop", "world-door",
+      "hall1-nav-back", "hall1-nav-room", "hall1-nav-stairs", "hall1-nav-forward"
+    );
     button.classList.add("hall1-nav", `hall1-nav-${nav.kind}`);
     button.dataset.hall1Nav = nav.kind;
     button.style.setProperty("--hall-arrow-rot", `${nav.rot}deg`);
@@ -77,7 +80,10 @@
       text.className = "hall1-nav-label";
       button.appendChild(text);
     }
-    if (text.textContent !== label) text.textContent = label;
+
+    const displayLabel = nav.displayLabel || label;
+    if (text.textContent !== displayLabel) text.textContent = displayLabel;
+    if (nav.displayLabel) button.title = displayLabel;
   }
 
   function decorateButton(button) {
@@ -86,7 +92,7 @@
 
     const prop = HALL1_PROPS[label];
     if (prop) {
-      button.classList.remove("hall1-nav", "hall1-nav-back", "hall1-nav-room", "hall1-nav-stairs", "foreground-prop", "world-door");
+      button.classList.remove("hall1-nav", "hall1-nav-back", "hall1-nav-room", "hall1-nav-stairs", "hall1-nav-forward", "foreground-prop", "world-door");
       button.classList.add("hall1-prop", "embedded-hitbox", prop.cls);
       setBox(button, prop);
       return;
