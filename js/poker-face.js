@@ -2,16 +2,37 @@
   "use strict";
 
   const DEFAULT_FACE = "assets/characters/tongshen.webp";
+  const FIRST_POKER_GIF = "assets/poker/tongshen/tongshen_poker_neutral_focus.gif";
 
-  // 之後只要把同名 GIF / PNG 放進 assets/poker/tongshen/，
-  // 不需要再修改 Poker 主程式。GIF 優先，PNG 次之，沒有素材時沿用原本 tongshen.webp。
+  // 表情素材對照：GIF 優先、PNG 次之、最後才回到原本 tongshen.webp。
+  // 第一支 neutral/focus GIF 已上傳，所以 neutral / focus 兩種狀態先共用它。
   const FACE_CANDIDATES = {
-    neutral:    ["assets/poker/tongshen/neutral.gif",    "assets/poker/tongshen/neutral.png"],
-    focus:      ["assets/poker/tongshen/focus.gif",      "assets/poker/tongshen/focus.png"],
-    pressure:   ["assets/poker/tongshen/pressure.gif",   "assets/poker/tongshen/pressure.png"],
-    aggressive: ["assets/poker/tongshen/aggressive.gif", "assets/poker/tongshen/aggressive.png"],
-    shocked:    ["assets/poker/tongshen/shocked.gif",    "assets/poker/tongshen/shocked.png"],
-    win:        ["assets/poker/tongshen/win.gif",        "assets/poker/tongshen/win.png"]
+    neutral: [
+      FIRST_POKER_GIF,
+      "assets/poker/tongshen/neutral.gif",
+      "assets/poker/tongshen/neutral.png"
+    ],
+    focus: [
+      FIRST_POKER_GIF,
+      "assets/poker/tongshen/focus.gif",
+      "assets/poker/tongshen/focus.png"
+    ],
+    pressure: [
+      "assets/poker/tongshen/pressure.gif",
+      "assets/poker/tongshen/pressure.png"
+    ],
+    aggressive: [
+      "assets/poker/tongshen/aggressive.gif",
+      "assets/poker/tongshen/aggressive.png"
+    ],
+    shocked: [
+      "assets/poker/tongshen/shocked.gif",
+      "assets/poker/tongshen/shocked.png"
+    ],
+    win: [
+      "assets/poker/tongshen/win.gif",
+      "assets/poker/tongshen/win.png"
+    ]
   };
 
   const resolvedAssets = new Map();
@@ -32,6 +53,7 @@
           resolve(DEFAULT_FACE);
           return;
         }
+
         const probe = new Image();
         probe.onload = () => {
           resolvedAssets.set(state, list[i]);
@@ -55,8 +77,8 @@
     if (!stage || !avatar) return "neutral";
 
     const result = stage.querySelector(".poker-result-v2");
-    if (result?.classList.contains("win")) return "shocked"; // 玩家贏牌，統神被抓到
-    if (result?.classList.contains("lose")) return "win";    // 玩家輸牌，統神得意
+    if (result?.classList.contains("win")) return "shocked";
+    if (result?.classList.contains("lose")) return "win";
     if (result?.classList.contains("tie")) return "focus";
 
     if (stage.classList.contains("is-reraise")) return "aggressive";
@@ -106,6 +128,7 @@
 
   function sync() {
     scheduled = false;
+
     const stage = document.querySelector("#modalBody .poker-v2-stage");
     if (!stage) {
       lastState = "";
@@ -115,8 +138,8 @@
 
     const avatar = stage.querySelector(".poker-opponent-v2 .poker-avatar-v2");
     if (!avatar) return;
-    avatar.classList.add("poker-face-system");
 
+    avatar.classList.add("poker-face-system");
     const state = deriveState(stage, avatar);
     applyState(stage, avatar, state);
   }
