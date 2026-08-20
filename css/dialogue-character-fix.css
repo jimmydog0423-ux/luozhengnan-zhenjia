@@ -1,0 +1,68 @@
+/* Dialogue character framing fixes.
+   rework.css intentionally varies camera shots; these speaker-specific rules
+   keep unusually large source sprites inside the portrait safely. */
+
+.dialogue-layout[data-speaker="統神"] .portrait{
+  height:460px;
+  overflow:hidden;
+  background:radial-gradient(circle at 56% 48%,rgba(117,43,58,.13),transparent 64%);
+}
+
+/* tongshen.webp has a much larger body footprint than the other portraits.
+   Override the generic bust shot (145%) so the head is never cropped. */
+.dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
+.dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+  position:absolute!important;
+  left:52%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:0!important;
+  width:auto!important;
+  height:94%!important;
+  max-width:92%!important;
+  max-height:94%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:translateX(-50%) scale(.88)!important;
+  transform-origin:center bottom!important;
+}
+
+/* Keep right-side speakers visually separated from the dialogue copy. */
+.dialogue-layout[data-speaker="統神"].speaker-right > div:not(.portrait):not(.dialogue-accent){
+  padding-left:34px;
+  padding-right:18px;
+}
+
+/* Other bust-shot guests get a milder safety cap as well, without changing
+   their intended RPG half-body presentation. */
+.dialogue-layout[data-speaker="中指通"] .portrait[data-shot="bust"] img.character-sprite,
+.dialogue-layout[data-speaker="TOYZ"] .portrait[data-shot="bust"] img.character-sprite{
+  height:116%!important;
+  max-height:116%!important;
+  transform:translateX(-50%) translateY(5%) scale(.98)!important;
+}
+
+@media (max-width:1500px), (max-height:820px){
+  .dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
+  .dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+    left:51%!important;
+    height:88%!important;
+    max-height:88%!important;
+    max-width:88%!important;
+    transform:translateX(-50%) scale(.84)!important;
+  }
+}
+
+@media (max-width:760px){
+  .dialogue-layout[data-speaker="統神"] .portrait{
+    height:300px;
+  }
+  .dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
+  .dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+    left:50%!important;
+    height:92%!important;
+    max-height:92%!important;
+    max-width:90%!important;
+    transform:translateX(-50%) scale(.86)!important;
+  }
+}
