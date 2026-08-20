@@ -7,18 +7,30 @@
     "拖行痕跡":       { x: 945,  y: 810, w: 330, h: 105, cls: "hall1-drag" }
   };
 
-  /*
-   * Door destinations on this background sit along the right wall in perspective.
-   * Markers are intentionally placed at each door threshold / floor seam rather than
-   * on the middle of the wall so they read as navigation arrows instead of stickers.
-   */
-  const HALL1_NAV = {
-    "回中庭":   { x: 175,  y: 820, rot: 180, scale: 0.92, kind: "back" },
-    "電腦教室": { x: 1080, y: 570, rot: 53,  scale: 0.62, kind: "room" },
-    "保健室":   { x: 1165, y: 635, rot: 56,  scale: 0.70, kind: "room" },
-    "二年三班": { x: 1260, y: 710, rot: 59,  scale: 0.80, kind: "room" },
-    "二樓樓梯": { x: 1415, y: 825, rot: 62,  scale: 0.88, kind: "stairs" }
+  /* Full-size desktop positions. Keep all destinations inside the safe stage area. */
+  const HALL1_NAV_BASE = {
+    "回中庭":   { x: 170,  y: 812, rot: 180, scale: 0.94, kind: "back" },
+    "電腦教室": { x: 1070, y: 555, rot: 53,  scale: 0.54, kind: "room" },
+    "保健室":   { x: 1160, y: 620, rot: 56,  scale: 0.63, kind: "room" },
+    "二年三班": { x: 1250, y: 685, rot: 59,  scale: 0.72, kind: "room" },
+    "二樓樓梯": { x: 1340, y: 755, rot: 62,  scale: 0.82, kind: "stairs" }
   };
+
+  /* Smaller browser windows: pull the whole right-side route inward and upward
+     so the stairs marker never sits underneath the bottom-right toolbar. */
+  const HALL1_NAV_COMPACT = {
+    "回中庭":   { x: 165,  y: 800, rot: 180, scale: 0.90, kind: "back" },
+    "電腦教室": { x: 1025, y: 540, rot: 53,  scale: 0.47, kind: "room" },
+    "保健室":   { x: 1100, y: 590, rot: 56,  scale: 0.54, kind: "room" },
+    "二年三班": { x: 1180, y: 640, rot: 59,  scale: 0.62, kind: "room" },
+    "二樓樓梯": { x: 1245, y: 700, rot: 62,  scale: 0.72, kind: "stairs" }
+  };
+
+  function getNavMap() {
+    return (window.innerWidth <= 1500 || window.innerHeight <= 920)
+      ? HALL1_NAV_COMPACT
+      : HALL1_NAV_BASE;
+  }
 
   function cleanLabel(raw) {
     return String(raw || "")
@@ -80,7 +92,7 @@
       return;
     }
 
-    const nav = HALL1_NAV[label];
+    const nav = getNavMap()[label];
     if (nav) makeGroundNav(button, label, nav);
   }
 
@@ -105,6 +117,12 @@
     syncHall1();
     new MutationObserver(syncHall1).observe(layer, { childList: true });
     new MutationObserver(syncHall1).observe(roomName, { childList: true, characterData: true, subtree: true });
+
+    let resizeTimer = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(syncHall1, 70);
+    }, { passive: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
