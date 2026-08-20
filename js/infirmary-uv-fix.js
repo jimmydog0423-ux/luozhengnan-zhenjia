@@ -4,11 +4,12 @@
   const body = document.getElementById("modalBody");
   if (!body) return;
 
-  // Coordinates are the visual centers of the three UV handprints in mini_uv_mirror.webp.
+  // Coordinates are the visual palm centers in mini_uv_mirror.webp.
+  // Calibrated from the rendered investigation image so the clickable circles sit on the handprints.
   const UV_SPOTS = [
-    { x: 53.0, y: 49.0, name: "左側手印" },
-    { x: 63.2, y: 35.8, name: "上方手印" },
-    { x: 61.2, y: 64.0, name: "下方手印" }
+    { x: 48.0, y: 43.0, name: "左側手印" },
+    { x: 56.2, y: 40.8, name: "上方手印" },
+    { x: 54.3, y: 60.7, name: "下方手印" }
   ];
 
   function isUvMini() {
