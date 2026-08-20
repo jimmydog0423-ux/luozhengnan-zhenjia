@@ -2,36 +2,56 @@
   "use strict";
 
   const DEFAULT_FACE = "assets/characters/tongshen.webp";
-  const FIRST_POKER_GIF = "assets/poker/tongshen/tongshen_poker_neutral_focus.gif";
+  const BASE = "assets/poker/tongshen/";
 
-  // 表情素材對照：GIF 優先、PNG 次之、最後才回到原本 tongshen.webp。
-  // 第一支 neutral/focus GIF 已上傳，所以 neutral / focus 兩種狀態先共用它。
+  // 8 支已上傳的 Poker GIF。
+  // neutral / focus 共用第一支；其餘狀態各自使用對應 GIF。
+  // 注意：bluff / trickster 是「演技表情」，不代表牌局一定正在 Bluff，避免形成答案表。
   const FACE_CANDIDATES = {
     neutral: [
-      FIRST_POKER_GIF,
-      "assets/poker/tongshen/neutral.gif",
-      "assets/poker/tongshen/neutral.png"
+      BASE + "tongshen_poker_neutral_focus.gif",
+      BASE + "neutral.gif",
+      BASE + "neutral.png"
     ],
     focus: [
-      FIRST_POKER_GIF,
-      "assets/poker/tongshen/focus.gif",
-      "assets/poker/tongshen/focus.png"
+      BASE + "tongshen_poker_neutral_focus.gif",
+      BASE + "focus.gif",
+      BASE + "focus.png"
     ],
     pressure: [
-      "assets/poker/tongshen/pressure.gif",
-      "assets/poker/tongshen/pressure.png"
+      BASE + "tongshen_poker_pressure.gif",
+      BASE + "pressure.gif",
+      BASE + "pressure.png"
     ],
     aggressive: [
-      "assets/poker/tongshen/aggressive.gif",
-      "assets/poker/tongshen/aggressive.png"
+      BASE + "tongshen_poker_aggressive.gif",
+      BASE + "aggressive.gif",
+      BASE + "aggressive.png"
     ],
     shocked: [
-      "assets/poker/tongshen/shocked.gif",
-      "assets/poker/tongshen/shocked.png"
+      BASE + "tongshen_poker_shocked.gif",
+      BASE + "shocked.gif",
+      BASE + "shocked.png"
     ],
     win: [
-      "assets/poker/tongshen/win.gif",
-      "assets/poker/tongshen/win.png"
+      BASE + "tongshen_poker_win.gif",
+      BASE + "win.gif",
+      BASE + "win.png"
+    ],
+    angry: [
+      BASE + "tongshen_poker_angry.gif",
+      BASE + "angry.gif",
+      BASE + "angry.png"
+    ],
+    bluff: [
+      BASE + "tongshen_poker_bluff.gif",
+      BASE + "bluff.gif",
+      BASE + "bluff.png"
+    ],
+    trickster: [
+      BASE + "tongshen_poker_trickster.gif",
+      BASE + "trickster.gif",
+      BASE + "trickster.png"
     ]
   };
 
@@ -77,17 +97,28 @@
     if (!stage || !avatar) return "neutral";
 
     const result = stage.querySelector(".poker-result-v2");
-    if (result?.classList.contains("win")) return "shocked";
+    const resultText = result?.textContent?.trim() || "";
+    const actionText = stage.querySelector(".opponent-action-v2")?.textContent?.trim() || "";
+
+    // 玩家把統神逼到棄牌：爆氣；真正攤牌輸掉：震驚。
+    if (result?.classList.contains("win")) {
+      if (/拿下底池|FOLD/i.test(resultText + " " + actionText)) return "angry";
+      return "shocked";
+    }
+
+    // 玩家輸掉牌局時，統神進入勝利表情。
     if (result?.classList.contains("lose")) return "win";
     if (result?.classList.contains("tie")) return "focus";
 
     if (stage.classList.contains("is-reraise")) return "aggressive";
 
+    // Tell 本身不是答案。遊戲核心 randomTell 已會混入假訊號，
+    // 這裡只是把不同微動作映射成不同視覺演技。
     if (avatar.classList.contains("tell-freeze")) return "focus";
     if (avatar.classList.contains("tell-fidget")) return "pressure";
     if (avatar.classList.contains("tell-snap")) return "aggressive";
-    if (avatar.classList.contains("tell-glance")) return "focus";
-    if (avatar.classList.contains("tell-breathe")) return "neutral";
+    if (avatar.classList.contains("tell-glance")) return "trickster";
+    if (avatar.classList.contains("tell-breathe")) return "bluff";
 
     return "neutral";
   }
