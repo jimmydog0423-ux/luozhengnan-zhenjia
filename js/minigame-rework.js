@@ -33,11 +33,19 @@
       if (grid) {
         grid.classList.add("terminal-console");
         $$("button", grid).forEach((b,i) => {
-          b.innerHTML = `<span class="terminal-led"></span><b>NODE ${String(i+1).padStart(2,"0")}</b><small>POWER / BOOT</small>`;
+          // IMPORTANT: do not rewrite innerHTML on every MutationObserver pass.
+          // Rewriting it triggers another childList mutation and can lock the page in an infinite loop.
+          if (b.dataset.terminalDecorated !== "1") {
+            b.dataset.terminalDecorated = "1";
+            b.innerHTML = `<span class="terminal-led"></span><b>NODE ${String(i+1).padStart(2,"0")}</b><small>POWER / BOOT</small>`;
+          }
+
           if (b.dataset.bootFx === "1") return;
           b.dataset.bootFx = "1";
           b.addEventListener("click", () => {
-            b.classList.remove("boot-pulse"); void b.offsetWidth; b.classList.add("boot-pulse");
+            b.classList.remove("boot-pulse");
+            void b.offsetWidth;
+            b.classList.add("boot-pulse");
           }, true);
         });
       }
@@ -55,17 +63,45 @@
         const firstMeter = $(".meter", body);
         firstMeter?.parentNode.insertBefore(visual, firstMeter);
       }
-      visual.innerHTML = `<div class="roll-track"><div class="roll-runner you" style="--p:${progress}%"><span></span><b>薛喜</b></div><div class="roll-runner foe" style="--p:${opponent}%"><span></span><b>TOYZ</b></div></div><div class="quality-dial"><i style="--q:${quality}%"></i><span>穩定區 37–73</span></div>`;
+
+      // Only repaint when gameplay values actually changed. This prevents the
+      // observer from reacting to its own innerHTML write forever.
+      if (visual) {
+        const renderSig = `${quality}|${progress}|${opponent}`;
+        if (visual.dataset.renderSig !== renderSig) {
+          visual.dataset.renderSig = renderSig;
+          visual.innerHTML = `<div class="roll-track"><div class="roll-runner you" style="--p:${progress}%"><span></span><b>薛喜</b></div><div class="roll-runner foe" style="--p:${opponent}%"><span></span><b>TOYZ</b></div></div><div class="quality-dial"><i style="--q:${quality}%"></i><span>穩定區 37–73</span></div>`;
+        }
+      }
+
       const roll = $("#roll", body);
       if (roll && roll.dataset.rollFx !== "1") {
         roll.dataset.rollFx = "1";
-        roll.addEventListener("click", () => visual.classList.add("rolling"), true);
+        roll.addEventListener("click", () => visual?.classList.add("rolling"), true);
       }
     }
   }
 
   const body = document.getElementById("modalBody");
   if (!body) return;
-  new MutationObserver(() => enhance(body)).observe(body, {childList:true,subtree:true,characterData:true});
+
+  // Coalesce bursts of DOM changes into one enhancement pass. Besides reducing
+  // work, this also keeps enhancement code from recursively monopolizing the UI thread.
+  let scheduled = false;
+  const scheduleEnhance = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      enhance(body);
+    });
+  };
+
+  new MutationObserver(scheduleEnhance).observe(body, {
+    childList:true,
+    subtree:true,
+    characterData:true
+  });
+
   enhance(body);
 })();
