@@ -12,10 +12,7 @@
   };
   const BGM_FILES = {
     explore: "assets/audio/bgm/explore.mp3",
-    // Paper-roll challenge gets its own mode immediately. It currently reuses
-    // the tense poker track; replacing this path with roll.mp3 later requires
-    // no gameplay changes.
-    roll: "assets/audio/bgm/poker.mp3",
+    roll: "assets/audio/bgm/roll.mp3",
     poker: "assets/audio/bgm/poker.mp3",
     boss: "assets/audio/bgm/boss.mp3",
     basement: "assets/audio/bgm/basement.mp3"
