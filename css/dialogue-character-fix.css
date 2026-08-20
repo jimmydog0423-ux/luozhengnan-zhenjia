@@ -1,40 +1,68 @@
 /* Dialogue character framing fixes.
-   rework.css intentionally varies camera shots; these speaker-specific rules
-   keep unusually large source sprites inside the portrait safely. */
+   Keep different source sprites at a consistent RPG-dialogue scale without
+   allowing close/bust camera presets to crop heads or dominate the layout. */
 
-.dialogue-layout[data-speaker="統神"] .portrait{
-  height:460px;
+/* Xuexi's "又我？" line is classified as a close shot by rework.js. The
+   generic close rule makes the source nearly 200% tall, so override it with a
+   full safe portrait that still fills the right side. */
+.dialogue-layout[data-speaker="薛喜"] .portrait{
+  height:520px!important;
   overflow:hidden;
-  background:radial-gradient(circle at 56% 48%,rgba(117,43,58,.13),transparent 64%);
+  background:radial-gradient(circle at 54% 48%,rgba(117,43,58,.12),transparent 64%);
 }
-
-/* tongshen.webp has a much larger body footprint than the other portraits.
-   Override the generic bust shot (145%) so the head is never cropped. */
-.dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
-.dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+.dialogue-layout[data-speaker="薛喜"] .portrait img.character-sprite,
+.dialogue-layout[data-speaker="薛喜"] .portrait[data-shot="close"] img.character-sprite,
+.dialogue-layout[data-speaker="薛喜"] .portrait[data-shot="medium"] img.character-sprite{
   position:absolute!important;
-  left:52%!important;
+  left:50%!important;
   right:auto!important;
   top:auto!important;
   bottom:0!important;
   width:auto!important;
-  height:94%!important;
-  max-width:92%!important;
-  max-height:94%!important;
+  height:100%!important;
+  max-width:94%!important;
+  max-height:100%!important;
   object-fit:contain!important;
   object-position:center bottom!important;
-  transform:translateX(-50%) scale(.88)!important;
+  transform:translateX(-50%) scale(.98)!important;
+  transform-origin:center bottom!important;
+}
+
+/* Tongshen previously became too small after the head-crop fix. Give him the
+   same 520px portrait stage as Xuexi and use the complete sprite at a readable
+   scale. */
+.dialogue-layout[data-speaker="統神"] .portrait{
+  height:520px!important;
+  overflow:hidden;
+  background:radial-gradient(circle at 56% 48%,rgba(117,43,58,.13),transparent 64%);
+}
+.dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
+.dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite,
+.dialogue-layout[data-speaker="統神"] .portrait img.character-sprite{
+  position:absolute!important;
+  left:51%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:0!important;
+  width:auto!important;
+  height:100%!important;
+  max-width:94%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:translateX(-50%) scale(1.00)!important;
   transform-origin:center bottom!important;
 }
 
 /* Keep right-side speakers visually separated from the dialogue copy. */
-.dialogue-layout[data-speaker="統神"].speaker-right > div:not(.portrait):not(.dialogue-accent){
+.dialogue-layout[data-speaker="統神"].speaker-right > div:not(.portrait):not(.dialogue-accent),
+.dialogue-layout[data-speaker="薛喜"].speaker-right > div:not(.portrait):not(.dialogue-accent){
   padding-left:34px;
   padding-right:18px;
 }
 
-/* Other bust-shot guests get a milder safety cap as well, without changing
-   their intended RPG half-body presentation. */
+/* Other bust-shot guests keep a half-body presentation but are capped so they
+   cannot repeat the same head-cropping issue. */
 .dialogue-layout[data-speaker="中指通"] .portrait[data-shot="bust"] img.character-sprite,
 .dialogue-layout[data-speaker="TOYZ"] .portrait[data-shot="bust"] img.character-sprite{
   height:116%!important;
@@ -43,26 +71,36 @@
 }
 
 @media (max-width:1500px), (max-height:820px){
-  .dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
-  .dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+  .dialogue-layout[data-speaker="薛喜"] .portrait,
+  .dialogue-layout[data-speaker="統神"] .portrait{
+    height:450px!important;
+  }
+  .dialogue-layout[data-speaker="薛喜"] .portrait img.character-sprite{
+    height:98%!important;
+    max-height:98%!important;
+    max-width:92%!important;
+    transform:translateX(-50%) scale(.96)!important;
+  }
+  .dialogue-layout[data-speaker="統神"] .portrait img.character-sprite{
     left:51%!important;
-    height:88%!important;
-    max-height:88%!important;
-    max-width:88%!important;
-    transform:translateX(-50%) scale(.84)!important;
+    height:100%!important;
+    max-height:100%!important;
+    max-width:92%!important;
+    transform:translateX(-50%) scale(.98)!important;
   }
 }
 
 @media (max-width:760px){
+  .dialogue-layout[data-speaker="薛喜"] .portrait,
   .dialogue-layout[data-speaker="統神"] .portrait{
-    height:300px;
+    height:310px!important;
   }
-  .dialogue-layout[data-speaker="統神"] .portrait[data-speaker="統神"] img.character-sprite,
-  .dialogue-layout[data-speaker="統神"] .portrait[data-shot="bust"] img.character-sprite{
+  .dialogue-layout[data-speaker="薛喜"] .portrait img.character-sprite,
+  .dialogue-layout[data-speaker="統神"] .portrait img.character-sprite{
     left:50%!important;
-    height:92%!important;
-    max-height:92%!important;
-    max-width:90%!important;
-    transform:translateX(-50%) scale(.86)!important;
+    height:96%!important;
+    max-height:96%!important;
+    max-width:92%!important;
+    transform:translateX(-50%) scale(.96)!important;
   }
 }
