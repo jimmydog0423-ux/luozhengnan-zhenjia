@@ -28,15 +28,31 @@
     return img;
   }
 
+  function syncRhythmArt(item) {
+    // Rhythm V2 is the gameplay itself. Do not insert the old 16:9 artwork as
+    // a separate banner because it pushes the six lanes below the fold.
+    body.querySelectorAll('img.minigame-art-banner[data-minigame-key="rhythm"]').forEach(img => img.remove());
+
+    const stage = body.querySelector(".rhythm-v2 .rv2-stage");
+    if (!stage) return;
+    stage.classList.add("rhythm-art-bg");
+    stage.style.setProperty("--rv2-stage-image", `url("${item.src}")`);
+  }
+
   function syncMinigameArt() {
     const text = body.textContent || "";
     const item = MINIGAMES.find(entry => text.includes(entry.match));
 
     body.querySelectorAll("img.minigame-art-banner").forEach(img => {
-      if (!item || img.dataset.minigameKey !== item.key) img.remove();
+      if (!item || img.dataset.minigameKey !== item.key || item.key === "rhythm") img.remove();
     });
 
     if (!item) return;
+
+    if (item.key === "rhythm") {
+      syncRhythmArt(item);
+      return;
+    }
 
     if (item.stage) {
       const stage = body.querySelector(".mini-stage");
