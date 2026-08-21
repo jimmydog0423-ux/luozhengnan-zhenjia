@@ -14,6 +14,7 @@
   ];
 
   let scheduled = false;
+  let bossSuspended = false;
 
   function createImage(item, className) {
     const img = document.createElement("img");
@@ -45,15 +46,13 @@
   function syncMinigameArt() {
     scheduled = false;
 
-    // Realtime bosses update HUD text dozens of times per second. They never use
-    // minigame banners, so do not scan their full text content at all.
     if (body.querySelector(".overload-boss-v2, .pyramid-boss-v2")) {
+      bossSuspended = true;
       clearBanners();
       return;
     }
+    bossSuspended = false;
 
-    /* Dialogue may mention a minigame by name. Never treat dialogue text as the
-       minigame screen itself, otherwise a huge gameplay banner appears above it. */
     if (body.querySelector(".dialogue-layout")) {
       clearBanners();
       return;
@@ -73,8 +72,6 @@
       return;
     }
 
-    /* V2 Paper Roll and Poker already have their own game presentation. Adding a
-       separate 16:9 banner makes the controls fall below the viewport. */
     if ((item.key === "roll" && body.querySelector(".paper-roll-v2")) ||
         (item.key === "poker" && body.querySelector(".poker-v2"))) {
       clearBanners();
@@ -116,6 +113,16 @@
   }
 
   function scheduleSync() {
+    const boss = body.querySelector(".overload-boss-v2, .pyramid-boss-v2");
+    if (boss) {
+      if (!bossSuspended) {
+        bossSuspended = true;
+        scheduled = false;
+        clearBanners();
+      }
+      return;
+    }
+    if (bossSuspended) bossSuspended = false;
     if (scheduled) return;
     scheduled = true;
     requestAnimationFrame(syncMinigameArt);
