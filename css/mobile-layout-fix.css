@@ -1,0 +1,155 @@
+/* Mobile portrait layout + scaled-stage readability fix */
+@media (max-width:900px) and (orientation:portrait){
+  #scene{
+    --mobile-toolbar-h:112px;
+    --mobile-objective-h:72px;
+  }
+
+  /* The 1600x900 stage is width-limited on phones. Move it upward so the
+     lower third stays available for the objective and toolbar. */
+  .game-stage{
+    top:43%!important;
+  }
+
+  .hud{
+    left:14px!important;
+    right:14px!important;
+    top:12px!important;
+    z-index:24!important;
+  }
+  .room-name{
+    font-size:clamp(30px,8.3vw,40px)!important;
+    line-height:1.04!important;
+  }
+  .room-sub{
+    margin-top:6px!important;
+    max-width:82vw;
+    font-size:13px!important;
+    line-height:1.4!important;
+  }
+  .hud-stats{display:none!important}
+
+  /* Two rows instead of the previous two-column / three-row stack. */
+  .toolbar{
+    position:absolute!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:auto!important;
+    z-index:32!important;
+  }
+  .toolbar button{
+    min-width:0!important;
+    min-height:50px!important;
+    padding:8px 6px!important;
+    border-radius:13px!important;
+    font-size:14px!important;
+    line-height:1.15!important;
+    white-space:nowrap!important;
+  }
+  .toolbar button:nth-child(5){grid-column:span 2}
+
+  /* Measured by mobile-layout-fix.js, so this stays correct even if browser
+     font scaling or safe-area size changes. */
+  .objective-panel{
+    position:absolute!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(var(--mobile-toolbar-h) + 20px + env(safe-area-inset-bottom,0px))!important;
+    width:auto!important;
+    min-height:0!important;
+    padding:11px 13px 12px!important;
+    border-radius:12px!important;
+    z-index:29!important;
+  }
+  .objective-kicker{
+    font-size:10px!important;
+    line-height:1.2!important;
+  }
+  .objective-text{
+    margin-top:5px!important;
+    font-size:13px!important;
+    line-height:1.42!important;
+  }
+
+  .message-box{
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(var(--mobile-toolbar-h) + var(--mobile-objective-h) + 34px + env(safe-area-inset-bottom,0px))!important;
+    width:auto!important;
+    transform:translateY(8px)!important;
+    padding:12px 14px!important;
+    font-size:13px!important;
+    z-index:36!important;
+  }
+  .message-box.show{transform:translateY(0)!important}
+
+  /* rework.js scales the whole 1600x900 stage. These variables contain
+     inverse-sized lengths, calculated by mobile-layout-fix.js, so labels and
+     tap targets stay readable in physical CSS pixels after the stage scales. */
+  .game-stage #objectLayer .scene-object{
+    min-width:var(--mobile-hit-min,116px)!important;
+    min-height:var(--mobile-hit-min,116px)!important;
+  }
+
+  .game-stage #objectLayer .scene-object::after{
+    top:calc(100% + var(--mobile-label-gap,14px))!important;
+    bottom:auto!important;
+    padding:var(--mobile-label-pad-y,11px) var(--mobile-label-pad-x,18px)!important;
+    border-width:var(--mobile-line,4px)!important;
+    border-radius:var(--mobile-label-radius,16px)!important;
+    font-size:var(--mobile-label-font,31px)!important;
+    line-height:1.2!important;
+    letter-spacing:.01em!important;
+    box-shadow:0 var(--mobile-shadow-y,12px) var(--mobile-shadow-blur,32px) rgba(0,0,0,.6)!important;
+  }
+  .game-stage #objectLayer.hint-mode .scene-object::after,
+  .game-stage #objectLayer .scene-object.world-door::after{
+    opacity:1!important;
+  }
+
+  /* Room-fix modules use custom nav labels instead of ::after. */
+  .game-stage #objectLayer [class*="nav-label"]{
+    left:50%!important;
+    top:calc(100% + var(--mobile-label-gap,14px))!important;
+    bottom:auto!important;
+    transform:translateX(-50%)!important;
+    padding:var(--mobile-label-pad-y,11px) var(--mobile-label-pad-x,18px)!important;
+    border-width:var(--mobile-line,4px)!important;
+    border-radius:999px!important;
+    font-size:var(--mobile-label-font,31px)!important;
+    line-height:1.2!important;
+    opacity:.96!important;
+    z-index:8!important;
+  }
+
+  /* Ground arrows were ~30px after stage scaling on a 720px phone. Keep them
+     around 46-50 physical pixels instead. */
+  .game-stage #objectLayer [class*="ground-arrow"]{
+    width:var(--mobile-arrow-w,108px)!important;
+    height:var(--mobile-arrow-h,116px)!important;
+    opacity:.92!important;
+  }
+
+  /* Hint borders are also inside the scaled stage, so compensate their stroke. */
+  .game-stage #objectLayer .embedded-hitbox::before,
+  .game-stage #objectLayer .aud-prop.embedded-hitbox::before{
+    border-width:var(--mobile-line,4px)!important;
+  }
+
+  .game-stage #objectLayer .done-mark{
+    width:var(--mobile-done-size,62px)!important;
+    height:var(--mobile-done-size,62px)!important;
+    font-size:var(--mobile-done-font,29px)!important;
+    border-width:var(--mobile-line,4px)!important;
+  }
+}
+
+@media (max-width:430px) and (orientation:portrait){
+  .toolbar{gap:6px!important}
+  .toolbar button{min-height:48px!important;font-size:13px!important;padding:7px 4px!important}
+  .objective-text{font-size:12.5px!important}
+}
