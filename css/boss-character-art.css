@@ -24,6 +24,23 @@
   filter:brightness(.98) saturate(1.13) contrast(1.08);
 }
 
+/* Use the uploaded Overload artwork in story dialogue too. */
+.dialogue-layout .portrait.overload-dialogue-portrait{
+  background:linear-gradient(180deg,#171015,#09080b)!important;
+  border-color:rgba(196,71,91,.34)!important;
+  display:block!important;
+  overflow:hidden!important;
+}
+.dialogue-layout .portrait.overload-dialogue-portrait .overload-dialogue-image{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:cover!important;
+  object-position:center 18%!important;
+  transform:scale(1.03);
+  filter:brightness(.86) saturate(.92) contrast(1.04);
+}
+
 .pyramid-boss-v3 .pyr2-stage-wrap{position:relative}
 .pyramid-boss-v3 .pharaoh-character-visual{
   position:absolute;
@@ -64,6 +81,7 @@
 
 @media(max-width:760px){
   .overload-boss-v3 .ob2-boss-visual{width:185px!important;height:190px!important}
+  .dialogue-layout .portrait.overload-dialogue-portrait .overload-dialogue-image{object-position:center 16%!important}
   .pyramid-boss-v3 .pharaoh-character-visual{
     width:108px;
     height:104px;
