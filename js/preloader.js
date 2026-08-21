@@ -37,7 +37,9 @@
       "assets/characters/zhongzhitong.webp",
       "assets/characters/toyz.webp",
       "assets/characters/tongshen.webp",
-      "assets/characters/fake_xuexi.webp"
+      "assets/characters/fake_xuexi.webp",
+      "assets/characters/overload.png",
+      "assets/characters/pharaoh.png"
     ],
     "互動物件": [
       "assets/objects/shoe.webp",
