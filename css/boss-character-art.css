@@ -27,12 +27,13 @@
 .pyramid-boss-v3 .pyr2-stage-wrap{position:relative}
 .pyramid-boss-v3 .pharaoh-character-visual{
   position:absolute;
-  left:50%;
-  top:7px;
+  left:auto;
+  right:22px;
+  top:18px;
   z-index:3;
-  width:200px;
-  height:188px;
-  transform:translateX(-50%);
+  width:168px;
+  height:160px;
+  transform:none;
   pointer-events:none;
   opacity:.9;
   overflow:hidden;
@@ -56,12 +57,17 @@
   box-shadow:0 16px 28px rgba(0,0,0,.66),0 0 34px rgba(255,49,92,.28);
 }
 @keyframes pharaohBossGlitch{
-  0%,100%{transform:translateX(-50%) translate(0,0)}
-  35%{transform:translateX(-50%) translate(-3px,1px)}
-  70%{transform:translateX(-50%) translate(3px,-1px)}
+  0%,100%{transform:translate(0,0)}
+  35%{transform:translate(-3px,1px)}
+  70%{transform:translate(3px,-1px)}
 }
 
 @media(max-width:760px){
   .overload-boss-v3 .ob2-boss-visual{width:185px!important;height:190px!important}
-  .pyramid-boss-v3 .pharaoh-character-visual{width:138px;height:132px;top:4px}
+  .pyramid-boss-v3 .pharaoh-character-visual{
+    width:108px;
+    height:104px;
+    right:8px;
+    top:8px;
+  }
 }
