@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const RUN_KEY="red_school_roger_run_v3";
-  const roomName=document.getElementById("roomName"),layer=document.getElementById("objectLayer"),objective=document.getElementById("objectiveText"),modalBody=document.getElementById("modalBody"),message=document.getElementById("messageBox"),soundBtn=document.getElementById("soundBtn");
+  const roomName=document.getElementById("roomName"),layer=document.getElementById("objectLayer"),objective=document.getElementById("objectiveText"),modalBody=document.getElementById("modalBody"),message=document.getElementById("messageBox"),soundBtn=document.getElementById("soundBtn"),winCount=document.getElementById("winCount");
 
   function run(){try{return JSON.parse(localStorage.getItem(RUN_KEY)||"null")}catch(_){return null}}
   function npcCount(d){const f=d?.flags||{};return [f.fingerWon,f.toyzWon,f.pokerWon].filter(Boolean).length}
@@ -12,6 +12,7 @@
   function syncNpcGate(){
     const d=run();if(!d)return;
     const npc=npcCount(d),ready=has(d,"window")&&has(d,"roll")&&npc>=2;
+    if(winCount)winCount.textContent=String(npc);
     if(roomName?.textContent?.trim()==="紅色禮堂"){
       const door=[...(layer?.querySelectorAll("button.scene-object")||[])].find(b=>label(b).includes("舞台深處"));
       if(door){door.disabled=!ready;door.classList.toggle("locked",!ready);door.setAttribute("aria-disabled",String(!ready));door.title=ready?"進入超負荷 Boss 戰":`還缺：第八扇窗、點名簿、NPC 挑戰 2 位（目前 ${npc}/2）`;}
