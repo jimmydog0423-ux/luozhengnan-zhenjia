@@ -6,7 +6,13 @@
   const actions = card?.querySelector(".title-actions");
   const startBtn = document.getElementById("startBtn");
   const continueBtn = document.getElementById("continueBtn");
+  const objectLayer = document.getElementById("objectLayer");
+  const modalOverlay = document.getElementById("modalOverlay");
   if (!title || !card || !actions || !startBtn || !continueBtn) return;
+
+  const AUTO_RESUME_KEY = "red_school_roger_checkpoint_resume_v1";
+  let resumeIntent = null;
+  try { resumeIntent = JSON.parse(sessionStorage.getItem(AUTO_RESUME_KEY) || "null"); } catch (_) {}
 
   const groups = {
     "場景背景": [
@@ -248,6 +254,32 @@
     finish();
   }
 
+  function findDoor(label) {
+    return [...(objectLayer?.querySelectorAll("button.scene-object") || [])].find(button => {
+      const raw = button.dataset.label || button.getAttribute("aria-label") || button.textContent || "";
+      return String(raw).trim() === label || String(raw).includes(label);
+    }) || null;
+  }
+
+  function resumeBossAfterPreload(intent) {
+    if (!intent?.boss) return;
+    const targetLabel = intent.boss === "pyramid" ? "更下面" : "舞台深處";
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (modalOverlay?.classList.contains("show")) {
+        clearInterval(timer);
+        return;
+      }
+      const door = findDoor(targetLabel);
+      if (door && !door.classList.contains("locked")) {
+        clearInterval(timer);
+        door.click();
+      } else if (++tries > 100) {
+        clearInterval(timer);
+      }
+    }, 100);
+  }
+
   function finish() {
     if (ready) return;
     ready = true;
@@ -266,8 +298,12 @@
 
     if (pendingButton && document.contains(pendingButton) && !pendingButton.hidden) {
       const target = pendingButton;
+      const shouldResumeBoss = target === continueBtn && !!resumeIntent?.boss;
       pendingButton = null;
-      setTimeout(() => target.click(), 120);
+      setTimeout(() => {
+        target.click();
+        if (shouldResumeBoss) setTimeout(() => resumeBossAfterPreload(resumeIntent), 180);
+      }, 120);
     }
   }
 
