@@ -1,0 +1,110 @@
+/* Keep TOYZ / Poker controls visible without an outer modal scrollbar. */
+#modalCard:has(.paper-roll-v2),
+#modalCard:has(.poker-v2){
+  width:min(1240px,calc(100vw - 20px))!important;
+  height:min(96dvh,900px)!important;
+  max-height:96dvh!important;
+  overflow:hidden!important;
+  padding:14px 18px!important;
+}
+#modalCard:has(.paper-roll-v2) #modalBody,
+#modalCard:has(.poker-v2) #modalBody{
+  height:100%;
+  min-height:0;
+  overflow:hidden!important;
+}
+
+/* Paper Roll V2: reserve the bottom rows for gauges and controls first. */
+#modalCard:has(.paper-roll-v2) .paper-roll-v2{
+  height:100%;
+  min-height:0!important;
+  grid-template-rows:auto minmax(0,1fr) auto auto auto;
+}
+#modalCard:has(.paper-roll-v2) .pr2-race{
+  min-height:0;
+  grid-template-rows:repeat(2,minmax(0,1fr));
+}
+#modalCard:has(.paper-roll-v2) .pr2-machine{
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto minmax(66px,1fr) auto;
+}
+#modalCard:has(.paper-roll-v2) .pr2-rig{
+  height:auto!important;
+  min-height:66px;
+  max-height:112px;
+}
+#modalCard:has(.paper-roll-v2) .pr2-paper-svg{
+  height:calc(100% - 10px)!important;
+  max-height:98px;
+}
+#modalCard:has(.paper-roll-v2) .pr2-controls{
+  position:relative;
+  z-index:2;
+}
+
+/* Poker gameplay is a flex column: table shrinks before the decision buttons do. */
+#modalCard:has(.poker-v2) .poker-v2:not(.poker-rules){
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+#modalCard:has(.poker-v2) .poker-v2-head{
+  flex:0 0 auto;
+  margin-bottom:8px;
+}
+#modalCard:has(.poker-v2) .poker-v2-stage{
+  flex:1 1 auto;
+  min-height:0!important;
+  height:auto!important;
+}
+#modalCard:has(.poker-v2) .poker-decision-v2{
+  flex:0 0 auto;
+  margin-top:8px;
+  padding:9px 12px;
+}
+#modalCard:has(.poker-v2) .poker-actions-v2 button{
+  min-height:48px;
+}
+
+/* Rules may still need vertical movement on very small screens, but hide the bar. */
+#modalCard:has(.poker-rules) #modalBody,
+#modalCard:has(.poker-rules) .poker-rules{
+  overflow-y:auto!important;
+  scrollbar-width:none;
+}
+#modalCard:has(.poker-rules) #modalBody::-webkit-scrollbar,
+#modalCard:has(.poker-rules) .poker-rules::-webkit-scrollbar{
+  width:0;
+  height:0;
+  display:none;
+}
+
+@media(max-height:820px){
+  #modalCard:has(.paper-roll-v2),
+  #modalCard:has(.poker-v2){padding:10px 14px!important}
+  #modalCard:has(.paper-roll-v2) .pr2-rig{min-height:58px;max-height:88px}
+  #modalCard:has(.paper-roll-v2) .pr2-machine{padding:7px 10px 6px}
+  #modalCard:has(.paper-roll-v2) .pr2-controls button{min-height:44px!important}
+  #modalCard:has(.poker-v2) .poker-v2-head{margin-bottom:5px}
+  #modalCard:has(.poker-v2) .poker-v2-head h2{font-size:25px}
+  #modalCard:has(.poker-v2) .poker-decision-v2{margin-top:6px;padding:7px 10px}
+  #modalCard:has(.poker-v2) .poker-actions-v2 button{min-height:44px}
+}
+
+@media(max-width:760px){
+  #modalCard:has(.paper-roll-v2),
+  #modalCard:has(.poker-v2){
+    width:calc(100vw - 8px)!important;
+    height:calc(100dvh - 8px)!important;
+    max-height:calc(100dvh - 8px)!important;
+    padding:10px 8px!important;
+    border-radius:12px!important;
+  }
+  #modalCard:has(.paper-roll-v2) .pr2-rig{min-height:54px;max-height:78px}
+  #modalCard:has(.poker-v2) .poker-v2-stage{min-height:340px!important}
+  #modalCard:has(.poker-v2) .poker-actions-v2{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  #modalCard:has(.poker-v2) .poker-actions-v2:has(button:nth-child(2):last-child){grid-template-columns:1fr 1fr!important}
+  #modalCard:has(.poker-v2) .poker-actions-v2 button{min-height:46px;font-size:12px;padding:6px 4px}
+}
