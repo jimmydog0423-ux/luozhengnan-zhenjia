@@ -1,0 +1,26 @@
+/* Keep room navigation out of the lower-left objective panel and lower-right toolbar. */
+@media (min-width:901px){
+  #objectLayer .scene-object.nav-safe-relocated{
+    z-index:14!important;
+    pointer-events:auto!important;
+  }
+  #objectLayer .scene-object.nav-safe-relocated::after{
+    z-index:2;
+  }
+  #objectLayer .scene-object.nav-safe-relocated .hall1-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .hall2-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .oldhall-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .basement-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .gate-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .courtyard-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .gym-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .auditorium-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .class203-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .infirmary-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .computer-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .library-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .music-nav-label,
+  #objectLayer .scene-object.nav-safe-relocated .staff-nav-label{
+    white-space:nowrap!important;
+  }
+}
