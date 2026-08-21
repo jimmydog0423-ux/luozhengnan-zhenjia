@@ -1,0 +1,141 @@
+/* Basement: align interactions to the photographed background and use floor navigation arrows. */
+#objectLayer[data-basement-fix="1"] .basement-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  filter:none!important;
+}
+
+/* Main power panel is part of the background: keep only an invisible hit area. */
+#objectLayer[data-basement-fix="1"] .basement-panel>img,
+#objectLayer[data-basement-fix="1"] .basement-panel>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#objectLayer[data-basement-fix="1"] .basement-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  border-radius:14px;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+#objectLayer[data-basement-fix="1"] .basement-panel:hover::before,
+#objectLayer[data-basement-fix="1"].hint-mode .basement-panel::before{
+  opacity:1;
+  border-color:rgba(255,93,111,.78);
+  background:rgba(105,20,38,.035);
+  box-shadow:0 0 20px rgba(255,63,87,.14),inset 0 0 18px rgba(255,63,87,.025);
+}
+
+/* Foreground clues should feel planted in the room rather than floating over the corridor. */
+#objectLayer[data-basement-fix="1"] .basement-cable,
+#objectLayer[data-basement-fix="1"] .basement-tape{
+  padding:0!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-basement-fix="1"] .basement-cable img,
+#objectLayer[data-basement-fix="1"] .basement-tape img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  opacity:.88;
+  transition:transform .16s ease,filter .16s ease,opacity .16s ease;
+}
+#objectLayer[data-basement-fix="1"] .basement-cable img{
+  transform:scale(.82)!important;
+  filter:brightness(.68) saturate(.88) drop-shadow(0 14px 14px rgba(0,0,0,.7))!important;
+  transform-origin:center bottom!important;
+}
+#objectLayer[data-basement-fix="1"] .basement-tape img{
+  transform:rotate(-5deg) scale(.82)!important;
+  filter:brightness(.70) saturate(.82) drop-shadow(0 10px 12px rgba(0,0,0,.7))!important;
+}
+#objectLayer[data-basement-fix="1"] .basement-cable:hover img,
+#objectLayer[data-basement-fix="1"].hint-mode .basement-cable img{
+  transform:translateY(-4px) scale(.88)!important;
+  filter:brightness(.92) saturate(1) drop-shadow(0 15px 16px rgba(0,0,0,.72))!important;
+  opacity:1;
+}
+#objectLayer[data-basement-fix="1"] .basement-tape:hover img,
+#objectLayer[data-basement-fix="1"].hint-mode .basement-tape img{
+  transform:rotate(-4deg) translateY(-4px) scale(.89)!important;
+  filter:brightness(.94) saturate(.94) drop-shadow(0 12px 13px rgba(0,0,0,.72))!important;
+  opacity:1;
+}
+
+/* Replace both floating door icons with ground arrows. */
+#objectLayer[data-basement-fix="1"] .basement-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+#objectLayer[data-basement-fix="1"] .basement-nav>svg,
+#objectLayer[data-basement-fix="1"] .basement-nav>img,
+#objectLayer[data-basement-fix="1"] .basement-nav>.done-mark{display:none!important}
+#objectLayer[data-basement-fix="1"] .basement-nav::before,
+#objectLayer[data-basement-fix="1"] .basement-nav::after{display:none!important}
+
+#objectLayer[data-basement-fix="1"] .basement-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:46%;
+  width:72px;
+  height:78px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(62deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.63));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+  opacity:.62;
+  animation:basementArrowPulse 1.55s ease-in-out infinite;
+  pointer-events:none;
+}
+#objectLayer[data-basement-fix="1"] .basement-nav-left .basement-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(62deg) rotate(-90deg);
+}
+#objectLayer[data-basement-fix="1"] .basement-nav-down .basement-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(62deg) rotate(180deg);
+}
+#objectLayer[data-basement-fix="1"] .basement-nav:hover .basement-ground-arrow,
+#objectLayer[data-basement-fix="1"].hint-mode .basement-nav .basement-ground-arrow{
+  opacity:1;
+  filter:brightness(1.18);
+}
+#objectLayer[data-basement-fix="1"] .basement-nav-label{
+  position:absolute;
+  left:50%;
+  top:82%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+#objectLayer[data-basement-fix="1"] .basement-nav:hover .basement-nav-label,
+#objectLayer[data-basement-fix="1"].hint-mode .basement-nav .basement-nav-label{opacity:1}
+
+@keyframes basementArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.84;filter:brightness(1.12)}
+}
