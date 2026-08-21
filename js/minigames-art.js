@@ -28,11 +28,12 @@
     return img;
   }
 
-  function syncRhythmArt(item) {
-    // Rhythm V2 is the gameplay itself. Do not insert the old 16:9 artwork as
-    // a separate banner because it pushes the six lanes below the fold.
-    body.querySelectorAll('img.minigame-art-banner[data-minigame-key="rhythm"]').forEach(img => img.remove());
+  function clearBanners() {
+    body.querySelectorAll("img.minigame-art-banner").forEach(img => img.remove());
+  }
 
+  function syncRhythmArt(item) {
+    body.querySelectorAll('img.minigame-art-banner[data-minigame-key="rhythm"]').forEach(img => img.remove());
     const stage = body.querySelector(".rhythm-v2 .rv2-stage");
     if (!stage) return;
     stage.classList.add("rhythm-art-bg");
@@ -40,6 +41,13 @@
   }
 
   function syncMinigameArt() {
+    /* Dialogue may mention a minigame by name. Never treat dialogue text as the
+       minigame screen itself, otherwise a huge gameplay banner appears above it. */
+    if (body.querySelector(".dialogue-layout")) {
+      clearBanners();
+      return;
+    }
+
     const text = body.textContent || "";
     const item = MINIGAMES.find(entry => text.includes(entry.match));
 
@@ -51,6 +59,14 @@
 
     if (item.key === "rhythm") {
       syncRhythmArt(item);
+      return;
+    }
+
+    /* V2 Paper Roll and Poker already have their own game presentation. Adding a
+       separate 16:9 banner makes the controls fall below the viewport. */
+    if ((item.key === "roll" && body.querySelector(".paper-roll-v2")) ||
+        (item.key === "poker" && body.querySelector(".poker-v2"))) {
+      clearBanners();
       return;
     }
 
