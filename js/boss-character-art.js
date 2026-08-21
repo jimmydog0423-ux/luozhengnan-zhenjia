@@ -12,6 +12,19 @@
     visual.innerHTML = '<img class="boss-character-image overload-character-image" src="assets/characters/overload.png" alt="" aria-hidden="true">';
   }
 
+  function syncOverloadDialogue() {
+    const layout = body.querySelector(".dialogue-layout");
+    const who = layout?.querySelector(".dialogue-who");
+    if (!layout || !who || !/超負荷/.test(who.textContent || "")) return;
+
+    const portrait = layout.querySelector(".portrait");
+    if (!portrait || portrait.dataset.characterArt === "overload") return;
+
+    portrait.dataset.characterArt = "overload";
+    portrait.classList.add("uploaded-dialogue-portrait", "overload-dialogue-portrait");
+    portrait.innerHTML = '<img class="dialogue-character-image overload-dialogue-image" src="assets/characters/overload.png" alt="" aria-hidden="true">';
+  }
+
   function syncPharaoh() {
     const root = body.querySelector(".pyramid-boss-v3");
     const stage = root?.querySelector(".pyr2-stage-wrap");
@@ -25,6 +38,7 @@
 
   function sync() {
     syncOverload();
+    syncOverloadDialogue();
     syncPharaoh();
   }
 
