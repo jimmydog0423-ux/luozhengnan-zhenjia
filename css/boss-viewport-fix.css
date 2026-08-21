@@ -1,0 +1,149 @@
+/* Boss viewport safety: no outer scrollbars, controls always remain visible. */
+#modalCard.overload-boss-card,
+#modalCard.pyramid-boss-modal{
+  height:min(96dvh,900px)!important;
+  max-height:96dvh!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+#modalCard.overload-boss-card #modalBody,
+#modalCard.pyramid-boss-modal #modalBody{
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+
+/* Overload: headers/status are fixed rows; only the bullet-hell arena shrinks. */
+#modalCard.overload-boss-card .overload-boss-v3{
+  height:100%!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  gap:8px!important;
+}
+#modalCard.overload-boss-card .ob2-arena-wrap{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+}
+#modalCard.overload-boss-card .ob2-status{
+  min-height:0!important;
+  flex:0 0 auto!important;
+}
+#modalCard.overload-boss-card .boss-touch-special{
+  position:relative!important;
+  z-index:10!important;
+  min-height:46px!important;
+}
+
+/* Pharaoh: phase header, bars and footer stay visible; only the battlefield flexes. */
+#modalCard.pyramid-boss-modal .pyramid-boss-v3{
+  height:100%!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  gap:7px!important;
+}
+#modalCard.pyramid-boss-modal .pyr2-stage-wrap{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+}
+#modalCard.pyramid-boss-modal .pyr2-foot{
+  min-height:0!important;
+  flex:0 0 auto!important;
+}
+#modalCard.pyramid-boss-modal .pyr2-confirm{
+  z-index:12!important;
+  min-height:42px!important;
+}
+
+/* Do not ever expose browser scrollbars inside active realtime boss fights. */
+#modalCard.overload-boss-card,
+#modalCard.overload-boss-card *,
+#modalCard.pyramid-boss-modal,
+#modalCard.pyramid-boss-modal *{
+  scrollbar-width:none;
+}
+#modalCard.overload-boss-card::-webkit-scrollbar,
+#modalCard.overload-boss-card #modalBody::-webkit-scrollbar,
+#modalCard.pyramid-boss-modal::-webkit-scrollbar,
+#modalCard.pyramid-boss-modal #modalBody::-webkit-scrollbar{
+  width:0;
+  height:0;
+  display:none;
+}
+
+@media(max-height:820px){
+  #modalCard.overload-boss-card,
+  #modalCard.pyramid-boss-modal{
+    padding:9px 12px!important;
+  }
+  #modalCard.overload-boss-card .overload-boss-v3,
+  #modalCard.pyramid-boss-modal .pyramid-boss-v3{
+    gap:5px!important;
+  }
+  #modalCard.overload-boss-card .ob2-head h2{font-size:24px!important}
+  #modalCard.overload-boss-card .ob2-status>div{min-height:44px!important;padding:6px 9px!important}
+  #modalCard.overload-boss-card .ob2-status b{font-size:16px!important}
+  #modalCard.overload-boss-card .boss-touch-special{min-height:42px!important;padding:6px 10px!important}
+
+  #modalCard.pyramid-boss-modal .pyr2-head h2{font-size:25px!important}
+  #modalCard.pyramid-boss-modal .pyr2-phase{padding:6px 9px!important;font-size:10px!important}
+  #modalCard.pyramid-boss-modal .pyr2-foot{font-size:9px!important}
+}
+
+@media(max-width:800px){
+  #modalCard.overload-boss-card,
+  #modalCard.pyramid-boss-modal{
+    width:calc(100vw - 8px)!important;
+    height:calc(100dvh - 8px)!important;
+    max-height:calc(100dvh - 8px)!important;
+    padding:8px!important;
+    border-radius:12px!important;
+  }
+
+  #modalCard.overload-boss-card .ob2-head h2{font-size:20px!important}
+  #modalCard.overload-boss-card .ob2-phase-label b{font-size:15px!important}
+  #modalCard.overload-boss-card .ob2-status{
+    grid-template-columns:1fr 1fr!important;
+    gap:5px!important;
+  }
+  #modalCard.overload-boss-card .ob2-status>div{min-height:38px!important;padding:5px 7px!important}
+  #modalCard.overload-boss-card .ob2-status span{font-size:8px!important}
+  #modalCard.overload-boss-card .ob2-status b{font-size:14px!important}
+  #modalCard.overload-boss-card .boss-touch-special{
+    grid-column:1/-1!important;
+    min-height:44px!important;
+    font-size:12px!important;
+  }
+
+  #modalCard.pyramid-boss-modal .pyr2-head h2{font-size:20px!important}
+  #modalCard.pyramid-boss-modal .pyr2-bars{gap:5px!important}
+  #modalCard.pyramid-boss-modal .pyr2-bars span{font-size:7px!important}
+  #modalCard.pyramid-boss-modal .pyr2-phase{font-size:8px!important;padding:5px 7px!important}
+  #modalCard.pyramid-boss-modal .pyr2-foot{
+    font-size:7px!important;
+    gap:4px!important;
+    flex-wrap:wrap!important;
+  }
+  #modalCard.pyramid-boss-modal .pyr2-confirm{
+    right:8px!important;
+    bottom:8px!important;
+    min-height:40px!important;
+    padding:7px 10px!important;
+    font-size:9px!important;
+  }
+}
+
+@media(max-height:650px){
+  #modalCard.overload-boss-card .ob2-head .eyebrow,
+  #modalCard.pyramid-boss-modal .pyr2-head .eyebrow{display:none!important}
+  #modalCard.overload-boss-card .ob2-status>div{min-height:34px!important}
+  #modalCard.pyramid-boss-modal .pyr2-foot span:last-child{display:none!important}
+}
