@@ -1,0 +1,32 @@
+/* Fake Shaxy disappears for real after the encounter. */
+#objectLayer[data-oldhall="1"] .oldhall-shaxy.fake-shaxy-vanish{
+  pointer-events:none!important;
+}
+#objectLayer[data-oldhall="1"] .oldhall-shaxy.fake-shaxy-vanish .scene-character-sprite,
+#objectLayer[data-oldhall="1"] .oldhall-shaxy.fake-shaxy-vanish>img{
+  animation:fakeShaxyDissolve .52s ease-in forwards!important;
+  transform-origin:center bottom!important;
+}
+#objectLayer[data-oldhall="1"] .oldhall-shaxy.fake-shaxy-vanish::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:12%;
+  width:88px;
+  height:120px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(140,96,190,.22),rgba(83,37,118,.08) 48%,transparent 72%);
+  animation:fakeShaxyMist .52s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes fakeShaxyDissolve{
+  0%{opacity:1;filter:brightness(.9) drop-shadow(0 14px 14px rgba(0,0,0,.66));transform:scale(.92) translateY(0)}
+  45%{opacity:.62;filter:brightness(1.2) blur(1px) saturate(.7);transform:scale(.9) translateY(-5px)}
+  100%{opacity:0;filter:brightness(1.5) blur(8px) saturate(.25);transform:scale(.72) translateY(-24px)}
+}
+@keyframes fakeShaxyMist{
+  0%{opacity:0;transform:translateX(-50%) scale(.7)}
+  35%{opacity:.7}
+  100%{opacity:0;transform:translateX(-50%) translateY(-34px) scale(1.35)}
+}
