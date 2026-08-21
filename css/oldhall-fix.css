@@ -1,0 +1,140 @@
+/* Old school building: align hotspots to background, ground fake Shaxy and replace door icons with floor arrows. */
+#objectLayer[data-oldhall="1"] .oldhall-prop{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-prop.embedded-hitbox>img,
+#objectLayer[data-oldhall="1"] .oldhall-prop.embedded-hitbox>svg{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-prop.embedded-hitbox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid transparent;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-prop.embedded-hitbox:hover::before,
+#objectLayer[data-oldhall="1"].hint-mode .oldhall-prop.embedded-hitbox::before{
+  opacity:1;
+  border-color:rgba(255,92,111,.78);
+  background:rgba(105,20,38,.045);
+  box-shadow:0 0 20px rgba(255,63,87,.14),inset 0 0 18px rgba(255,63,87,.03);
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-locker::before{border-radius:14px!important}
+#objectLayer[data-oldhall="1"] .oldhall-sealed::before{border-radius:10px!important}
+#objectLayer[data-oldhall="1"] .oldhall-stairs::before{border-radius:16px!important}
+
+#objectLayer[data-oldhall="1"] .oldhall-shaxy{
+  width:190px!important;
+  height:270px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-shaxy>svg{display:none!important}
+#objectLayer[data-oldhall="1"] .oldhall-shaxy .scene-character-sprite,
+#objectLayer[data-oldhall="1"] .oldhall-shaxy>img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:scale(.92)!important;
+  transform-origin:center bottom!important;
+  filter:brightness(.74) drop-shadow(0 16px 15px rgba(0,0,0,.72))!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-shaxy:hover .scene-character-sprite,
+#objectLayer[data-oldhall="1"].hint-mode .oldhall-shaxy .scene-character-sprite{
+  transform:scale(.97)!important;
+  filter:brightness(.94) drop-shadow(0 17px 16px rgba(0,0,0,.75))!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  overflow:visible!important;
+  display:block!important;
+  transform:translate(-50%,-50%)!important;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav>svg,
+#objectLayer[data-oldhall="1"] .oldhall-nav>img,
+#objectLayer[data-oldhall="1"] .oldhall-nav>.done-mark{display:none!important}
+#objectLayer[data-oldhall="1"] .oldhall-nav::before,
+#objectLayer[data-oldhall="1"] .oldhall-nav::after{display:none!important}
+
+#objectLayer[data-oldhall="1"] .oldhall-ground-arrow{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:80px;
+  height:84px;
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg);
+  transform-origin:center center;
+  clip-path:polygon(50% 0,100% 46%,72% 46%,72% 100%,28% 100%,28% 46%,0 46%);
+  background:linear-gradient(180deg,rgba(210,207,216,.82),rgba(82,76,94,.63));
+  box-shadow:0 0 18px rgba(210,205,220,.18);
+  opacity:.62;
+  animation:oldhallArrowPulse 1.55s ease-in-out infinite;
+  pointer-events:none;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav-left .oldhall-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(-90deg);
+}
+#objectLayer[data-oldhall="1"] .oldhall-nav-down .oldhall-ground-arrow{
+  transform:translate(-50%,-50%) perspective(250px) rotateX(60deg) rotate(180deg);
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav:hover .oldhall-ground-arrow,
+#objectLayer[data-oldhall="1"].hint-mode .oldhall-nav .oldhall-ground-arrow{
+  opacity:1;
+  filter:brightness(1.16);
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav-label{
+  position:absolute;
+  left:50%;
+  top:82%;
+  transform:translate(-50%,7px);
+  white-space:nowrap;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(5,5,8,.84);
+  border:1px solid rgba(255,255,255,.13);
+  color:#f6eff7;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 7px #000;
+  opacity:.72;
+  pointer-events:none;
+}
+
+#objectLayer[data-oldhall="1"] .oldhall-nav:hover .oldhall-nav-label,
+#objectLayer[data-oldhall="1"].hint-mode .oldhall-nav .oldhall-nav-label{opacity:1}
+
+@keyframes oldhallArrowPulse{
+  0%,100%{opacity:.48;filter:brightness(.92)}
+  50%{opacity:.82;filter:brightness(1.1)}
+}
