@@ -120,6 +120,11 @@
     const meta = bossMeta();
     if (!meta) { lastBossKey = ""; return; }
 
+    // Boss HUD text changes many times per second. Bail out before touching
+    // localStorage when the phase itself has not changed.
+    const key = `${meta.boss}:${meta.phase}`;
+    if (key === lastBossKey) return;
+
     const old = readCheckpoint();
     const oldPhase = Number(old?.phase) || 0;
     const resumePhase = Number(window.__bossResumeIntent?.phase) || 0;
@@ -127,8 +132,6 @@
       return;
     }
 
-    const key = `${meta.boss}:${meta.phase}`;
-    if (key === lastBossKey) return;
     lastBossKey = key;
 
     if (old?.run) {
@@ -239,8 +242,17 @@
   againBtn?.addEventListener("click", clearCheckpoint, true);
 
   if (modalBody) {
+    // Only direct modal content replacement means a boss screen opened/closed.
+    // Internal HUD text changes are intentionally ignored.
     new MutationObserver(() => syncBoss(true)).observe(modalBody, {
-      childList:true, subtree:true, attributes:true, attributeFilter:["data-phase"]
+      childList:true,
+      subtree:false
+    });
+    // Phase checkpoints only need the data-phase attribute on the boss root.
+    new MutationObserver(() => syncBoss(true)).observe(modalBody, {
+      attributes:true,
+      subtree:true,
+      attributeFilter:["data-phase"]
     });
   }
   if (ending) {
