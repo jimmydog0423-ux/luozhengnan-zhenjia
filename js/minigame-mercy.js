@@ -82,9 +82,7 @@
   function candidateRoots() {
     const body = document.getElementById("modalBody");
     if (!body) return [];
-    return [
-      ...body.querySelectorAll(".pr2-result, .rv2-result, .poker-v2.poker-finish")
-    ];
+    return [...body.querySelectorAll(".pr2-result, .rv2-result, .poker-v2.poker-finish")];
   }
 
   function addProgress(root, id, count) {
@@ -223,7 +221,23 @@
   }
 
   const body = document.getElementById("modalBody");
-  if (body) new MutationObserver(scan).observe(body, { childList: true, subtree: true });
+  if (body) {
+    new MutationObserver(records => {
+      // Boss HUD updates create child-list mutations every frame. Ignore all of
+      // them; mercy only cares when an actual minigame result element is added.
+      if (body.querySelector(".overload-boss-v2, .pyramid-boss-v2")) return;
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          if (node.matches(".pr2-result, .rv2-result, .poker-v2.poker-finish") ||
+              node.querySelector?.(".pr2-result, .rv2-result, .poker-v2.poker-finish")) {
+            scan();
+            return;
+          }
+        }
+      }
+    }).observe(body, { childList: true, subtree: true });
+  }
 
   document.getElementById("startBtn")?.addEventListener("click", resetAll, true);
   document.getElementById("againBtn")?.addEventListener("click", resetAll, true);
