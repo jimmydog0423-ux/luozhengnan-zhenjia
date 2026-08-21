@@ -1,0 +1,110 @@
+/* Title-screen asset preloader */
+.game-preloader{
+  margin:16px 0 14px;
+  padding:14px 15px 13px;
+  border:1px solid rgba(170,126,183,.32);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(24,18,29,.92),rgba(13,10,17,.94));
+  box-shadow:0 14px 34px rgba(0,0,0,.2);
+  overflow:hidden;
+}
+.game-preloader-top,
+.game-preloader-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.game-preloader-top>div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.game-preloader-top b{
+  font-size:14px;
+  letter-spacing:.04em;
+}
+.game-preloader-top span,
+.game-preloader-bottom{
+  color:#b9adbd;
+  font-size:12px;
+}
+.game-preloader-top strong{
+  flex:0 0 auto;
+  min-width:48px;
+  text-align:right;
+  font-size:17px;
+  color:#f1d78d;
+}
+.game-preloader-track{
+  position:relative;
+  height:8px;
+  margin:11px 0 8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#0a080d;
+  border:1px solid rgba(255,255,255,.06);
+}
+.game-preloader-track i{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#6d3155,#d05c79,#f0cb79);
+  box-shadow:0 0 15px rgba(222,94,126,.42);
+  transition:width .18s ease;
+}
+.game-preloader-bottom span:last-child{
+  min-width:0;
+  max-width:68%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:right;
+}
+.game-preloader.is-ready{
+  border-color:rgba(134,204,148,.35);
+}
+.game-preloader.is-ready .game-preloader-track i{
+  background:linear-gradient(90deg,#467d54,#70bc7e,#d4db8c);
+}
+.game-preloader.is-ready .game-preloader-top strong{
+  color:#9edba8;
+}
+.game-preloader.has-error{
+  border-color:rgba(235,91,110,.55);
+}
+.game-preloader.has-error .game-preloader-top strong{
+  color:#ff8998;
+}
+.game-preloader-retry{
+  width:100%;
+  margin-top:10px;
+  padding:9px 12px;
+  font-size:12px;
+}
+.title-actions button.preload-locked{
+  opacity:.45;
+  filter:saturate(.55);
+  cursor:wait;
+  transform:none!important;
+}
+.preload-pending .title-actions button.preload-locked::after{
+  content:" · 載入中";
+  font-size:.78em;
+  opacity:.75;
+}
+.game-preloader.preload-attention{
+  animation:preloadAttention .42s ease;
+}
+@keyframes preloadAttention{
+  0%,100%{transform:translateX(0)}
+  28%{transform:translateX(-5px)}
+  58%{transform:translateX(4px)}
+  78%{transform:translateX(-2px)}
+}
+@media (max-width:680px){
+  .game-preloader{padding:12px;margin:13px 0}
+  .game-preloader-bottom span:last-child{max-width:58%}
+}
