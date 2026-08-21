@@ -8,8 +8,10 @@
   function has(d,k){return Array.isArray(d?.clues)&&d.clues.includes(k)}
   function label(btn){return String(btn?.dataset?.label||btn?.getAttribute?.("aria-label")||btn?.textContent||"").replace(/^已完成[:：]?\s*/,"").trim()}
   function say(text){if(!message)return;message.textContent=text;message.classList.add("show");clearTimeout(say.t);say.t=setTimeout(()=>message.classList.remove("show"),3200)}
+  function realtimeBossActive(){return !!modalBody?.querySelector(".overload-boss-v2, .pyramid-boss-v2")}
 
   function syncNpcGate(){
+    if(realtimeBossActive())return;
     const d=run();if(!d)return;
     const npc=npcCount(d),ready=has(d,"window")&&has(d,"roll")&&npc>=2;
     if(winCount)winCount.textContent=String(npc);
@@ -32,6 +34,7 @@
   },true);
 
   function injectTerminalEvidence(){
+    if(realtimeBossActive())return;
     const h=modalBody?.querySelector("h2");if(!h||!h.textContent.includes("四台機器啟動順序")||modalBody.querySelector(".terminal-evidence"))return;
     const p=h.nextElementSibling;
     const box=document.createElement("div");box.className="terminal-evidence";box.innerHTML=`<b>維修紀錄已貼在主機旁</b><div><span>電腦 1</span><strong>2012</strong><small>正常時間</small></div><div><span>電腦 2</span><strong>2016</strong><small>正常時間</small></div><div class="reverse"><span>電腦 3</span><strong>8002 → 2008</strong><small>系統時間倒著顯示</small></div><div><span>電腦 4</span><strong>2020</strong><small>正常時間</small></div><em>依「實際年份」從最舊到最新啟動。</em>`;
@@ -41,14 +44,20 @@
 
   function rhythmActive(){return !!modalBody?.querySelector('.rhythm-v2[data-playing="1"]')}
   function silenceRoomBgm(){
-    if(!rhythmActive())return;
+    if(realtimeBossActive()||!rhythmActive())return;
     const list=window.__redSchoolAudioRegistry||[];
     list.forEach(a=>{if(!a?.dataset?.bgmMode)return;try{a.pause();a.volume=0}catch(_){}});
   }
   soundBtn?.addEventListener("click",()=>setTimeout(silenceRoomBgm,0),true);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(silenceRoomBgm,30)});
-  if(modalBody)new MutationObserver(()=>{injectTerminalEvidence();silenceRoomBgm()}).observe(modalBody,{childList:true,subtree:true,attributes:true,attributeFilter:["data-playing"]});
+  if(modalBody)new MutationObserver(()=>{
+    if(realtimeBossActive())return;
+    injectTerminalEvidence();silenceRoomBgm();
+  }).observe(modalBody,{childList:true,subtree:true,attributes:true,attributeFilter:["data-playing"]});
 
-  setInterval(()=>{syncNpcGate();injectTerminalEvidence();silenceRoomBgm()},180);
+  setInterval(()=>{
+    if(realtimeBossActive())return;
+    syncNpcGate();injectTerminalEvidence();silenceRoomBgm();
+  },180);
   syncNpcGate();injectTerminalEvidence();
 })();
