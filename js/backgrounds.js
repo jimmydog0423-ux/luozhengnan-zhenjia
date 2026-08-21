@@ -71,7 +71,7 @@
 
   if (!document.querySelector("script[data-minigame-art-loader]")) {
     const minigameScript = document.createElement("script");
-    minigameScript.src = "js/minigames-art.js?v=20260821-0921";
+    minigameScript.src = "js/minigames-art.js?v=20260821-1608";
     minigameScript.dataset.minigameArtLoader = "true";
     document.body.appendChild(minigameScript);
   }
