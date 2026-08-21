@@ -4,6 +4,8 @@
   const body = document.getElementById("modalBody");
   if (!body) return;
 
+  let activeBossRoot = null;
+
   function syncOverload() {
     const root = body.querySelector(".overload-boss-v3");
     const visual = root?.querySelector(".ob2-boss-visual");
@@ -42,6 +44,20 @@
     syncPharaoh();
   }
 
-  new MutationObserver(sync).observe(body, { childList: true, subtree: true });
+  function onMutation() {
+    const boss = body.querySelector(".overload-boss-v3, .pyramid-boss-v3");
+    if (boss) {
+      // During realtime combat the HUD changes continuously. Artwork only needs
+      // to be installed once for the current boss root.
+      if (boss === activeBossRoot) return;
+      activeBossRoot = boss;
+      sync();
+      return;
+    }
+    activeBossRoot = null;
+    sync();
+  }
+
+  new MutationObserver(onMutation).observe(body, { childList: true, subtree: true });
   sync();
 })();
