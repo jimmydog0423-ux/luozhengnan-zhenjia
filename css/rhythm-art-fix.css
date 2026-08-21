@@ -1,0 +1,19 @@
+/* Rhythm artwork should support the lanes, not become a separate banner. */
+.rhythm-v2 img.minigame-art-banner[data-minigame-key="rhythm"]{display:none!important}
+.rhythm-v2 .rv2-stage.rhythm-art-bg{
+  background:
+    linear-gradient(180deg,rgba(7,5,10,.78) 0%,rgba(10,6,12,.72) 38%,rgba(8,5,10,.90) 100%),
+    var(--rv2-stage-image) center 44% / cover no-repeat;
+  box-shadow:inset 0 0 110px rgba(0,0,0,.62),0 22px 55px rgba(0,0,0,.35)
+}
+.rhythm-v2 .rv2-stage.rhythm-art-bg::before{
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.03) 42%,rgba(5,2,8,.30) 72%,rgba(215,55,79,.11)),
+    radial-gradient(circle at 50% 58%,rgba(190,39,69,.12),transparent 42%)
+}
+.rhythm-v2 .rv2-stage.rhythm-art-bg .rv2-lane{
+  background:linear-gradient(180deg,rgba(9,6,12,.20),rgba(13,8,15,.38));
+  backdrop-filter:brightness(.88)
+}
+.rhythm-v2 .rv2-stage.rhythm-art-bg .rv2-lane:nth-child(3),
+.rhythm-v2 .rv2-stage.rhythm-art-bg .rv2-lane:nth-child(4){background:linear-gradient(180deg,rgba(26,10,19,.17),rgba(20,8,16,.34))}
