@@ -74,17 +74,17 @@
     const overload = modalBody?.querySelector(".overload-boss-v2");
     if (overload) {
       const phase = Math.max(1, Math.min(3, Number(overload.dataset.phase) || 1));
-      return { boss:"overload", phase, label:`超負荷 Phase ${phase}` };
+      return { boss:"overload", phase, label:`超負荷 Phase ${phase}`, legacy:false };
     }
     const pyramid = modalBody?.querySelector(".pyramid-boss-v2");
     if (pyramid) {
       const phase = Math.max(1, Math.min(4, Number(pyramid.dataset.phase) || 1));
       const names = ["","MEMORY JUDGEMENT","TRIANGLE HELL","ROOM DISTORTION","BAN MODE"];
-      return { boss:"pyramid", phase, label:`紹安 ${names[phase]}` };
+      return { boss:"pyramid", phase, label:`紹安 ${names[phase]}`, legacy:false };
     }
     const legacy = modalBody?.querySelector(".boss-panel h2")?.textContent || "";
-    if (/超負荷/.test(legacy)) return { boss:"overload", phase:1, label:"超負荷 Phase 1" };
-    if (/金字塔紹安/.test(legacy)) return { boss:"pyramid", phase:1, label:"紹安 MEMORY JUDGEMENT" };
+    if (/超負荷/.test(legacy)) return { boss:"overload", phase:1, label:"超負荷 Phase 1", legacy:true };
+    if (/金字塔紹安/.test(legacy)) return { boss:"pyramid", phase:1, label:"紹安 MEMORY JUDGEMENT", legacy:true };
     return null;
   }
 
@@ -119,11 +119,18 @@
   function syncBoss(showToast=false) {
     const meta = bossMeta();
     if (!meta) { lastBossKey = ""; return; }
+
+    const old = readCheckpoint();
+    const oldPhase = Number(old?.phase) || 0;
+    const resumePhase = Number(window.__bossResumeIntent?.phase) || 0;
+    if (meta.legacy && meta.phase === 1 && meta.boss === (old?.boss || window.__bossResumeIntent?.boss) && Math.max(oldPhase, resumePhase) > 1) {
+      return;
+    }
+
     const key = `${meta.boss}:${meta.phase}`;
     if (key === lastBossKey) return;
     lastBossKey = key;
 
-    const old = readCheckpoint();
     if (old?.run) {
       const cp = {
         ...old,
