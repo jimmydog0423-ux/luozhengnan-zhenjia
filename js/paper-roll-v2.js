@@ -86,9 +86,9 @@
     s.input[act] = on;
     if (btn) btn.classList.toggle("is-held", on);
     if (on) {
-      if (act === "roll") s.speed = clamp(s.speed + .62, 0, 8);
-      if (act === "tight") s.tension = clamp(s.tension + 3.1, 0, 100);
-      if (act === "loose") s.tension = clamp(s.tension - 3.1, 0, 100);
+      if (act === "roll") s.speed = clamp(s.speed + .58, 0, 8);
+      if (act === "tight") s.tension = clamp(s.tension + 2.8, 0, 100);
+      if (act === "loose") s.tension = clamp(s.tension - 2.8, 0, 100);
     }
   }
 
@@ -98,7 +98,7 @@
       btn.addEventListener("pointerdown", ev => { ev.preventDefault(); btn.setPointerCapture?.(ev.pointerId); setInput(s,act,true,btn); });
       const end = ev => { try{btn.releasePointerCapture?.(ev.pointerId)}catch(_){} setInput(s,act,false,btn); };
       btn.addEventListener("pointerup", end); btn.addEventListener("pointercancel", end); btn.addEventListener("pointerleave", ev => { if(ev.buttons===0)setInput(s,act,false,btn); });
-      btn.addEventListener("click", () => { if(act==="roll") s.speed=clamp(s.speed+.42,0,8); });
+      btn.addEventListener("click", () => { if(act==="roll") s.speed=clamp(s.speed+.38,0,8); });
     });
 
     const keyAct = key => {
@@ -116,68 +116,70 @@
     if (s.dead || session !== s || !document.contains(s.root)) { stopSession(); return; }
     const dt = clamp((now - s.last) / 1000, 0, .05); s.last = now; s.elapsed += dt;
 
-    // V2 hard mode: narrower, faster moving safe window with a small irregular wobble.
-    const center = 50 + Math.sin(s.elapsed * .86) * 8 + Math.sin(s.elapsed * .31 + 1.2) * 5 + Math.sin(s.elapsed * 1.73) * 2.2;
-    const safeHalf = 9;
+    // Fair mode: the target still moves, but is readable. The first five seconds
+    // are slightly more forgiving so the player can settle into the controls.
+    const center = 50 + Math.sin(s.elapsed * .58) * 6 + Math.sin(s.elapsed * .23 + 1.2) * 3 + Math.sin(s.elapsed * 1.17) * 1.2;
+    const safeHalf = 12 + Math.max(0, 2 * (1 - s.elapsed / 5));
     const safeLow = center - safeHalf, safeHigh = center + safeHalf;
 
-    if (s.input.roll) s.speed += 6.5 * dt; else s.speed -= 2.8 * dt;
+    if (s.input.roll) s.speed += 6.1 * dt; else s.speed -= 2.5 * dt;
     s.speed = clamp(s.speed, 0, 8);
 
-    if (s.input.tight) s.tension += 30 * dt;
-    if (s.input.loose) s.tension -= 32 * dt;
-    if (s.input.roll) s.tension += (s.speed * .62 + s.strain * .035) * dt;
-    s.tension += (50 - s.tension) * .012 * dt;
+    if (s.input.tight) s.tension += 26 * dt;
+    if (s.input.loose) s.tension -= 28 * dt;
+    if (s.input.roll) s.tension += (s.speed * .50 + s.strain * .025) * dt;
+    s.tension += (50 - s.tension) * .016 * dt;
     s.tension = clamp(s.tension, 0, 100);
 
-    // Sustained fast rolling heats/loads the paper. It takes time to recover.
-    const strainTarget = Math.max(0, s.speed - 4.15) * 12 + (s.input.roll ? 3 : 0);
-    s.strain += (strainTarget - s.strain) * clamp(dt * (strainTarget > s.strain ? 2.3 : .72), 0, 1);
-    s.strain = clamp(s.strain, 0, 46);
+    const strainTarget = Math.max(0, s.speed - 4.45) * 9 + (s.input.roll ? 2 : 0);
+    s.strain += (strainTarget - s.strain) * clamp(dt * (strainTarget > s.strain ? 1.8 : .95), 0, 1);
+    s.strain = clamp(s.strain, 0, 38);
 
     const lowErr = Math.max(0, safeLow - s.tension);
     const highErr = Math.max(0, s.tension - safeHigh);
-    const overSpeed = Math.max(0, s.speed - 5.05);
-    const targetWobble = lowErr * .11 + overSpeed * .78 + s.strain * .035;
-    s.wobble += (targetWobble - s.wobble) * clamp(dt * 4.8, 0, 1);
-    const targetSkew = (s.tension - center) * .16 + Math.sin(s.elapsed * 7.6) * s.wobble + Math.sin(s.elapsed * 2.1) * s.strain * .025;
-    s.skew += (targetSkew - s.skew) * clamp(dt * 4.1,0,1);
+    const overSpeed = Math.max(0, s.speed - 5.4);
+    const targetWobble = lowErr * .085 + overSpeed * .62 + s.strain * .025;
+    s.wobble += (targetWobble - s.wobble) * clamp(dt * 4.3, 0, 1);
+    const targetSkew = (s.tension - center) * .13 + Math.sin(s.elapsed * 6.6) * s.wobble + Math.sin(s.elapsed * 1.9) * s.strain * .018;
+    s.skew += (targetSkew - s.skew) * clamp(dt * 3.7,0,1);
 
-    if (lowErr > 0 || highErr > 0) s.quality -= (lowErr + highErr) * .22 * dt;
-    if (overSpeed > 0) s.quality -= overSpeed * 2.65 * dt;
-    if (s.strain > 18) s.quality -= (s.strain - 18) * .045 * dt;
-    if (!lowErr && !highErr && s.speed >= 2.35 && s.speed <= 4.85 && s.strain < 19) s.quality += .42 * dt;
-    if (s.speed < .55 && s.input.loose) s.quality -= .25 * dt;
+    if (lowErr > 0 || highErr > 0) s.quality -= (lowErr + highErr) * .15 * dt;
+    if (overSpeed > 0) s.quality -= overSpeed * 1.8 * dt;
+    if (s.strain > 22) s.quality -= (s.strain - 22) * .025 * dt;
+    if (!lowErr && !highErr && s.speed >= 2.1 && s.speed <= 5.15 && s.strain < 23) s.quality += 1.05 * dt;
+    if (s.speed < .5 && s.input.loose) s.quality -= .12 * dt;
     s.quality = clamp(s.quality, 0, 100);
 
     if (s.jamCooldown > 0) s.jamCooldown -= dt;
-    if (s.jamCooldown <= 0 && s.tension > 84 && s.speed > 4.9) {
-      s.jamCooldown = 2.9; s.quality = clamp(s.quality - 9,0,100); s.speed *= .27; s.tension -= 16; s.strain *= .56;
-      flash(s,"紙張打滑！","warn",520); navigator.vibrate?.(45);
+    if (s.jamCooldown <= 0 && s.tension > 89 && s.speed > 5.4) {
+      s.jamCooldown = 2.6; s.quality = clamp(s.quality - 6,0,100); s.speed *= .38; s.tension -= 14; s.strain *= .62;
+      flash(s,"紙張打滑！","warn",470); navigator.vibrate?.(35);
     }
-    if (s.jamCooldown <= 0 && s.tension < 18 && s.speed > 2.7) {
-      s.jamCooldown = 2.5; s.quality = clamp(s.quality - 6,0,100); s.speed *= .48; s.tension += 9;
-      flash(s,"捲軸空轉！","warn",440);
+    if (s.jamCooldown <= 0 && s.tension < 14 && s.speed > 3.1) {
+      s.jamCooldown = 2.3; s.quality = clamp(s.quality - 4,0,100); s.speed *= .58; s.tension += 8;
+      flash(s,"捲軸空轉！","warn",390);
     }
 
-    const qualityFactor = .40 + s.quality / 205;
-    const strainPenalty = 1 - Math.min(.28, s.strain / 165);
+    const qualityFactor = .48 + s.quality / 215;
+    const strainPenalty = 1 - Math.min(.18, s.strain / 190);
     s.progress = clamp(s.progress + s.speed * qualityFactor * strainPenalty * dt, 0, 100);
-    s.spin += s.speed * 98 * dt;
+    s.spin += s.speed * 96 * dt;
 
-    // TOYZ is intentionally competitive and has short acceleration bursts.
-    const burst = Math.sin(s.elapsed * .47 + .9) > .70 ? 1.02 : 0;
-    const chase = s.progress > s.rival + 7 ? .38 : 0;
-    const late = s.rival > 62 ? .24 : 0;
-    const rivalBase = 2.92 + Math.sin(s.elapsed*.83)*.26 + burst + chase + late;
+    // TOYZ remains competitive, but cannot snowball into an effectively
+    // unwinnable lead. A large lead slightly reduces his pace.
+    const burst = Math.sin(s.elapsed * .47 + .9) > .76 ? .62 : 0;
+    const chase = s.progress > s.rival + 10 ? .20 : 0;
+    const late = s.rival > 70 ? .10 : 0;
+    const mercy = s.rival > s.progress + 10 ? -.25 : 0;
+    const rivalBase = 2.65 + Math.sin(s.elapsed*.75)*.22 + burst + chase + late + mercy;
     s.rival = clamp(s.rival + rivalBase * dt, 0, 100);
-    s.rivalSpin += rivalBase * 84 * dt;
+    s.rivalSpin += rivalBase * 82 * dt;
 
     updateUi(s, false, safeLow, safeHigh, center);
 
     if (s.progress >= 100) {
-      if (s.quality >= 68) finish(s, true, `你先捲完，品質 ${Math.round(s.quality)}。紙面夠平，TOYZ 認輸。`);
-      else finish(s, false, `雖然先捲完，但品質只有 ${Math.round(s.quality)}。TOYZ：這種成品不算。`);
+      if (s.quality >= 60) finish(s, true, `你先捲完，品質 ${Math.round(s.quality)}。紙面夠平，TOYZ 認輸。`);
+      else finish(s, false, `雖然先捲完，但品質只有 ${Math.round(s.quality)}。TOYZ：成品還不夠穩。`);
       return;
     }
     if (s.rival >= 100) { finish(s, false, `TOYZ 先完成了。你的進度 ${Math.round(s.progress)}%，品質 ${Math.round(s.quality)}。`); return; }
@@ -185,9 +187,9 @@
     if (now > s.messageUntil) {
       if (s.tension < safeLow) setMessage(s,"太鬆 · 紙帶起皺","warn");
       else if (s.tension > safeHigh) setMessage(s,"太緊 · 紙面拉扯","warn");
-      else if (s.strain > 27) setMessage(s,"紙張負荷過高 · 降速","warn");
-      else if (s.speed > 5.05) setMessage(s,"速度過快 · 品質下降","warn");
-      else if (s.speed >= 2.35) setMessage(s,"穩定","good");
+      else if (s.strain > 29) setMessage(s,"紙張負荷過高 · 降速","warn");
+      else if (s.speed > 5.4) setMessage(s,"速度過快 · 品質下降","warn");
+      else if (s.speed >= 2.1) setMessage(s,"穩定","good");
       else setMessage(s,"待加速","");
     }
     s.raf = requestAnimationFrame(n => frame(s,n));
@@ -215,13 +217,13 @@
     m.querySelector(".pr2-paper-fiber").style.strokeDashoffset=`${-spin*.13}px`;
   }
 
-  function updateUi(s, initial=false, safeLow=41, safeHigh=59, center=50) {
+  function updateUi(s, initial=false, safeLow=38, safeHigh=62, center=50) {
     updateMachine(s,"player",s.progress,s.spin,s.wobble,s.skew);
     updateMachine(s,"foe",s.rival,s.rivalSpin,Math.sin(s.elapsed*2.4)*.45,Math.sin(s.elapsed*.8)*.7);
     const player=s.root.querySelector('[data-machine="player"]');
     player.classList.toggle("is-rolling",s.speed>1);
-    player.classList.toggle("danger",s.tension<safeLow||s.tension>safeHigh||s.speed>5.05||s.strain>27);
-    player.classList.toggle("good",s.tension>=safeLow&&s.tension<=safeHigh&&s.speed>=2.35&&s.speed<=4.85&&s.strain<19);
+    player.classList.toggle("danger",s.tension<safeLow||s.tension>safeHigh||s.speed>5.4||s.strain>29);
+    player.classList.toggle("good",s.tension>=safeLow&&s.tension<=safeHigh&&s.speed>=2.1&&s.speed<=5.15&&s.strain<23);
     s.root.querySelector("[data-tension-label]").textContent=Math.round(s.tension);
     s.root.querySelector("[data-speed-label]").textContent=s.speed.toFixed(1);
     s.root.querySelector("[data-quality-label]").textContent=Math.round(s.quality);
