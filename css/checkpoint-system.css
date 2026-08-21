@@ -1,0 +1,48 @@
+/* Autosave / death checkpoint UI */
+.checkpoint-toast{
+  position:fixed;
+  left:50%;
+  top:18px;
+  z-index:9999;
+  transform:translate(-50%,-14px);
+  padding:8px 14px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  background:rgba(8,8,13,.9);
+  color:#f7f0f8;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  box-shadow:0 8px 28px rgba(0,0,0,.38);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+}
+.checkpoint-toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+
+#checkpointRetryBtn.checkpoint-retry-btn{
+  width:100%;
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+}
+#checkpointRetryBtn.checkpoint-retry-btn span{
+  font-size:15px;
+  font-weight:900;
+}
+#checkpointRetryBtn.checkpoint-retry-btn small{
+  display:block;
+  opacity:.72;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+#endingOverlay #againBtn{
+  margin-top:8px;
+}
