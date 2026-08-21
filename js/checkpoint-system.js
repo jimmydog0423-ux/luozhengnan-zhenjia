@@ -1,13 +1,16 @@
 (() => {
   "use strict";
 
-  const RUN_KEY = "red_school_roger_run_v3";
+  const RUN_KEY = "red_school_roger_click_v3";
   const CHECKPOINT_KEY = "red_school_roger_checkpoint_v1";
   const AUTO_RESUME_KEY = "red_school_roger_checkpoint_resume_v1";
 
+  // Current game run key used by game.js. Keep the old key name here as a
+  // compatibility fallback because earlier builds used it during development.
+  const RUN_KEYS = ["red_school_roger_run_v3", RUN_KEY];
+
   const roomName = document.getElementById("roomName");
   const layer = document.getElementById("objectLayer");
-  const modal = document.getElementById("modalOverlay");
   const modalBody = document.getElementById("modalBody");
   const ending = document.getElementById("endingOverlay");
   const endingTitle = document.getElementById("endingTitle");
@@ -15,6 +18,7 @@
   const startBtn = document.getElementById("startBtn");
   const continueBtn = document.getElementById("continueBtn");
 
+  let activeRunKey = "red_school_roger_run_v3";
   let lastRun = "";
   let lastBoss = "";
   let lastPhase = "";
@@ -22,14 +26,18 @@
   let endingRetryInjected = false;
 
   function readRun() {
-    const raw = localStorage.getItem(RUN_KEY);
-    if (!raw) return null;
-    try {
-      const data = JSON.parse(raw);
-      return data && data.room ? { raw, data } : null;
-    } catch (_) {
-      return null;
+    for (const key of RUN_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const data = JSON.parse(raw);
+        if (data && data.room) {
+          activeRunKey = key;
+          return { raw, data, key };
+        }
+      } catch (_) {}
     }
+    return null;
   }
 
   function readCheckpoint() {
@@ -70,19 +78,23 @@
     const overload = modalBody?.querySelector(".overload-boss-v2");
     if (overload) {
       const phase = overload.dataset.phase || overload.querySelector("[data-phase-label]")?.textContent?.trim() || "1";
-      return { boss: "overload", phase, label: `超負荷 Phase ${String(phase).replace(/\s*\/.*$/, "")}` };
+      return { boss: "overload", phase, label: "超負荷 Boss 入口" };
     }
 
     const pyramid = modalBody?.querySelector(".pyramid-boss-v2");
     if (pyramid) {
       const phaseText = pyramid.querySelector("[data-phase]")?.textContent?.trim() || "MEMORY JUDGEMENT";
-      return { boss: "pyramid", phase: phaseText, label: `紹安 ${phaseText}` };
+      return { boss: "pyramid", phase: phaseText, label: "紹安 Hidden Boss 入口" };
     }
 
     const legacyTitle = modalBody?.querySelector(".boss-panel h2")?.textContent || "";
-    if (/大肥哥超負荷/.test(legacyTitle)) return { boss: "overload", phase: "1", label: "超負荷 Boss" };
-    if (/金字塔紹安/.test(legacyTitle)) return { boss: "pyramid", phase: "MEMORY JUDGEMENT", label: "紹安 Hidden Boss" };
+    if (/大肥哥超負荷/.test(legacyTitle)) return { boss: "overload", phase: "1", label: "超負荷 Boss 入口" };
+    if (/金字塔紹安/.test(legacyTitle)) return { boss: "pyramid", phase: "MEMORY JUDGEMENT", label: "紹安 Hidden Boss 入口" };
     return null;
+  }
+
+  function pickOption(options, key, fallback) {
+    return Object.prototype.hasOwnProperty.call(options, key) ? options[key] : fallback;
   }
 
   function writeCheckpoint(reason = "auto", options = {}) {
@@ -91,15 +103,20 @@
 
     const bossMeta = currentBossMeta();
     const old = readCheckpoint();
+    const bossFallback = bossMeta?.boss ?? old?.boss ?? null;
+    const phaseFallback = bossMeta?.phase ?? old?.phase ?? null;
+    const labelFallback = bossMeta?.label ?? old?.label ?? roomName?.textContent?.trim() ?? "最近紀錄點";
+
     const cp = {
       version: 1,
       savedAt: Date.now(),
       reason,
       room: run.data.room,
+      runKey: run.key,
       run: run.raw,
-      boss: bossMeta?.boss || options.boss || old?.boss || null,
-      phase: bossMeta?.phase || options.phase || old?.phase || null,
-      label: bossMeta?.label || options.label || old?.label || roomName?.textContent?.trim() || "最近紀錄點"
+      boss: pickOption(options, "boss", bossFallback),
+      phase: pickOption(options, "phase", phaseFallback),
+      label: pickOption(options, "label", labelFallback)
     };
 
     localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(cp));
@@ -112,11 +129,15 @@
     if (!run || run.raw === lastRun) return;
     lastRun = run.raw;
 
-    // Do not overwrite a Boss checkpoint merely because the old run save is still
-    // present behind a live Boss fight. The Boss entrance remains the safe respawn.
+    // During an active Boss fight, keep the safe snapshot from immediately
+    // before the encounter. The game intentionally stops regular saves in Boss mode.
     if (currentBossMeta()) return;
 
-    writeCheckpoint("autosave", { boss: null, phase: null, label: roomName?.textContent?.trim() || "自動存檔" });
+    writeCheckpoint("autosave", {
+      boss: null,
+      phase: null,
+      label: roomName?.textContent?.trim() || "自動存檔"
+    });
   }
 
   function syncBossCheckpoint(showToast = false) {
@@ -128,9 +149,9 @@
     lastBoss = meta.boss;
     lastPhase = meta.phase;
 
-    // The run save represents the safe state immediately before entering the boss.
-    // Keep that snapshot and attach the current phase as metadata, so a death can
-    // return the player straight to this encounter instead of wiping the run.
+    // Phase is recorded as metadata so the player knows where the failure happened.
+    // Respawn is intentionally the safe Boss entrance, avoiding a restart in the
+    // middle of an already-live bullet pattern.
     const cp = readCheckpoint();
     if (cp?.run) {
       cp.savedAt = Date.now();
@@ -143,7 +164,12 @@
       writeCheckpoint("boss", meta);
     }
 
-    if (showToast) toast(`CHECKPOINT · ${meta.label}`);
+    if (showToast) {
+      const phaseText = meta.boss === "overload"
+        ? `Phase ${String(meta.phase).replace(/\s*\/.*$/, "")}`
+        : String(meta.phase);
+      toast(`CHECKPOINT · ${phaseText}`);
+    }
   }
 
   function isBadEnding() {
@@ -178,7 +204,10 @@
 
   function retryCheckpoint(cp) {
     if (!cp?.run) return;
-    localStorage.setItem(RUN_KEY, cp.run);
+    const key = cp.runKey || activeRunKey || "red_school_roger_run_v3";
+    localStorage.setItem(key, cp.run);
+    if (key !== "red_school_roger_run_v3") localStorage.setItem("red_school_roger_run_v3", cp.run);
+
     sessionStorage.setItem(AUTO_RESUME_KEY, JSON.stringify({
       boss: cp.boss || null,
       phase: cp.phase || null,
@@ -244,6 +273,8 @@
     injectRetryButton();
   }
 
+  // A deliberately new investigation means the previous death checkpoint should
+  // not bleed into the new run.
   startBtn?.addEventListener("click", clearCheckpoint, true);
   againBtn?.addEventListener("click", clearCheckpoint, true);
 
@@ -261,14 +292,16 @@
   if (ending) {
     new MutationObserver(() => {
       if (ending.classList.contains("show") && !isBadEnding()) {
-        // A real clear/normal ending should not leave an old death checkpoint behind.
         if (endingTitle?.textContent && !/^BAD END/.test(endingTitle.textContent.trim())) clearCheckpoint();
       }
       injectRetryButton();
     }).observe(ending, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   }
 
-  if (roomName) new MutationObserver(() => setTimeout(syncRunCheckpoint, 0)).observe(roomName, { childList: true, subtree: true, characterData: true });
+  if (roomName) {
+    new MutationObserver(() => setTimeout(syncRunCheckpoint, 0))
+      .observe(roomName, { childList: true, subtree: true, characterData: true });
+  }
 
   setInterval(watch, 650);
   setTimeout(() => {
