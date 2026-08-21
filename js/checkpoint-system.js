@@ -1,13 +1,11 @@
 (() => {
   "use strict";
 
-  const RUN_KEY = "red_school_roger_click_v3";
-  const CHECKPOINT_KEY = "red_school_roger_checkpoint_v1";
-  const AUTO_RESUME_KEY = "red_school_roger_checkpoint_resume_v1";
-
-  // Current game run key used by game.js. Keep the old key name here as a
-  // compatibility fallback because earlier builds used it during development.
-  const RUN_KEYS = ["red_school_roger_run_v3", RUN_KEY];
+  const CHECKPOINT_KEY = "red_school_roger_checkpoint_v2";
+  const OLD_CHECKPOINT_KEY = "red_school_roger_checkpoint_v1";
+  const AUTO_RESUME_KEY = "red_school_roger_checkpoint_resume_v2";
+  const OLD_RESUME_KEY = "red_school_roger_checkpoint_resume_v1";
+  const RUN_KEYS = ["red_school_roger_run_v3", "red_school_roger_click_v3"];
 
   const roomName = document.getElementById("roomName");
   const layer = document.getElementById("objectLayer");
@@ -18,12 +16,10 @@
   const startBtn = document.getElementById("startBtn");
   const continueBtn = document.getElementById("continueBtn");
 
-  let activeRunKey = "red_school_roger_run_v3";
   let lastRun = "";
-  let lastBoss = "";
-  let lastPhase = "";
+  let lastBossKey = "";
+  let retryInjected = false;
   let toastTimer = 0;
-  let endingRetryInjected = false;
 
   function readRun() {
     for (const key of RUN_KEYS) {
@@ -31,30 +27,30 @@
       if (!raw) continue;
       try {
         const data = JSON.parse(raw);
-        if (data && data.room) {
-          activeRunKey = key;
-          return { raw, data, key };
-        }
+        if (data?.room) return { key, raw, data };
       } catch (_) {}
     }
     return null;
   }
 
   function readCheckpoint() {
-    try {
-      const cp = JSON.parse(localStorage.getItem(CHECKPOINT_KEY) || "null");
-      return cp && cp.run ? cp : null;
-    } catch (_) {
-      return null;
+    for (const key of [CHECKPOINT_KEY, OLD_CHECKPOINT_KEY]) {
+      try {
+        const cp = JSON.parse(localStorage.getItem(key) || "null");
+        if (cp?.run) return cp;
+      } catch (_) {}
     }
+    return null;
   }
 
   function clearCheckpoint() {
     localStorage.removeItem(CHECKPOINT_KEY);
+    localStorage.removeItem(OLD_CHECKPOINT_KEY);
     sessionStorage.removeItem(AUTO_RESUME_KEY);
+    sessionStorage.removeItem(OLD_RESUME_KEY);
+    delete window.__bossResumeIntent;
     lastRun = "";
-    lastBoss = "";
-    lastPhase = "";
+    lastBossKey = "";
   }
 
   function toast(text) {
@@ -71,241 +67,185 @@
     void el.offsetWidth;
     el.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("show"), 1250);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 1450);
   }
 
-  function currentBossMeta() {
+  function bossMeta() {
     const overload = modalBody?.querySelector(".overload-boss-v2");
     if (overload) {
-      const phase = overload.dataset.phase || overload.querySelector("[data-phase-label]")?.textContent?.trim() || "1";
-      return { boss: "overload", phase, label: "超負荷 Boss 入口" };
+      const phase = Math.max(1, Math.min(3, Number(overload.dataset.phase) || 1));
+      return { boss:"overload", phase, label:`超負荷 Phase ${phase}` };
     }
-
     const pyramid = modalBody?.querySelector(".pyramid-boss-v2");
     if (pyramid) {
-      const phaseText = pyramid.querySelector("[data-phase]")?.textContent?.trim() || "MEMORY JUDGEMENT";
-      return { boss: "pyramid", phase: phaseText, label: "紹安 Hidden Boss 入口" };
+      const phase = Math.max(1, Math.min(4, Number(pyramid.dataset.phase) || 1));
+      const names = ["","MEMORY JUDGEMENT","TRIANGLE HELL","ROOM DISTORTION","BAN MODE"];
+      return { boss:"pyramid", phase, label:`紹安 ${names[phase]}` };
     }
-
-    const legacyTitle = modalBody?.querySelector(".boss-panel h2")?.textContent || "";
-    if (/大肥哥超負荷/.test(legacyTitle)) return { boss: "overload", phase: "1", label: "超負荷 Boss 入口" };
-    if (/金字塔紹安/.test(legacyTitle)) return { boss: "pyramid", phase: "MEMORY JUDGEMENT", label: "紹安 Hidden Boss 入口" };
+    const legacy = modalBody?.querySelector(".boss-panel h2")?.textContent || "";
+    if (/超負荷/.test(legacy)) return { boss:"overload", phase:1, label:"超負荷 Phase 1" };
+    if (/金字塔紹安/.test(legacy)) return { boss:"pyramid", phase:1, label:"紹安 MEMORY JUDGEMENT" };
     return null;
   }
 
-  function pickOption(options, key, fallback) {
-    return Object.prototype.hasOwnProperty.call(options, key) ? options[key] : fallback;
-  }
-
-  function writeCheckpoint(reason = "auto", options = {}) {
+  function writeCheckpoint(reason="autosave", meta=null) {
     const run = readRun();
     if (!run) return false;
-
-    const bossMeta = currentBossMeta();
     const old = readCheckpoint();
-    const bossFallback = bossMeta?.boss ?? old?.boss ?? null;
-    const phaseFallback = bossMeta?.phase ?? old?.phase ?? null;
-    const labelFallback = bossMeta?.label ?? old?.label ?? roomName?.textContent?.trim() ?? "最近紀錄點";
-
     const cp = {
-      version: 1,
-      savedAt: Date.now(),
+      version:2,
+      savedAt:Date.now(),
       reason,
-      room: run.data.room,
-      runKey: run.key,
-      run: run.raw,
-      boss: pickOption(options, "boss", bossFallback),
-      phase: pickOption(options, "phase", phaseFallback),
-      label: pickOption(options, "label", labelFallback)
+      room:run.data.room,
+      runKey:run.key,
+      run:run.raw,
+      boss:meta?.boss ?? null,
+      phase:meta?.phase ?? null,
+      label:meta?.label || roomName?.textContent?.trim() || old?.label || "最近紀錄點"
     };
-
     localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(cp));
+    localStorage.removeItem(OLD_CHECKPOINT_KEY);
     lastRun = run.raw;
     return true;
   }
 
-  function syncRunCheckpoint() {
+  function syncAutosave() {
     const run = readRun();
-    if (!run || run.raw === lastRun) return;
+    if (!run || run.raw === lastRun || bossMeta()) return;
     lastRun = run.raw;
-
-    // During an active Boss fight, keep the safe snapshot from immediately
-    // before the encounter. The game intentionally stops regular saves in Boss mode.
-    if (currentBossMeta()) return;
-
-    writeCheckpoint("autosave", {
-      boss: null,
-      phase: null,
-      label: roomName?.textContent?.trim() || "自動存檔"
-    });
+    writeCheckpoint("autosave", null);
   }
 
-  function syncBossCheckpoint(showToast = false) {
-    const meta = currentBossMeta();
-    if (!meta) return;
+  function syncBoss(showToast=false) {
+    const meta = bossMeta();
+    if (!meta) { lastBossKey = ""; return; }
     const key = `${meta.boss}:${meta.phase}`;
-    if (key === `${lastBoss}:${lastPhase}`) return;
+    if (key === lastBossKey) return;
+    lastBossKey = key;
 
-    lastBoss = meta.boss;
-    lastPhase = meta.phase;
-
-    // Phase is recorded as metadata so the player knows where the failure happened.
-    // Respawn is intentionally the safe Boss entrance, avoiding a restart in the
-    // middle of an already-live bullet pattern.
-    const cp = readCheckpoint();
-    if (cp?.run) {
-      cp.savedAt = Date.now();
-      cp.reason = "boss";
-      cp.boss = meta.boss;
-      cp.phase = meta.phase;
-      cp.label = meta.label;
+    const old = readCheckpoint();
+    if (old?.run) {
+      const cp = {
+        ...old,
+        version:2,
+        savedAt:Date.now(),
+        reason:"boss-phase",
+        boss:meta.boss,
+        phase:meta.phase,
+        label:meta.label
+      };
       localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(cp));
+      localStorage.removeItem(OLD_CHECKPOINT_KEY);
     } else {
-      writeCheckpoint("boss", meta);
+      writeCheckpoint("boss-phase", meta);
     }
-
-    if (showToast) {
-      const phaseText = meta.boss === "overload"
-        ? `Phase ${String(meta.phase).replace(/\s*\/.*$/, "")}`
-        : String(meta.phase);
-      toast(`CHECKPOINT · ${phaseText}`);
-    }
+    if (showToast) toast(`CHECKPOINT · ${meta.label}`);
   }
 
-  function isBadEnding() {
-    if (!ending?.classList.contains("show")) return false;
-    return /^BAD END/.test(endingTitle?.textContent?.trim() || "");
-  }
-
-  function injectRetryButton() {
-    if (!isBadEnding()) {
-      endingRetryInjected = false;
-      document.getElementById("checkpointRetryBtn")?.remove();
-      return;
-    }
-
-    const cp = readCheckpoint();
-    if (!cp || endingRetryInjected) return;
-    endingRetryInjected = true;
-
-    const btn = document.createElement("button");
-    btn.id = "checkpointRetryBtn";
-    btn.type = "button";
-    btn.className = "primary checkpoint-retry-btn";
-    btn.innerHTML = `<span>從最近檢查點重試</span><small>${escapeHtml(cp.label || "最近紀錄點")}</small>`;
-    btn.addEventListener("click", () => retryCheckpoint(cp));
-
-    if (againBtn?.parentNode) againBtn.parentNode.insertBefore(btn, againBtn);
+  function isBadEnd() {
+    return ending?.classList.contains("show") && /^BAD END/.test(endingTitle?.textContent?.trim() || "");
   }
 
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[ch]);
   }
 
-  function retryCheckpoint(cp) {
-    if (!cp?.run) return;
-    const key = cp.runKey || activeRunKey || "red_school_roger_run_v3";
-    localStorage.setItem(key, cp.run);
-    if (key !== "red_school_roger_run_v3") localStorage.setItem("red_school_roger_run_v3", cp.run);
+  function injectRetry() {
+    if (!isBadEnd()) {
+      retryInjected = false;
+      document.getElementById("checkpointRetryBtn")?.remove();
+      return;
+    }
+    const cp = readCheckpoint();
+    if (!cp || retryInjected) return;
+    retryInjected = true;
+    const btn = document.createElement("button");
+    btn.id = "checkpointRetryBtn";
+    btn.type = "button";
+    btn.className = "primary checkpoint-retry-btn";
+    btn.innerHTML = `<span>從最近檢查點重試</span><small>${escapeHtml(cp.label || "最近紀錄點")}</small>`;
+    btn.onclick = () => retry(cp);
+    againBtn?.parentNode?.insertBefore(btn, againBtn);
+  }
 
-    sessionStorage.setItem(AUTO_RESUME_KEY, JSON.stringify({
-      boss: cp.boss || null,
-      phase: cp.phase || null,
-      room: cp.room || null,
-      at: Date.now()
-    }));
+  function retry(cp) {
+    if (!cp?.run) return;
+    const key = RUN_KEYS.includes(cp.runKey) ? cp.runKey : RUN_KEYS[0];
+    localStorage.setItem(key, cp.run);
+    localStorage.setItem(RUN_KEYS[0], cp.run);
+    const intent = {
+      boss:cp.boss || null,
+      phase:Number(cp.phase) || null,
+      room:cp.room || null,
+      label:cp.label || null,
+      at:Date.now()
+    };
+    sessionStorage.setItem(AUTO_RESUME_KEY, JSON.stringify(intent));
+    sessionStorage.removeItem(OLD_RESUME_KEY);
     location.reload();
   }
 
   function findDoor(label) {
-    return [...(layer?.querySelectorAll("button.scene-object") || [])].find(b => {
-      const raw = b.dataset.label || b.getAttribute("aria-label") || b.textContent || "";
-      return String(raw).trim() === label || String(raw).includes(label);
+    return [...(layer?.querySelectorAll("button.scene-object") || [])].find(btn => {
+      const raw = btn.dataset.label || btn.getAttribute("aria-label") || btn.textContent || "";
+      return String(raw).includes(label);
     }) || null;
   }
 
-  function autoResumeIfNeeded() {
+  async function autoResume() {
     let pending = null;
     try { pending = JSON.parse(sessionStorage.getItem(AUTO_RESUME_KEY) || "null"); } catch (_) {}
     if (!pending) return;
-    sessionStorage.removeItem(AUTO_RESUME_KEY);
+    window.__bossResumeIntent = pending;
 
-    const clickContinue = () => {
-      if (continueBtn && !continueBtn.hidden) {
-        continueBtn.click();
-        waitForRoomThenBoss(pending);
-        return true;
-      }
-      return false;
-    };
+    try { await window.GamePreloader?.ready; } catch (_) {}
 
-    if (clickContinue()) return;
     let tries = 0;
-    const timer = setInterval(() => {
-      if (clickContinue() || ++tries > 40) clearInterval(timer);
-    }, 100);
-  }
+    while ((!continueBtn || continueBtn.hidden) && tries++ < 80) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    if (!continueBtn || continueBtn.hidden) return;
+    continueBtn.click();
 
-  function waitForRoomThenBoss(pending) {
-    if (!pending?.boss) {
+    if (!pending.boss) {
+      sessionStorage.removeItem(AUTO_RESUME_KEY);
+      delete window.__bossResumeIntent;
       toast("已回到最近紀錄點");
       return;
     }
 
-    const targetLabel = pending.boss === "pyramid" ? "更下面" : "舞台深處";
-    let tries = 0;
-    const timer = setInterval(() => {
-      const door = findDoor(targetLabel);
-      if (door && !door.classList.contains("locked")) {
-        clearInterval(timer);
-        toast(`已恢復 ${pending.boss === "pyramid" ? "紹安" : "超負荷"} Boss 紀錄點`);
-        setTimeout(() => door.click(), 280);
-      } else if (++tries > 50) {
-        clearInterval(timer);
-        toast("已回到最近紀錄房間");
+    const target = pending.boss === "pyramid" ? "更下面" : "舞台深處";
+    tries = 0;
+    while (tries++ < 100) {
+      const door = findDoor(target);
+      if (door && !door.disabled && !door.classList.contains("locked")) {
+        toast(`準備從 ${pending.label || `Phase ${pending.phase}`} 繼續`);
+        setTimeout(() => door.click(), 240);
+        return;
       }
-    }, 100);
+      await new Promise(r => setTimeout(r, 100));
+    }
+    toast("已回到最近紀錄房間");
   }
 
-  function watch() {
-    syncRunCheckpoint();
-    syncBossCheckpoint(false);
-    injectRetryButton();
-  }
-
-  // A deliberately new investigation means the previous death checkpoint should
-  // not bleed into the new run.
   startBtn?.addEventListener("click", clearCheckpoint, true);
   againBtn?.addEventListener("click", clearCheckpoint, true);
 
   if (modalBody) {
-    new MutationObserver(() => {
-      const before = `${lastBoss}:${lastPhase}`;
-      syncBossCheckpoint(true);
-      if (!currentBossMeta() && before !== ":") {
-        lastBoss = "";
-        lastPhase = "";
-      }
-    }).observe(modalBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-phase"] });
+    new MutationObserver(() => syncBoss(true)).observe(modalBody, {
+      childList:true, subtree:true, attributes:true, attributeFilter:["data-phase"]
+    });
   }
-
   if (ending) {
     new MutationObserver(() => {
-      if (ending.classList.contains("show") && !isBadEnding()) {
-        if (endingTitle?.textContent && !/^BAD END/.test(endingTitle.textContent.trim())) clearCheckpoint();
-      }
-      injectRetryButton();
-    }).observe(ending, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+      if (ending.classList.contains("show") && !isBadEnd() && endingTitle?.textContent) clearCheckpoint();
+      injectRetry();
+    }).observe(ending, {childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
   }
-
   if (roomName) {
-    new MutationObserver(() => setTimeout(syncRunCheckpoint, 0))
-      .observe(roomName, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(() => setTimeout(syncAutosave, 0)).observe(roomName, {childList:true,subtree:true,characterData:true});
   }
 
-  setInterval(watch, 650);
-  setTimeout(() => {
-    syncRunCheckpoint();
-    autoResumeIfNeeded();
-  }, 80);
+  setInterval(() => { syncAutosave(); syncBoss(false); injectRetry(); }, 650);
+  setTimeout(() => { syncAutosave(); autoResume(); }, 100);
 })();
