@@ -1,0 +1,59 @@
+/* Uploaded boss character artwork */
+.overload-boss-v3 .ob2-boss-visual{
+  top:-1%!important;
+  width:260px!important;
+  height:270px!important;
+  opacity:.93!important;
+  overflow:visible!important;
+}
+.overload-boss-v3 .ob2-boss-visual .boss-character-image{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center top;
+  filter:brightness(.82) saturate(.92) drop-shadow(0 20px 20px rgba(0,0,0,.78));
+  pointer-events:none;
+}
+.overload-boss-v3[data-phase="2"] .ob2-boss-visual .boss-character-image{
+  filter:brightness(.9) saturate(1.02) drop-shadow(0 0 24px rgba(205,41,63,.26));
+}
+.overload-boss-v3[data-phase="3"] .ob2-boss-visual .boss-character-image{
+  filter:brightness(1) saturate(1.12) drop-shadow(0 0 30px rgba(235,39,65,.34));
+}
+
+.pyramid-boss-v3 .pyr2-stage-wrap{position:relative}
+.pyramid-boss-v3 .pharaoh-character-visual{
+  position:absolute;
+  left:50%;
+  top:2px;
+  z-index:3;
+  width:205px;
+  height:205px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  opacity:.86;
+  mix-blend-mode:screen;
+}
+.pyramid-boss-v3 .pharaoh-character-image{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center top;
+  filter:brightness(.8) saturate(.88) drop-shadow(0 0 22px rgba(182,95,255,.32)) drop-shadow(0 16px 16px rgba(0,0,0,.8));
+}
+.pyramid-boss-v3[data-phase="2"] .pharaoh-character-visual{opacity:.9}
+.pyramid-boss-v3[data-phase="3"] .pharaoh-character-visual{opacity:.93;filter:hue-rotate(8deg)}
+.pyramid-boss-v3[data-phase="4"] .pharaoh-character-visual{
+  opacity:.96;
+  animation:pharaohBossGlitch .72s steps(2,end) infinite;
+}
+@keyframes pharaohBossGlitch{
+  0%,100%{transform:translateX(-50%) translate(0,0)}
+  35%{transform:translateX(-50%) translate(-3px,1px)}
+  70%{transform:translateX(-50%) translate(3px,-1px)}
+}
+
+@media(max-width:760px){
+  .overload-boss-v3 .ob2-boss-visual{width:190px!important;height:205px!important}
+  .pyramid-boss-v3 .pharaoh-character-visual{width:145px;height:145px;top:0}
+}
