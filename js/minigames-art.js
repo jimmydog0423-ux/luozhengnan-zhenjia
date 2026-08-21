@@ -13,6 +13,8 @@
     { key:"poker", match:"統神 vs 薛喜：讀人", src:"assets/minigames/mini_poker_duel.webp" }
   ];
 
+  let scheduled = false;
+
   function createImage(item, className) {
     const img = document.createElement("img");
     img.className = className;
@@ -41,6 +43,15 @@
   }
 
   function syncMinigameArt() {
+    scheduled = false;
+
+    // Realtime bosses update HUD text dozens of times per second. They never use
+    // minigame banners, so do not scan their full text content at all.
+    if (body.querySelector(".overload-boss-v2, .pyramid-boss-v2")) {
+      clearBanners();
+      return;
+    }
+
     /* Dialogue may mention a minigame by name. Never treat dialogue text as the
        minigame screen itself, otherwise a huge gameplay banner appears above it. */
     if (body.querySelector(".dialogue-layout")) {
@@ -104,6 +115,12 @@
     else body.prepend(img);
   }
 
-  new MutationObserver(syncMinigameArt).observe(body, { childList:true, subtree:true, characterData:true });
+  function scheduleSync() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(syncMinigameArt);
+  }
+
+  new MutationObserver(scheduleSync).observe(body, { childList:true, subtree:true, characterData:true });
   syncMinigameArt();
 })();
