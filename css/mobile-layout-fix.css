@@ -1,14 +1,14 @@
-/* Mobile portrait layout + scaled-stage readability fix */
+/* Mobile portrait mode: keep the scene clean and move all interaction to buttons below it. */
 @media (max-width:900px) and (orientation:portrait){
   #scene{
-    --mobile-toolbar-h:112px;
-    --mobile-objective-h:72px;
+    --mobile-toolbar-h:104px;
+    --mobile-objective-h:78px;
+    --mobile-actions-h:138px;
   }
 
-  /* The 1600x900 stage is width-limited on phones. Move it upward so the
-     lower third stays available for the objective and toolbar. */
+  /* Leave the lower part of the phone for interaction controls. */
   .game-stage{
-    top:43%!important;
+    top:39.5%!important;
   }
 
   .hud{
@@ -29,31 +29,176 @@
   }
   .hud-stats{display:none!important}
 
-  /* Two rows instead of the previous two-column / three-row stack. */
+  /* Mobile no longer uses the PC-style on-scene hit areas. Keep foreground
+     characters/props visible, but remove arrows, labels, frames and touch input. */
+  #scene.mobile-button-mode .game-stage #objectLayer .scene-object{
+    pointer-events:none!important;
+    cursor:default!important;
+    border-color:transparent!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  #scene.mobile-button-mode .game-stage #objectLayer .scene-object::before,
+  #scene.mobile-button-mode .game-stage #objectLayer .scene-object::after,
+  #scene.mobile-button-mode .game-stage #objectLayer .done-mark,
+  #scene.mobile-button-mode .game-stage #objectLayer [class*="ground-arrow"],
+  #scene.mobile-button-mode .game-stage #objectLayer [class*="nav-label"]{
+    display:none!important;
+  }
+  #scene.mobile-button-mode .game-stage #objectLayer .world-door>svg,
+  #scene.mobile-button-mode .game-stage #objectLayer .world-door>img,
+  #scene.mobile-button-mode .game-stage #objectLayer [class*="-nav"]>svg,
+  #scene.mobile-button-mode .game-stage #objectLayer [class*="-nav"]>img{
+    opacity:0!important;
+  }
+  #scene.mobile-button-mode .game-stage #objectLayer.hint-mode .scene-object{
+    animation:none!important;
+    border-color:transparent!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+
+  /* New mobile interaction list. It mirrors the real scene buttons, so game
+     logic, locks and completion state still come from the original game. */
+  .mobile-room-actions{
+    position:absolute;
+    left:10px;
+    right:10px;
+    bottom:calc(var(--mobile-toolbar-h) + var(--mobile-objective-h) + 38px + env(safe-area-inset-bottom,0px));
+    z-index:30;
+    padding:9px;
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:14px;
+    background:linear-gradient(180deg,rgba(13,10,17,.96),rgba(8,7,11,.96));
+    box-shadow:0 15px 38px rgba(0,0,0,.42);
+    backdrop-filter:blur(8px);
+  }
+  .mobile-room-actions[hidden]{display:none!important}
+  .mobile-room-actions-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:1px 3px 8px;
+  }
+  .mobile-room-actions-head strong{
+    color:#ff7581;
+    font-size:11px;
+    letter-spacing:.12em;
+  }
+  .mobile-room-actions-head span{
+    color:#8f8493;
+    font-size:10px;
+    font-weight:800;
+  }
+  .mobile-room-actions-list{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    max-height:128px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    padding-right:1px;
+  }
+  .mobile-room-action{
+    position:relative;
+    min-width:0!important;
+    min-height:48px!important;
+    display:grid!important;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:7px;
+    padding:8px 9px!important;
+    border-radius:11px!important;
+    text-align:left;
+    background:rgba(24,19,29,.94)!important;
+    border-color:rgba(255,255,255,.13)!important;
+    transform:none!important;
+  }
+  .mobile-room-action small{
+    display:inline-block!important;
+    margin:0!important;
+    padding:3px 5px;
+    border-radius:6px;
+    color:#9f939f;
+    background:rgba(255,255,255,.055);
+    font-size:9px;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .mobile-room-action span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#f2ecf3;
+    font-size:13px;
+    line-height:1.2;
+    font-weight:900;
+  }
+  .mobile-room-action b{
+    width:20px;
+    height:20px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    color:#bdf4df;
+    background:#183d31;
+    border:1px solid #59b998;
+    font-size:11px;
+  }
+  .mobile-room-action.is-move{
+    border-color:rgba(218,83,101,.34)!important;
+    background:linear-gradient(180deg,rgba(54,23,31,.92),rgba(27,15,21,.94))!important;
+  }
+  .mobile-room-action.is-move small{color:#ff9aa5;background:rgba(205,63,84,.13)}
+  .mobile-room-action.is-npc{
+    border-color:rgba(212,184,93,.28)!important;
+  }
+  .mobile-room-action.is-npc small{color:#e7cf7b;background:rgba(209,178,79,.10)}
+  .mobile-room-action.is-done{
+    border-color:rgba(88,178,145,.34)!important;
+  }
+  .mobile-room-action.is-locked{
+    opacity:.46;
+    filter:grayscale(.35);
+  }
+  .mobile-room-actions-empty{
+    grid-column:1/-1;
+    padding:15px;
+    text-align:center;
+    color:#8e8492;
+    font-size:12px;
+  }
+
+  /* Hint mode is redundant on mobile because every available interaction is
+     always listed explicitly. */
+  #hintBtn{display:none!important}
+
+  /* Four utility buttons = compact 2x2 footer. */
   .toolbar{
     position:absolute!important;
     left:10px!important;
     right:10px!important;
     bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
     display:grid!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:8px!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
     width:auto!important;
     z-index:32!important;
   }
   .toolbar button{
     min-width:0!important;
-    min-height:50px!important;
-    padding:8px 6px!important;
-    border-radius:13px!important;
-    font-size:14px!important;
+    min-height:47px!important;
+    padding:7px 6px!important;
+    border-radius:12px!important;
+    font-size:13px!important;
     line-height:1.15!important;
     white-space:nowrap!important;
   }
-  .toolbar button:nth-child(5){grid-column:span 2}
+  .toolbar button:nth-child(5){grid-column:auto!important}
 
-  /* Measured by mobile-layout-fix.js, so this stays correct even if browser
-     font scaling or safe-area size changes. */
   .objective-panel{
     position:absolute!important;
     left:10px!important;
@@ -61,7 +206,7 @@
     bottom:calc(var(--mobile-toolbar-h) + 20px + env(safe-area-inset-bottom,0px))!important;
     width:auto!important;
     min-height:0!important;
-    padding:11px 13px 12px!important;
+    padding:10px 13px 11px!important;
     border-radius:12px!important;
     z-index:29!important;
   }
@@ -70,86 +215,29 @@
     line-height:1.2!important;
   }
   .objective-text{
-    margin-top:5px!important;
-    font-size:13px!important;
-    line-height:1.42!important;
+    margin-top:4px!important;
+    font-size:12.5px!important;
+    line-height:1.4!important;
   }
 
   .message-box{
     left:10px!important;
     right:10px!important;
-    bottom:calc(var(--mobile-toolbar-h) + var(--mobile-objective-h) + 34px + env(safe-area-inset-bottom,0px))!important;
+    bottom:calc(var(--mobile-toolbar-h) + var(--mobile-objective-h) + var(--mobile-actions-h) + 54px + env(safe-area-inset-bottom,0px))!important;
     width:auto!important;
     transform:translateY(8px)!important;
-    padding:12px 14px!important;
-    font-size:13px!important;
+    padding:11px 13px!important;
+    font-size:12.5px!important;
     z-index:36!important;
   }
   .message-box.show{transform:translateY(0)!important}
-
-  /* rework.js scales the whole 1600x900 stage. These variables contain
-     inverse-sized lengths, calculated by mobile-layout-fix.js, so labels and
-     tap targets stay readable in physical CSS pixels after the stage scales. */
-  .game-stage #objectLayer .scene-object{
-    min-width:var(--mobile-hit-min,116px)!important;
-    min-height:var(--mobile-hit-min,116px)!important;
-  }
-
-  .game-stage #objectLayer .scene-object::after{
-    top:calc(100% + var(--mobile-label-gap,14px))!important;
-    bottom:auto!important;
-    padding:var(--mobile-label-pad-y,11px) var(--mobile-label-pad-x,18px)!important;
-    border-width:var(--mobile-line,4px)!important;
-    border-radius:var(--mobile-label-radius,16px)!important;
-    font-size:var(--mobile-label-font,31px)!important;
-    line-height:1.2!important;
-    letter-spacing:.01em!important;
-    box-shadow:0 var(--mobile-shadow-y,12px) var(--mobile-shadow-blur,32px) rgba(0,0,0,.6)!important;
-  }
-  .game-stage #objectLayer.hint-mode .scene-object::after,
-  .game-stage #objectLayer .scene-object.world-door::after{
-    opacity:1!important;
-  }
-
-  /* Room-fix modules use custom nav labels instead of ::after. */
-  .game-stage #objectLayer [class*="nav-label"]{
-    left:50%!important;
-    top:calc(100% + var(--mobile-label-gap,14px))!important;
-    bottom:auto!important;
-    transform:translateX(-50%)!important;
-    padding:var(--mobile-label-pad-y,11px) var(--mobile-label-pad-x,18px)!important;
-    border-width:var(--mobile-line,4px)!important;
-    border-radius:999px!important;
-    font-size:var(--mobile-label-font,31px)!important;
-    line-height:1.2!important;
-    opacity:.96!important;
-    z-index:8!important;
-  }
-
-  /* Ground arrows were ~30px after stage scaling on a 720px phone. Keep them
-     around 46-50 physical pixels instead. */
-  .game-stage #objectLayer [class*="ground-arrow"]{
-    width:var(--mobile-arrow-w,108px)!important;
-    height:var(--mobile-arrow-h,116px)!important;
-    opacity:.92!important;
-  }
-
-  /* Hint borders are also inside the scaled stage, so compensate their stroke. */
-  .game-stage #objectLayer .embedded-hitbox::before,
-  .game-stage #objectLayer .aud-prop.embedded-hitbox::before{
-    border-width:var(--mobile-line,4px)!important;
-  }
-
-  .game-stage #objectLayer .done-mark{
-    width:var(--mobile-done-size,62px)!important;
-    height:var(--mobile-done-size,62px)!important;
-    font-size:var(--mobile-done-font,29px)!important;
-    border-width:var(--mobile-line,4px)!important;
-  }
 }
 
 @media (max-width:430px) and (orientation:portrait){
+  .mobile-room-actions-list{max-height:118px;gap:6px}
+  .mobile-room-action{min-height:46px!important;padding:7px 8px!important}
+  .mobile-room-action span{font-size:12.5px}
   .toolbar{gap:6px!important}
-  .toolbar button{min-height:48px!important;font-size:13px!important;padding:7px 4px!important}
-  .objective-text{font-size:12.5px!important}
+  .toolbar button{min-height:45px!important;font-size:12.5px!important}
+  .objective-text{font-size:12px!important}
 }
