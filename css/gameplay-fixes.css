@@ -1,0 +1,31 @@
+/* Gameplay fixes: touch Boss controls + terminal evidence */
+.boss-touch-special{
+  grid-column:1/-1;
+  min-height:46px;
+  border:1px solid rgba(243,210,105,.38)!important;
+  background:linear-gradient(180deg,rgba(83,59,22,.88),rgba(35,25,12,.96))!important;
+  color:#fff0ab!important;
+  font-weight:950!important;
+  letter-spacing:.04em;
+}
+.boss-touch-special:not(:disabled){box-shadow:0 0 22px rgba(238,196,70,.16);animation:bossSpecialReady .75s ease-in-out infinite alternate}
+.boss-touch-special:disabled{opacity:.48!important;cursor:not-allowed!important;animation:none}
+@keyframes bossSpecialReady{to{filter:brightness(1.25)}}
+.overload-boss-v3 .ob2-status{grid-template-columns:1fr 1.55fr .7fr .55fr}
+.overload-boss-v3 .boss-touch-special{margin-top:2px}
+
+.pyr3-countdown{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(5,3,9,.76);backdrop-filter:blur(5px);transition:.2s ease}
+.pyr3-countdown.hide{opacity:0;pointer-events:none}
+.pyr3-countdown>div{width:min(520px,88%);padding:24px 26px;border:1px solid rgba(195,115,255,.34);border-radius:18px;background:linear-gradient(180deg,rgba(31,15,42,.97),rgba(8,6,13,.98));display:grid;gap:12px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.68)}
+.pyr3-countdown b{font-size:27px;color:#f0d6ff}.pyr3-countdown span{font-size:12px;line-height:1.7;color:#b9a9c4}.pyr3-countdown>strong{font-size:76px;color:#fff;text-shadow:0 0 28px rgba(191,97,255,.55)}
+.pyramid-boss-v3 .pyr2-confirm.boss-touch-special{display:block!important;right:14px;bottom:13px;min-width:150px;min-height:43px;grid-column:auto}
+
+.terminal-evidence{margin:14px 0 17px;padding:14px;border:1px solid rgba(116,210,214,.28);border-radius:12px;background:linear-gradient(180deg,rgba(15,31,35,.72),rgba(8,15,19,.82));display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.terminal-evidence>b,.terminal-evidence>em{grid-column:1/-1}.terminal-evidence>b{color:#a8f5ee;font-size:14px}.terminal-evidence>div{padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:rgba(5,10,13,.6);display:grid;gap:3px}.terminal-evidence span{font-size:10px;color:#a8aeb4}.terminal-evidence strong{font-size:18px;color:#fff}.terminal-evidence small{margin:0;font-size:10px;color:#87949b}.terminal-evidence .reverse{border-color:rgba(255,188,83,.4);box-shadow:inset 0 0 18px rgba(255,166,55,.05)}.terminal-evidence .reverse strong{color:#ffd77d}.terminal-evidence>em{font-style:normal;color:#f0d58e;font-size:12px;font-weight:850}
+
+@media(max-width:760px){
+  .overload-boss-v3 .ob2-status{grid-template-columns:1fr 1fr}
+  .boss-touch-special{min-height:52px;font-size:15px!important}
+  .pyramid-boss-v3 .pyr2-confirm.boss-touch-special{right:8px;bottom:8px;min-width:132px;min-height:48px;font-size:11px!important}
+  .terminal-evidence{grid-template-columns:1fr 1fr}.terminal-evidence>div{padding:8px}.terminal-evidence strong{font-size:16px}
+}
